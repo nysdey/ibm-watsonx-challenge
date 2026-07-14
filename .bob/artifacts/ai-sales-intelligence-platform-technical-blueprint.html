@@ -1,0 +1,348 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Sales Intelligence Platform — Blueprint</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #1f2328;
+    background: #ffffff;
+    padding: 32px 16px 48px;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: #57606a; font-size: 13px; margin-bottom: 32px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 28px 0 10px; color: #1f2328; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+  h3 { font-size: 13px; font-weight: 700; margin: 16px 0 6px; color: #3b82d4; }
+  p { margin-bottom: 8px; color: #1f2328; }
+  ul { margin: 0 0 10px 18px; }
+  li { margin-bottom: 3px; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #5b21b6; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-orange { background: #ffedd5; color: #9a3412; }
+  .badge-gray { background: #f1f5f9; color: #475569; }
+
+  .phase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .card {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .card h3 { margin-top: 0; }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 18px; font-size: 13px; }
+  th { background: #f7f8fa; border: 1px solid #e5e7eb; padding: 7px 10px; text-align: left; font-weight: 600; color: #1f2328; }
+  td { border: 1px solid #e5e7eb; padding: 7px 10px; vertical-align: top; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+
+  .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 14px 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1;
+    min-width: 100px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-right: none;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1f2328;
+    text-align: center;
+    position: relative;
+  }
+  .flow-step:last-child { border-right: 1px solid #e5e7eb; border-radius: 0 6px 6px 0; }
+  .flow-step:first-child { border-radius: 6px 0 0 6px; }
+  .flow-step .sub { font-weight: 400; color: #57606a; font-size: 11px; margin-top: 3px; }
+  .arrow { display: flex; align-items: center; color: #3b82d4; font-size: 16px; padding: 0 2px; }
+
+  .note {
+    background: #f0f6ff;
+    border-left: 3px solid #3b82d4;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .warn {
+    background: #fff7ed;
+    border-left: 3px solid #f97316;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin: 12px 0;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+
+  .section-label {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7c5cd8;
+    margin-bottom: 2px;
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>AI Sales Intelligence Platform</h1>
+  <p class="subtitle">Technical blueprint &amp; system design — IBM watsonx challenge</p>
+
+  
+  <h2>Overview</h2>
+  <p>A full-stack AI-assisted sales platform that ingests account data, enriches it with third-party signals, uses watsonx to prioritize and personalize outreach, and automates execution through SalesLoft — while keeping the rep in control at every step.</p>
+
+  <div class="flow">
+    <div class="flow-step">Data Ingestion<div class="sub">Accounts, contacts, signals</div></div>
+    <div class="arrow">›</div>
+    <div class="flow-step">AI Enrichment<div class="sub">watsonx scoring</div></div>
+    <div class="arrow">›</div>
+    <div class="flow-step">Prioritization<div class="sub">Cadences &amp; plans</div></div>
+    <div class="arrow">›</div>
+    <div class="flow-step">Execution<div class="sub">Email / calls</div></div>
+    <div class="arrow">›</div>
+    <div class="flow-step">Tracking<div class="sub">Dashboard &amp; metrics</div></div>
+  </div>
+
+  
+  <h2>Feature Modules</h2>
+
+  <h3>Module 1 — Account &amp; Data Ingestion</h3>
+  <div class="phase-grid">
+    <div class="card">
+      <h3>1A · Account Import</h3>
+      <ul>
+        <li>CSV / Excel upload with column mapping UI</li>
+        <li>Paste-in list support (newline-separated)</li>
+        <li>Deduplication on domain / company name</li>
+        <li>Stored in persistent Account table</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>1B · External Enrichment</h3>
+      <ul>
+        <li><strong>ZoomInfo API</strong> — contacts per account</li>
+        <li><strong>Install base feed</strong> — existing product footprint</li>
+        <li><strong>LISN</strong> — buyer intent / signal scores</li>
+        <li><strong>Web research</strong> — watsonx scrape &amp; summarise</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">Accounts missing an IT Director-level contact are auto-flagged and optionally dropped before prioritization runs.</div>
+
+  <h3>Module 2 — Rep Profile</h3>
+  <div class="phase-grid">
+    <div class="card">
+      <h3>Products &amp; Territory</h3>
+      <ul>
+        <li>Products sold (multi-select from knowledge base)</li>
+        <li>Territory definition (geo, industry, segment)</li>
+        <li>Target title / persona mapping</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Writing Style &amp; Preferences</h3>
+      <ul>
+        <li>Upload example emails for style extraction</li>
+        <li>Tone sliders (formal ↔ casual, brief ↔ detailed)</li>
+        <li>Automation permission level (0 = approve all → 5 = fully auto)</li>
+        <li>Notification cadence preferences</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Module 3 — AI Intelligence Engine (watsonx)</h3>
+  <table>
+    <tr><th>Capability</th><th>watsonx Feature Used</th><th>Output</th></tr>
+    <tr>
+      <td>Account scoring</td>
+      <td>watsonx.ai — custom prompt chain over account + signal data</td>
+      <td>Priority tier (A/B/C/D) + rationale</td>
+    </tr>
+    <tr>
+      <td>Use-case bucketing</td>
+      <td>watsonx.ai — classification on install base + pain signals</td>
+      <td>Cadence bucket (e.g. Security, Cost Savings, Modernization)</td>
+    </tr>
+    <tr>
+      <td>Contact ranking</td>
+      <td>watsonx.ai — persona fit scoring</td>
+      <td>Ranked contact list per account</td>
+    </tr>
+    <tr>
+      <td>Outreach plan</td>
+      <td>watsonx.ai — scheduling logic prompt</td>
+      <td>Daily / weekly / monthly / quarterly call + email plan</td>
+    </tr>
+    <tr>
+      <td>Email generation</td>
+      <td>watsonx.ai — style-matched generation</td>
+      <td>Personalized email draft per contact</td>
+    </tr>
+    <tr>
+      <td>Web research</td>
+      <td>watsonx.ai + search tool</td>
+      <td>Account news summary, trigger events</td>
+    </tr>
+  </table>
+  <div class="note"><strong>Governance:</strong> At each AI recommendation step, the rep receives an approval prompt (inline or email digest) unless their automation level is set to fully auto.</div>
+
+  <h3>Module 4 — Sales Motion &amp; Execution</h3>
+  <div class="phase-grid">
+    <div class="card">
+      <h3>Email Automation</h3>
+      <ul>
+        <li>Drafts generated, shown for review</li>
+        <li>One-click load into SalesLoft cadence via API</li>
+        <li>Cadences auto-mapped to use-case bucket</li>
+        <li>Sends tracked (open, click, reply)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Call List</h3>
+      <ul>
+        <li>Prioritized daily call queue</li>
+        <li>Contact card with talking points from watsonx</li>
+        <li>Log outcome (Connected / VM / No answer)</li>
+        <li>Auto-schedule follow-up based on outcome</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Module 5 — Dashboard &amp; Analytics</h3>
+  <div class="two-col">
+    <div class="card">
+      <h3>Account Snapshot</h3>
+      <ul>
+        <li>Heatmap of account tiers across territory</li>
+        <li>Coverage %: accounts with active cadence</li>
+        <li>Stale accounts (no touch in N days)</li>
+        <li>Refresh priority button per account</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Activity Metrics</h3>
+      <ul>
+        <li>Calls made, connect rate</li>
+        <li>Emails sent, open / click / reply rates</li>
+        <li>Pipeline created from AI-suggested accounts</li>
+        <li>Weekly plan completion %</li>
+      </ul>
+    </div>
+  </div>
+
+  
+  <h2>Proposed Tech Stack</h2>
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Rationale</th></tr>
+    <tr><td>Frontend</td><td>Next.js 14 (App Router) + Tailwind CSS</td><td>Fast full-stack React, built-in API routes</td></tr>
+    <tr><td>Backend / API</td><td>Next.js API routes + tRPC</td><td>Type-safe end-to-end, minimal boilerplate</td></tr>
+    <tr><td>AI / LLM</td><td>IBM watsonx.ai (Llama 3 / Granite)</td><td>Challenge requirement; enterprise-grade</td></tr>
+    <tr><td>Database</td><td>PostgreSQL (Supabase or Neon)</td><td>Relational accounts/contacts, easy auth</td></tr>
+    <tr><td>Auth</td><td>NextAuth.js / Supabase Auth</td><td>SSO-ready, per-rep profiles</td></tr>
+    <tr><td>File parsing</td><td>Papa Parse (CSV) + xlsx (Excel)</td><td>Client-side parse, no server upload needed</td></tr>
+    <tr><td>External APIs</td><td>ZoomInfo, LISN, SalesLoft REST APIs</td><td>Official SDKs / REST with API key auth</td></tr>
+    <tr><td>Background jobs</td><td>Inngest or pg-boss</td><td>Async enrichment, scheduled plan generation</td></tr>
+    <tr><td>Hosting</td><td>Vercel (app) + Supabase (DB)</td><td>Zero-ops, fast deploy</td></tr>
+  </table>
+
+  
+  <h2>Core Data Model (abbreviated)</h2>
+  <table>
+    <tr><th>Table</th><th>Key Fields</th></tr>
+    <tr><td>accounts</td><td>id, company_name, domain, industry, segment, tier, last_enriched_at, priority_score</td></tr>
+    <tr><td>contacts</td><td>id, account_id, name, title, email, phone, source (zoominfo/manual), persona_fit_score</td></tr>
+    <tr><td>signals</td><td>id, account_id, type (intent/install/news), payload, ingested_at</td></tr>
+    <tr><td>rep_profiles</td><td>id, user_id, products[], territory, tone_settings, automation_level, example_emails[]</td></tr>
+    <tr><td>cadences</td><td>id, name, use_case_bucket, salesloft_cadence_id</td></tr>
+    <tr><td>outreach_plan</td><td>id, rep_id, account_id, contact_id, action_type, scheduled_date, status</td></tr>
+    <tr><td>activities</td><td>id, rep_id, account_id, contact_id, type, outcome, timestamp, salesloft_id</td></tr>
+    <tr><td>knowledge_base</td><td>id, product, use_case, content, embedding (pgvector)</td></tr>
+  </table>
+
+  
+  <h2>watsonx.ai Integration Architecture</h2>
+  <div class="card" style="margin-bottom:12px">
+    <h3 style="margin-top:0">Prompt Chain for Account Prioritization</h3>
+    <p style="font-size:13px">
+      <strong>Step 1</strong> — Summarize raw signals (install base + LISN + news) into a structured account brief.<br />
+      <strong>Step 2</strong> — Score brief against rep's territory/products using a classification prompt → tier A/B/C/D.<br />
+      <strong>Step 3</strong> — Identify best-fit use-case bucket from knowledge base (RAG over pgvector embeddings).<br />
+      <strong>Step 4</strong> — Generate outreach plan with scheduling constraints.<br />
+      <strong>Step 5</strong> — Draft first-touch email, grounded in account brief + rep writing style.
+    </p>
+  </div>
+  <div class="note">Knowledge base articles are embedded at ingest time using <code>watsonx.ai</code> embedding endpoint and stored in <code>pgvector</code>. Each email generation step performs a top-5 retrieval for relevant product talking points.</div>
+
+  
+  <h2>Governance Model</h2>
+  <table>
+    <tr><th>Automation Level</th><th>Behavior</th></tr>
+    <tr><td>0 — Manual</td><td>AI suggests only. Rep approves every action before anything is sent or scheduled.</td></tr>
+    <tr><td>1 — Assisted</td><td>AI drafts emails and plan. Rep reviews a daily digest and approves in bulk.</td></tr>
+    <tr><td>2 — Semi-auto</td><td>Emails load into SalesLoft drafts automatically. Rep sends manually.</td></tr>
+    <tr><td>3 — Auto (business hrs)</td><td>Emails send automatically during business hours. Rep notified of sends.</td></tr>
+    <tr><td>4 — Fully auto</td><td>Full automation. Rep receives weekly summary only. Can override at any time.</td></tr>
+  </table>
+  <div class="warn">Regardless of automation level, all AI-generated content is logged with the originating prompt, model version, and timestamp for auditability.</div>
+
+  
+  <h2>Build Phases</h2>
+  <table>
+    <tr><th>Phase</th><th>Scope</th><th>Est. Complexity</th></tr>
+    <tr><td>Phase 1 — Foundation</td><td>Project scaffold, auth, DB schema, account CSV import, rep profile UI</td><td>Medium</td></tr>
+    <tr><td>Phase 2 — Enrichment</td><td>ZoomInfo + LISN + install base connectors, contact storage, signal table</td><td>Medium–High</td></tr>
+    <tr><td>Phase 3 — AI Engine</td><td>watsonx.ai prompt chains, scoring, use-case bucketing, email drafts, knowledge base RAG</td><td>High</td></tr>
+    <tr><td>Phase 4 — Execution</td><td>SalesLoft API integration, cadence mapping, call list UI, activity logging</td><td>Medium–High</td></tr>
+    <tr><td>Phase 5 — Dashboard</td><td>Analytics views, account heatmap, plan progress, refresh trigger</td><td>Medium</td></tr>
+    <tr><td>Phase 6 — Governance</td><td>Approval flows, automation level controls, audit log, notification system</td><td>Medium</td></tr>
+  </table>
+
+  
+  <h2>Open Questions / Decisions Needed</h2>
+  <ul>
+    <li><strong>ZoomInfo / LISN access:</strong> Do you have API credentials, or will mock/sample data be used for the challenge?</li>
+    <li><strong>SalesLoft access:</strong> OAuth app registered, or API key available?</li>
+    <li><strong>watsonx.ai model:</strong> Granite (IBM-native) or Llama 3.1 70B for generation tasks?</li>
+    <li><strong>Multi-rep vs. single-rep:</strong> Is this a team tool (manager visibility) or personal rep tool for the challenge scope?</li>
+    <li><strong>"The internet" signal source:</strong> Implement as a watsonx web-search tool call, or a fixed news API (e.g. NewsAPI)?</li>
+    <li><strong>Install base format:</strong> What does the fake install base CSV look like — product name + account domain?</li>
+  </ul>
+
+  <footer>Made with IBM Bob</footer>
+</div>
+</body>
+</html>

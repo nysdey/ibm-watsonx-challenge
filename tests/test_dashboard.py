@@ -75,7 +75,7 @@ def test_routes():
     import run_pipeline as rp
     c = rp.app.test_client()
     idx = c.get("/").get_data(as_text=True)
-    ok('id="page-outbound"' in idx, "outbound page present")
+    ok('id="page-dashboard"' in idx, "dashboard page present")
     ok('data-page="meetings"' not in idx and 'data-page="pipeline"' not in idx, "no meetings/pipeline tabs")
     ok("{{ meeting_api }}" not in idx, "no unrendered placeholder")
     # removed routes 404
@@ -91,7 +91,8 @@ def test_routes():
     # api shape
     st = json.loads(c.get("/api/status").get_data())
     acts = st.get("_actions", {})
-    ok(set(acts) == {"get_my_accounts", "outbound_strategy", "fill_contacts", "bobby"}, "actions (no pipeline_review)")
+    ok(set(acts) == {"get_my_accounts", "outbound_strategy", "fill_contacts", "bobby", "strategize"},
+       "actions (no pipeline_review)")
     lg = json.loads(c.get("/api/login/status").get_data())
     ok(set(lg) == {"isc", "zoominfo", "salesloft"} and all(v["state"] == "ready" for v in lg.values()),
        "login status: 3 services, all ready")

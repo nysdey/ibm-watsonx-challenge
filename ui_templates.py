@@ -26,12 +26,15 @@ _SPARKLE = '<svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="
 _DESIGN_CSS = """
   :root{
     --bg:#0a0a0c; --layer1:#18181b; --layer2:#212124; --layer3:#29292d;
-    --border:#2b2b2f; --border-strong:#3c3c41;
-    --text1:#f2f2f3; --text2:#a8a8ae; --text3:#77777d;
-    --blue:#0f62fe; --blue-text:#5b96ff; --blue-soft:rgba(15,98,254,.14); --blue-border:rgba(91,150,255,.3);
-    --purple:#8a3ffc; --purple-text:#b490ff; --purple-soft:rgba(138,63,252,.14); --purple-border:rgba(180,144,255,.32);
+    --border:#3a3a40; --border-strong:#55555c;
+    /* All-white type ramp (IBM Carbon dark theme reads white-on-gray10) —
+       gray body text was hard to read on the dark layers. */
+    --text1:#ffffff; --text2:#f4f4f4; --text3:#e0e0e0;
+    --blue:#0f62fe; --blue-text:#78a9ff; --blue-soft:rgba(15,98,254,.14); --blue-border:rgba(120,169,255,.4);
+    --purple:#8a3ffc; --purple-text:#be95ff; --purple-soft:rgba(138,63,252,.14); --purple-border:rgba(190,149,255,.4);
     --green:#42be65; --amber:#f1c21b; --red:#fa4d56;
-    --r-sm:4px; --r-md:8px; --r-lg:12px;
+    /* IBM Carbon: sharp, rectangular corners everywhere. */
+    --r-sm:0; --r-md:0; --r-lg:0;
     --font:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
     --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
   }
@@ -41,7 +44,7 @@ _DESIGN_CSS = """
   ::selection{ background:rgba(91,150,255,.3); }
   ::-webkit-scrollbar{ width:10px; height:10px; }
   ::-webkit-scrollbar-track{ background:transparent; }
-  ::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:8px; border:2px solid transparent; background-clip:content-box; }
+  ::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:0; border:2px solid transparent; background-clip:content-box; }
   a{ color:var(--blue-text); }
   h1,h2,h3{ font-weight:600; letter-spacing:-.01em; margin:0; color:var(--text1); }
   .mono{ font-family:var(--mono); }
@@ -119,14 +122,29 @@ PAGE_TEMPLATE = """
   .gate-note{ color:var(--text3); font-size:12px; line-height:1.55; margin-top:20px; }
 
   /* ── top bar ────────────────────────────────────────────────── */
-  .topbar{ position:sticky; top:0; z-index:50; background:rgba(10,10,12,.85); backdrop-filter:saturate(160%) blur(16px);
-           border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;
-           padding:12px 28px; gap:16px; }
-  .brand{ display:flex; align-items:center; gap:11px; }
-  .brand-logo{ width:32px; height:32px; flex:none; }
-  .brand-name{ font-size:16px; font-weight:600; letter-spacing:-.01em; }
-  .brand-sub{ font-size:11.5px; color:var(--text3); margin-top:1px; }
-  .topbar .right{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .topbar{ position:sticky; top:0; z-index:50; background:rgba(10,10,12,.9); backdrop-filter:saturate(160%) blur(16px);
+           border-bottom:1px solid #ffffff; display:flex; align-items:center; justify-content:space-between;
+           padding:12px 28px; gap:24px; }
+  .brand{ display:flex; align-items:center; gap:10px; cursor:pointer; background:none; border:none; padding:0; }
+  .brand-logo{ width:30px; height:30px; flex:none; }
+  .brand-name{ font-size:16px; font-weight:600; letter-spacing:-.01em; color:var(--text1); }
+  .topnav{ display:flex; align-items:center; gap:2px; flex:1; }
+  .navlink{ font:inherit; font-size:13.5px; font-weight:500; color:var(--text2); background:none; border:none;
+            cursor:pointer; padding:8px 14px; border-radius:var(--r-sm); transition:color .15s,background .15s; }
+  .navlink:hover{ color:var(--text1); background:var(--layer2); }
+  .navlink.active{ color:var(--text1); background:var(--layer2); }
+  .profile-wrap{ position:relative; flex:none; }
+  .profile-btn{ width:32px; height:32px; border-radius:50%; background:var(--layer2); border:1px solid var(--border);
+                color:var(--text1); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer;
+                display:flex; align-items:center; justify-content:center; }
+  .profile-btn:hover{ border-color:var(--border-strong); }
+  .profile-menu{ position:absolute; top:calc(100% + 10px); right:0; background:var(--layer1); border:1px solid var(--border);
+                 border-radius:var(--r-md); min-width:180px; box-shadow:0 16px 36px rgba(0,0,0,.45); display:none;
+                 overflow:hidden; z-index:60; }
+  .profile-menu.show{ display:block; }
+  .profile-menu button{ display:block; width:100%; text-align:left; font:inherit; font-size:13.5px; color:var(--text1);
+                         background:none; border:none; padding:11px 15px; cursor:pointer; }
+  .profile-menu button:hover{ background:var(--layer2); }
   .detailsbtn{ position:relative; }
   .warndot{ position:absolute; top:4px; right:6px; width:8px; height:8px; border-radius:50%; background:var(--red);
             box-shadow:0 0 0 3px rgba(250,77,86,.18); }
@@ -136,6 +154,155 @@ PAGE_TEMPLATE = """
   .page-head{ margin-bottom:24px; }
   .page-head h2{ font-size:24px; }
   .page-head p{ color:var(--text3); font-size:14.5px; margin:5px 0 0; }
+
+  /* ── dashboard ──────────────────────────────────────────────── */
+  .empty-state{ text-align:center; padding:70px 20px; background:var(--layer1); border:1px solid var(--border);
+                border-radius:var(--r-lg); }
+  .empty-state h3{ font-size:18px; margin-bottom:8px; }
+  .empty-state p{ color:var(--text3); font-size:14px; margin:0 0 20px; }
+  .empty-state .btn{ width:auto; }
+  .range-toggle{ display:inline-flex; background:var(--layer2); border:1px solid var(--border); border-radius:var(--r-sm);
+                 padding:3px; gap:2px; margin-bottom:18px; }
+  .range-btn{ font:inherit; font-size:12.5px; font-weight:500; color:var(--text2); background:none; border:none;
+              cursor:pointer; padding:6px 15px; border-radius:0; }
+  .range-btn.active{ background:var(--layer1); color:var(--text1); }
+  .aitem{ display:flex; align-items:center; gap:14px; padding:13px 16px; background:var(--layer1); border:1px solid var(--border);
+          border-radius:var(--r-md); margin-bottom:8px; }
+  .aitem .adate{ width:78px; flex:none; font-size:11px; color:var(--text3); font-family:var(--mono); }
+  .aitem .aname{ flex:1; font-weight:500; font-size:13.5px; min-width:0; }
+  .aitem .aplay{ font-size:11px; color:var(--text3); flex:none; }
+  .aitems-empty{ color:var(--text3); font-size:13.5px; padding:26px; text-align:center; background:var(--layer1);
+                 border:1px dashed var(--border); border-radius:var(--r-md); }
+  .stub{ text-align:center; padding:110px 20px; color:var(--text3); }
+  .stub h3{ color:var(--text1); font-size:18px; margin-bottom:6px; }
+
+  /* ── accounts tab ───────────────────────────────────────────── */
+  .accts-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
+  .accts-count{ color:var(--text3); font-size:13px; }
+  .acct-list{ max-height:600px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--r-lg);
+              background:var(--layer1); }
+  .acct-row{ display:flex; align-items:center; gap:16px; padding:11px 18px; border-bottom:1px solid var(--border); }
+  .acct-row:last-child{ border-bottom:none; }
+  .acct-row .an{ flex:1; min-width:0; font-weight:500; font-size:13.5px; }
+  .acct-row .ai{ width:180px; flex:none; color:var(--text3); font-size:12.5px; }
+  .acct-row .aiv{ flex:1; color:var(--text3); font-size:12px; }
+
+  .stages{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+  .stage{ display:flex; align-items:flex-start; gap:12px; padding:15px 18px; background:var(--layer1);
+          border:1px solid var(--border); border-radius:var(--r-md); transition:border-color .2s,box-shadow .2s; }
+  .stage.running{ border-color:var(--blue-border); box-shadow:0 0 0 3px var(--blue-soft); }
+  .stage.done{ border-color:rgba(66,190,101,.32); }
+  .stage.err{ border-color:rgba(250,77,86,.4); }
+  .stage .sicon{ margin-top:2px; flex:none; }
+  .stage .stitle{ font-weight:600; font-size:13.5px; }
+  .stage .smsg{ color:var(--text3); font-size:12.5px; margin-top:3px; }
+
+  .side-lists{ display:flex; gap:10px; margin-bottom:24px; }
+  .side-badge{ font:inherit; font-size:12.5px; color:var(--text2); background:var(--layer1); border:1px solid var(--border);
+               border-radius:var(--r-sm); padding:8px 14px; cursor:pointer; }
+  .side-badge:hover{ border-color:var(--border-strong); color:var(--text1); }
+  .side-badge b{ color:var(--text1); font-family:var(--mono); }
+
+  .cadence-group{ margin-bottom:22px; }
+  .cadence-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .cadence-head h3{ font-size:14.5px; }
+  .cadence-head .cnt{ color:var(--text3); font-size:12px; }
+  .acct-card{ display:flex; align-items:center; gap:14px; padding:12px 16px; background:var(--layer1);
+              border:1px solid var(--border); border-radius:var(--r-md); margin-bottom:6px; }
+  .acct-card .arank{ width:26px; flex:none; font-family:var(--mono); font-size:12px; color:var(--text3); text-align:center; }
+  .acct-card .abody{ flex:1; min-width:0; }
+  .acct-card .aname{ font-weight:500; font-size:13.5px; }
+  .acct-card .ameta{ color:var(--text3); font-size:11.5px; margin-top:2px; }
+  .acct-card .atags{ display:flex; gap:6px; flex-wrap:wrap; flex:none; max-width:340px; justify-content:flex-end; }
+  /* Tags: white text on a transparent box (border-only), IBM Carbon style —
+     the border color alone carries the category. */
+  .tagpill{ font-size:10.5px; font-weight:500; color:#fff; background:transparent; border:1px solid var(--border-strong);
+            border-radius:0; padding:3px 9px; white-space:nowrap; cursor:pointer; }
+  .tagpill.white{ border-color:var(--blue-border); }
+  .tagpill.risk{ border-color:rgba(250,77,86,.55); }
+  .tagpill.up{ border-color:rgba(66,190,101,.55); }
+  .tagpill.on{ background:#fff; color:#0a0a0c; border-color:#fff; }
+
+  /* ── accounts layout (sidebar lists + search/filter) ─────────── */
+  .accts-layout{ display:flex; gap:18px; align-items:flex-start; }
+  .accts-sidebar{ width:230px; flex:none; background:var(--layer1); border:1px solid var(--border); }
+  .accts-sidebar h4{ font-size:11.5px; font-weight:600; color:var(--text3); padding:12px 14px 6px; }
+  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; color:var(--text2); background:none;
+          border:none; border-left:3px solid transparent; padding:9px 14px; cursor:pointer; }
+  .slist:hover{ background:var(--layer2); color:var(--text1); }
+  .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:600; }
+  .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:var(--text3); }
+  .accts-main{ flex:1; min-width:0; }
+  .accts-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
+  .accts-tools input{ width:320px; max-width:100%; }
+  .tag-filters{ display:flex; gap:6px; flex-wrap:wrap; }
+
+  /* ── dashboard panels ───────────────────────────────────────── */
+  .dash-grid{ display:flex; gap:14px; align-items:stretch; }
+  .dash-grid > .dash-panel{ flex:1.4; min-width:0; }
+  .dash-side{ flex:1; display:flex; flex-direction:column; gap:14px; }
+  .dash-panel{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
+  .dash-panel h3{ font-size:13.5px; margin-bottom:14px; }
+  .dash-nums{ display:flex; gap:26px; margin-bottom:12px; flex-wrap:wrap; }
+  .dnum .v{ display:block; font-family:var(--mono); font-size:26px; font-weight:600; }
+  .dnum .l{ font-size:11.5px; color:var(--text3); }
+  .news-item{ display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--border); font-size:12.5px; }
+  .news-item:first-child{ border-top:none; }
+  .news-item .nd{ width:80px; flex:none; font-family:var(--mono); font-size:11px; color:var(--text3); }
+  .news-item .nb{ flex:1; min-width:0; }
+  .news-item .na{ font-weight:600; }
+  @media(max-width:900px){ .dash-grid{ flex-direction:column; } }
+
+  /* ── plan calendar ──────────────────────────────────────────── */
+  .cal-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
+  .cal-nav{ display:flex; align-items:center; gap:10px; }
+  .cal-nav .btn{ padding:6px 12px; }
+  .cal-label{ font-weight:600; font-size:14px; min-width:150px; text-align:center; }
+  .cal-month{ background:var(--layer1); border:1px solid var(--border); padding:14px; }
+  .cal-month h4{ font-size:13px; margin-bottom:10px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .cal-grid .dow{ font-size:10.5px; color:var(--text3); text-align:center; padding:4px 0; }
+  .cal-cell{ min-height:56px; background:var(--layer2); padding:5px 7px; cursor:default; border:1px solid transparent; }
+  .cal-cell.out{ opacity:.3; }
+  .cal-cell.today{ border-color:#fff; }
+  .cal-cell.has{ cursor:pointer; border-color:var(--blue-border); }
+  .cal-cell.has:hover{ background:var(--layer3); }
+  .cal-cell.sel{ background:var(--blue-soft); border-color:var(--blue); }
+  .cal-cell .d{ font-family:var(--mono); font-size:11px; color:var(--text3); }
+  .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:var(--text2); }
+  .cal-cell.compact{ min-height:34px; }
+  .cal-quarter{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .cal-week{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .cal-weekday{ background:var(--layer1); border:1px solid var(--border); padding:12px; min-height:150px; cursor:pointer; }
+  .cal-weekday:hover{ background:var(--layer2); }
+  .cal-weekday.sel{ border-color:var(--blue); }
+  .cal-weekday h5{ font-size:12px; margin-bottom:8px; }
+  .cal-weekday .cnt{ font-size:11.5px; color:var(--text3); margin-bottom:8px; }
+  .day-detail{ margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
+  .day-detail h3{ font-size:14px; margin-bottom:6px; }
+  .day-detail .sums{ color:var(--text2); font-size:13px; margin-bottom:12px; }
+  .act-row{ display:flex; gap:12px; align-items:center; padding:8px 0; border-top:1px solid var(--border); font-size:12.5px; }
+  .act-row:first-of-type{ border-top:none; }
+  .act-type{ width:52px; flex:none; font-size:10.5px; font-weight:600; text-align:center; border:1px solid var(--border-strong); padding:2px 0; }
+  .act-type.email{ border-color:var(--purple-border); }
+  .act-type.call{ border-color:var(--blue-border); }
+  @media(max-width:980px){ .cal-quarter{ grid-template-columns:1fr; } .cal-week{ grid-template-columns:1fr; } .accts-layout{ flex-direction:column; } .accts-sidebar{ width:100%; } }
+
+  /* ── account detail modal ──────────────────────────────────── */
+  .modal-card.wide{ width:820px; }
+  .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .detail-grid .panel.full{ grid-column:1 / -1; }
+  .kv{ display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-top:1px solid var(--border); font-size:12.5px; }
+  .kv:first-of-type{ border-top:none; }
+  .kv .k{ color:var(--text3); }
+  .kv .v{ font-family:var(--mono); text-align:right; }
+  .contact-row{ display:flex; gap:10px; padding:7px 0; border-top:1px solid var(--border); font-size:12.5px; align-items:center; }
+  .contact-row:first-of-type{ border-top:none; }
+  .contact-row .cn{ flex:1; font-weight:500; }
+  .contact-row .ct{ color:var(--text3); }
+  .dm-badge{ font-size:10px; font-weight:600; border:1px solid rgba(66,190,101,.55); padding:1px 7px; color:#fff; }
+  .ai-panel{ border-color:var(--purple-border) !important; }
+  .ai-panel h3{ color:var(--purple-text) !important; display:flex; align-items:center; gap:6px; }
 
   /* ── pipeline ───────────────────────────────────────────────── */
   .pipeline{ display:flex; align-items:stretch; gap:0; margin-bottom:28px; }
@@ -242,116 +409,209 @@ PAGE_TEMPLATE = """
 <!-- ── main app ───────────────────────────────────────────────── -->
 <div id="app" style="display:none">
   <header class="topbar">
-    <div class="brand">
+    <button class="brand" onclick="showPage('dashboard')">
       <img class="brand-logo" src="/static/logo.png" alt="">
-      <div>
-        <div class="brand-name">BobBee</div>
-        <div class="brand-sub">AI-powered outbound planning and personalization</div>
+      <div class="brand-name">BobBee</div>
+    </button>
+    <nav class="topnav">
+      <button class="navlink" data-page="plan" onclick="showPage('plan')">Plan</button>
+      <button class="navlink" data-page="accounts" onclick="showPage('accounts')">Accounts</button>
+      <button class="navlink" data-page="email" onclick="showPage('email')">Email</button>
+      <button class="navlink" data-page="call" onclick="showPage('call')">Call</button>
+    </nav>
+    <div class="profile-wrap">
+      <button class="profile-btn" id="profileBtn" onclick="toggleProfileMenu()">?</button>
+      <div class="profile-menu" id="profileMenu">
+        <button onclick="openDetails(); closeProfileMenu();">Settings<span class="warndot" id="detailsWarn" style="display:none"></span></button>
       </div>
-    </div>
-    <div class="right">
-      <span class="badge blue" id="territoryBadge">Territory</span>
-      <span class="badge green">Watsonx connected</span>
-      <span class="badge ai">""" + _SPARKLE + """Granite active</span>
-      <button class="btn detailsbtn" onclick="openDetails()">Details<span class="warndot" id="detailsWarn" style="display:none"></span></button>
     </div>
   </header>
 
   <main>
-    <section id="page-outbound" class="page active">
+    <!-- Dashboard (home) -->
+    <section id="page-dashboard" class="page active">
       <div class="page-head">
-        <h2>Territory to personalization, in four steps</h2>
-        <p>Pull your accounts, build a strategy, load contacts, and let Bobby write the outreach.</p>
+        <h2>Dashboard</h2>
+        <p id="dashSub">Your day at a glance.</p>
       </div>
 
-      <div class="pipeline">
-        <!-- Step 1: Accounts -->
-        <div class="pipe-step" id="card-gma">
-          <div class="pipe-num">Step 1</div>
-          <div class="pipe-title">Accounts</div>
-          <div class="pipe-sub">ISC + IBM install base + segmentation</div>
+      <div id="dashboardEmpty" class="empty-state" style="display:none">
+        <h3>Import accounts to get started</h3>
+        <p>BobBee builds your day from your accounts. Import them first.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="dashboardStrat" class="empty-state" style="display:none">
+        <h3>Strategize your accounts</h3>
+        <p>Your accounts are in — run Strategize to build cadences and your daily plan.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+
+      <div id="dashboardBody" style="display:none">
+        <div class="dash-grid">
+          <div class="dash-panel">
+            <h3 id="dashTodayLabel">Today</h3>
+            <div class="dash-nums">
+              <div class="dnum"><span class="v" id="dashTodayEmails">0</span><span class="l">Emails</span></div>
+              <div class="dnum"><span class="v" id="dashTodayCalls">0</span><span class="l">Calls</span></div>
+              <div class="dnum"><span class="v" id="dashTodayAccounts">0</span><span class="l">Accounts touched</span></div>
+            </div>
+            <div id="dashTodayItems"></div>
+          </div>
+          <div class="dash-side">
+            <div class="dash-panel">
+              <h3>This week</h3>
+              <div class="dash-nums">
+                <div class="dnum"><span class="v" id="dashWeekEmails">0</span><span class="l">Emails</span></div>
+                <div class="dnum"><span class="v" id="dashWeekCalls">0</span><span class="l">Calls</span></div>
+                <div class="dnum"><span class="v" id="dashWeekAccounts">0</span><span class="l">Accounts</span></div>
+              </div>
+            </div>
+            <div class="dash-panel">
+              <h3>Cadences</h3>
+              <div class="dash-nums">
+                <div class="dnum"><span class="v" id="cadActive">0</span><span class="l">Active</span></div>
+                <div class="dnum"><span class="v" id="cadPending">0</span><span class="l">Pending</span></div>
+                <div class="dnum"><span class="v" id="cadCompleted">0</span><span class="l">Completed</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-panel" style="margin-top:14px;">
+          <h3>Notable news</h3>
+          <div id="dashNews"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Plan -->
+    <section id="page-plan" class="page">
+      <div class="page-head">
+        <h2>Plan</h2>
+        <p>Your quarter, distributed — who to email and call, every day.</p>
+      </div>
+
+      <div id="planEmpty" class="empty-state" style="display:none">
+        <h3>Import accounts to get started</h3>
+        <p>The plan calendar is built from your strategized accounts.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="planStrat" class="empty-state" style="display:none">
+        <h3>Strategize your accounts</h3>
+        <p>Run Strategize on the Accounts tab to distribute cadences across the quarter.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+
+      <div id="planBody" style="display:none">
+        <div class="cal-toolbar">
+          <div class="range-toggle">
+            <button class="range-btn" data-view="quarter" onclick="setCalView('quarter')">Quarter</button>
+            <button class="range-btn active" data-view="month" onclick="setCalView('month')">Month</button>
+            <button class="range-btn" data-view="week" onclick="setCalView('week')">Week</button>
+            <button class="range-btn" data-view="day" onclick="setCalView('day')">Day</button>
+          </div>
+          <div class="cal-nav">
+            <button class="btn" onclick="calStep(-1)">&larr;</button>
+            <span class="cal-label" id="calLabel"></span>
+            <button class="btn" onclick="calStep(1)">&rarr;</button>
+          </div>
+        </div>
+        <div id="calGrid"></div>
+        <div class="day-detail" id="dayDetail" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- Accounts -->
+    <section id="page-accounts" class="page">
+      <div class="page-head">
+        <h2>Accounts</h2>
+        <p>Import, strategize, and work your book of business.</p>
+      </div>
+
+      <div id="acctsEmpty" style="display:none">
+        <div class="pipe-step" id="card-gma" style="max-width:540px;">
+          <div class="pipe-title">Import accounts</div>
+          <div class="pipe-sub">IBM Sales Cloud + install base + segmentation</div>
           <div class="pipe-status" id="gmaStatus"><span class="dot pending"></span><span class="amsg">Not started</span></div>
           <div class="pipe-seller" id="gmaSeller"></div>
           <div class="pipe-foot">
             <span class="pipe-records" id="gmaResults"></span>
-            <button class="btn primary" id="gmaBtn" onclick="runGetMyAccounts()">Run step</button>
+            <button class="btn primary" id="gmaBtn" onclick="runGetMyAccounts()">Import accounts</button>
           </div>
           <div class="pipe-chips" id="gmaChips"></div>
           <button class="link showlog" id="gmaLogToggle" onclick="toggleLog('gma')" style="display:none">Show details</button>
           <div class="alog" id="gmaLog"></div>
         </div>
-        <div class="pipe-arrow">&rarr;</div>
-
-        <!-- Step 2: Strategy -->
-        <div class="pipe-step" id="card-strategy">
-          <div class="pipe-num">Step 2</div>
-          <div class="pipe-title">Strategy</div>
-          <div class="pipe-sub">Account tiering + call planning</div>
-          <div class="pipe-status" id="strategyStatus"><span class="dot pending"></span><span class="amsg">Not started</span></div>
-          <div class="pipe-foot">
-            <span class="pipe-records" id="strategyResults"></span>
-            <button class="btn primary" id="strategyBtn" onclick="runStrategy()">Run step</button>
-          </div>
-          <div class="pipe-chips" id="strategyChips"></div>
-          <button class="link showlog" id="strategyLogToggle" onclick="toggleLog('strategy')" style="display:none">Show details</button>
-          <div class="alog" id="strategyLog"></div>
-        </div>
-        <div class="pipe-arrow">&rarr;</div>
-
-        <!-- Step 3: Contacts -->
-        <div class="pipe-step" id="card-fill">
-          <div class="pipe-num">Step 3</div>
-          <div class="pipe-title">Contacts</div>
-          <div class="pipe-sub">ZoomInfo readiness + Salesloft cadence</div>
-          <div class="pipe-status" id="fillStatus"><span class="dot pending"></span><span class="amsg">Not started</span></div>
-          <div class="pipe-foot">
-            <select class="sel pipe-select" id="fillCadence">{% for c in cadences %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
-            <span class="pipe-records" id="fillResults"></span>
-            <button class="btn primary" id="fillBtn" onclick="runFill()">Run step</button>
-          </div>
-          <div class="pipe-chips" id="fillChips"></div>
-          <button class="link showlog" id="fillLogToggle" onclick="toggleLog('fill')" style="display:none">Show details</button>
-          <div class="alog" id="fillLog"></div>
-        </div>
-        <div class="pipe-arrow">&rarr;</div>
-
-        <!-- Step 4: Bobby AI -->
-        <div class="pipe-step ai" id="card-bobby">
-          <div class="pipe-num">Step 4</div>
-          <div class="pipe-title">""" + _SPARKLE + """Bobby AI</div>
-          <div class="pipe-sub">Personalized email per contact, written by Granite</div>
-          <div class="pipe-status" id="bobbyStatus"><span class="dot pending"></span><span class="amsg">Pick a cadence</span></div>
-          <div class="pipe-choices" id="bobbyChoices">
-            {% for c in bobby_cadences %}
-            <label class="pipe-choice"><input type="radio" name="bobbyCadence" value="{{ c }}"{{ ' checked' if loop.first else '' }}> {{ c }}</label>
-            {% endfor %}
-          </div>
-          <div class="pipe-foot">
-            <button class="btn ai" id="bobbyBtn" onclick="runBobby()">Run step</button>
-          </div>
-        </div>
       </div>
 
-      <div class="kpis">
-        <div class="kpi"><div class="kval" id="kpiAccounts">—</div><div class="klabel">Accounts analyzed</div></div>
-        <div class="kpi"><div class="kval" id="kpiTier1">—</div><div class="klabel">Tier 1 accounts</div></div>
-        <div class="kpi"><div class="kval" id="kpiContacts">—</div><div class="klabel">Contacts staged</div></div>
-        <div class="kpi ai"><div class="kval" id="kpiEmails">—</div><div class="klabel">""" + _SPARKLE + """Emails generated</div></div>
-        <div class="kpi"><div class="kval" id="kpiTime">—</div><div class="klabel">Time saved</div></div>
-      </div>
+      <div id="acctsBody" style="display:none">
+        <div class="accts-head">
+          <span class="accts-count" id="acctsCount"></span>
+          <button class="btn primary" id="strategizeBtn" onclick="runStrategize()">Strategize</button>
+        </div>
 
-      <div class="roi-head">
-        <h3>Productivity impact</h3>
-        <p>Manual outbound prep versus one BobBee run.</p>
-      </div>
-      <div class="roi">
-        <div class="roi-card"><div class="rlabel">Manual process</div><div class="rval">6+ hrs / week</div></div>
-        <div class="roi-card"><div class="rlabel">BobBee</div><div class="rval blue">~10 minutes</div></div>
-        <div class="roi-card ai"><div class="rlabel">""" + _SPARKLE + """Emails personalized</div><div class="rval" id="roiEmails">—</div></div>
-        <div class="roi-card"><div class="rlabel">Estimated productivity gain</div><div class="rval blue">94%</div></div>
+        <div class="stages" id="stages" style="display:none">
+          <div class="stage" id="stage-contacts">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Contacts check</div><div class="smsg">Checking each account's contacts in ZoomInfo for an IT decision-maker.</div></div>
+          </div>
+          <div class="stage" id="stage-scoring">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Signals &amp; quarter segmentation</div><div class="smsg">Waiting…</div></div>
+          </div>
+          <div class="stage" id="stage-cadences">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Cadences, ranking &amp; tags</div><div class="smsg">Waiting…</div></div>
+          </div>
+          <div class="stage" id="stage-schedule">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Quarter distribution</div><div class="smsg">Waiting…</div></div>
+          </div>
+        </div>
+
+        <div class="accts-layout" id="acctsLayout">
+          <aside class="accts-sidebar" id="acctsSidebar" style="display:none"></aside>
+          <div class="accts-main">
+            <div class="accts-tools" id="acctsTools" style="display:none">
+              <input type="text" id="acctSearch" placeholder="Search accounts..." oninput="renderAccounts()">
+              <div class="tag-filters" id="tagFilters"></div>
+            </div>
+            <div id="acctList"></div>
+          </div>
+        </div>
       </div>
     </section>
+
+    <!-- Email -->
+    <section id="page-email" class="page">
+      <div id="emailEmpty" class="empty-state" style="display:none">
+        <h3>Import accounts to get started</h3>
+        <p>Email campaigns are built from your strategized cadences.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="emailStub" class="stub" style="display:none"><h3>Email</h3><p>Coming soon.</p></div>
+    </section>
+
+    <!-- Call -->
+    <section id="page-call" class="page">
+      <div id="callEmpty" class="empty-state" style="display:none">
+        <h3>Import accounts to get started</h3>
+        <p>Call plans are built from your strategized cadences.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="callStub" class="stub" style="display:none"><h3>Call</h3><p>Coming soon.</p></div>
+    </section>
   </main>
+</div>
+
+<!-- ── account detail modal ─────────────────────────────────────── -->
+<div class="modal" id="acctModal" onclick="if(event.target===this) closeAcctModal()">
+  <div class="modal-card wide">
+    <div class="modal-head">
+      <h2 id="acctModalTitle">Account</h2>
+      <button class="link" onclick="closeAcctModal()">Close</button>
+    </div>
+    <div id="acctModalBody"></div>
+  </div>
 </div>
 
 <!-- ── Details (Access) modal ─────────────────────────────────── -->
@@ -435,25 +695,393 @@ function closeDetails(){
   document.getElementById('detailsModal').classList.remove('show');
 }
 
+// ── page nav ──────────────────────────────────────────────────
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  document.querySelectorAll('.navlink').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+  closeProfileMenu();
+  if (name === 'accounts'){ fetchAccountsList(); fetchStrategizeStatus(); }
+  if (name === 'dashboard'){ refreshDashboard(); }
+  if (name === 'plan'){ fetchSchedule(); }
+}
+
+// ── profile menu ──────────────────────────────────────────────
+function toggleProfileMenu(){ document.getElementById('profileMenu').classList.toggle('show'); }
+function closeProfileMenu(){ document.getElementById('profileMenu').classList.remove('show'); }
+document.addEventListener('click', (ev) => {
+  const wrap = document.querySelector('.profile-wrap');
+  if (wrap && !wrap.contains(ev.target)) closeProfileMenu();
+});
+
+// ── accounts tab: strategize stages ───────────────────────────
+const STAGE_ORDER = ['contacts', 'scoring', 'quarters', 'cadences', 'schedule', 'done'];
+function stageIdx(phase){ return STAGE_ORDER.indexOf(phase); }
+
+function setStageEl(id, cls, msg){
+  const el = document.getElementById(id);
+  el.className = 'stage ' + cls;
+  el.querySelector('.dot').className = 'dot sicon ' + cls;
+  if (msg) el.querySelector('.smsg').textContent = msg;
+}
+
+function renderStages(a){
+  const box = document.getElementById('stages');
+  if (!a || a.phase === 'idle'){ box.style.display = 'none'; return; }
+  box.style.display = '';
+  const idx = stageIdx(a.phase);
+  const err = a.phase === 'error';
+  const c = a.counts || {};
+
+  if (err && idx <= 0) setStageEl('stage-contacts', 'err', a.message);
+  else if (idx === 0) setStageEl('stage-contacts', 'running', a.message);
+  else if (idx > 0) setStageEl('stage-contacts', 'done',
+    c.no_contacts != null ? `${c.no_contacts} of ${c.total} accounts had no IT decision-maker — saved to No Contacts.` : 'Done.');
+
+  if (err && idx > 0 && idx <= 2) setStageEl('stage-scoring', 'err', a.message);
+  else if (idx === 1 || idx === 2) setStageEl('stage-scoring', 'running', a.message);
+  else if (idx > 2) setStageEl('stage-scoring', 'done',
+    c.current_quarter != null ? `${c.current_quarter} accounts selected for this quarter.` : 'Done.');
+
+  if (err && idx === 3) setStageEl('stage-cadences', 'err', a.message);
+  else if (idx === 3) setStageEl('stage-cadences', 'running', a.message);
+  else if (idx > 3) setStageEl('stage-cadences', 'done',
+    c.cadences ? `${Object.keys(c.cadences).length} cadence(s) built${c.leftovers ? ` — ${c.leftovers} account(s) moved to Leftovers` : ''}.` : 'Done.');
+
+  if (err && idx === 4) setStageEl('stage-schedule', 'err', a.message);
+  else if (idx === 4) setStageEl('stage-schedule', 'running', a.message);
+  else if (idx > 4) setStageEl('stage-schedule', 'done',
+    c.scheduled_activities ? `${c.scheduled_activities} touches distributed across the quarter.` : 'Done.');
+
+  document.getElementById('strategizeBtn').disabled = !!a.active;
+}
+
+// ── accounts tab: lists, search, tag filter, detail popup ─────
+let _acctData = null;
+let _acctSel = 'all';
+const _tagSel = new Set();
+
+function tagClass(t){
+  if (t.startsWith('Whitespace') || t === 'Bluemix footprint') return 'white';
+  if (t === 'At-risk spend' || t === 'Competitive displacement') return 'risk';
+  if (t === 'Growing spend') return 'up';
+  return '';
+}
+
+function renderSidebar(){
+  const bar = document.getElementById('acctsSidebar');
+  if (!_acctData || !_acctData.strategized){ bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  const L = _acctData.lists;
+  const item = (key, label, n) =>
+    `<button class="slist ${_acctSel === key ? 'active' : ''}" onclick="selectList('${esc(key)}')">${esc(label)}<span class="n">${n}</span></button>`;
+  bar.innerHTML = '<h4>Lists</h4>'
+    + item('all', 'All accounts', L.all)
+    + '<h4>Cadences</h4>'
+    + Object.entries(L.cadences).map(([nm, n]) => item('cadence:' + nm, nm, n)).join('')
+    + '<h4>Set aside</h4>'
+    + item('leftovers', 'Leftovers', L.leftovers)
+    + item('no_contacts', 'No contacts', L.no_contacts)
+    + item('future', 'Future quarters', L.future);
+}
+
+function selectList(key){ _acctSel = key; renderSidebar(); renderAccounts(); }
+function toggleTag(t){ _tagSel.has(t) ? _tagSel.delete(t) : _tagSel.add(t); renderTagFilters(); renderAccounts(); }
+
+function renderTagFilters(){
+  const host = document.getElementById('tagFilters');
+  if (!_acctData || !_acctData.strategized){ host.innerHTML = ''; return; }
+  const tags = [...new Set(_acctData.accounts.flatMap(a => a.tags || []))].sort();
+  host.innerHTML = tags.map(t =>
+    `<button class="tagpill ${tagClass(t)} ${_tagSel.has(t) ? 'on' : ''}" onclick="toggleTag('${esc(t)}')">${esc(t)}</button>`).join('');
+}
+
+function renderAccounts(){
+  const host = document.getElementById('acctList');
+  if (!_acctData) return;
+  const q = (document.getElementById('acctSearch')?.value || '').toLowerCase();
+
+  let rows = _acctData.accounts;
+  if (_acctSel.startsWith('cadence:')){
+    const cn = _acctSel.slice(8);
+    rows = rows.filter(a => a.cadence === cn).sort((x, y) => (x.rank || 99) - (y.rank || 99));
+  } else if (_acctSel !== 'all'){
+    const bucket = _acctSel === 'no_contacts' ? 'no_contacts' : _acctSel === 'leftovers' ? 'leftovers' : 'future';
+    rows = rows.filter(a => a.bucket === bucket);
+  }
+  if (q) rows = rows.filter(a => (a.account || '').toLowerCase().includes(q) || (a.industry || '').toLowerCase().includes(q));
+  if (_tagSel.size) rows = rows.filter(a => [..._tagSel].every(t => (a.tags || []).includes(t)));
+
+  if (!rows.length){ host.innerHTML = '<div class="aitems-empty">No accounts match.</div>'; return; }
+  host.innerHTML = '<div class="acct-list">' + rows.map(a => `
+    <div class="acct-row" style="cursor:pointer" onclick="openAcctModal('${esc(a.account)}')">
+      ${a.rank ? `<span class="arank">#${a.rank}</span>` : ''}
+      <span class="an">${esc(a.account || '')}</span>
+      <span class="ai">${esc(a.industry || '')}</span>
+      ${a.cadence && _acctSel === 'all' ? `<span class="aiv">${esc(a.cadence)}</span>` : ''}
+      <span class="atags">${(a.tags || []).map(t => `<span class="tagpill ${tagClass(t)}">${esc(t)}</span>`).join('')}</span>
+    </div>`).join('') + '</div>';
+}
+
+function renderAccountList(data){
+  _acctData = data;
+  const count = document.getElementById('acctsCount');
+  const empty = document.getElementById('acctsEmpty');
+  const body = document.getElementById('acctsBody');
+  if (!data.has_accounts){ empty.style.display = ''; body.style.display = 'none'; return; }
+  empty.style.display = 'none'; body.style.display = '';
+
+  document.getElementById('acctsTools').style.display = data.strategized ? '' : 'none';
+  renderSidebar(); renderTagFilters();
+
+  if (!data.strategized){
+    count.textContent = `${data.accounts.length} accounts`;
+    renderAccounts();
+    return;
+  }
+  const L = data.lists;
+  const inCadences = Object.values(L.cadences).reduce((n, x) => n + x, 0);
+  count.innerHTML = `${L.all} accounts &middot; ${inCadences} in Q${data.current_quarter} cadences`;
+  renderAccounts();
+}
+
+async function fetchAccountsList(){
+  let data;
+  try { data = await (await fetch('/api/accounts/list')).json(); } catch(e){ return; }
+  renderAccountList(data);
+}
+
+async function fetchStrategizeStatus(){
+  let data;
+  try { data = await (await fetch('/api/status')).json(); } catch(e){ return; }
+  const a = (data._actions || {}).strategize;
+  renderStages(a);
+  if (a && a.done && !_strategizeWasDone){ _strategizeWasDone = true; fetchAccountsList(); fetchSchedule(); refreshDashboard(); }
+  if (!a || !a.done) _strategizeWasDone = false;
+}
+let _strategizeWasDone = false;
+
+async function runStrategize(){
+  const res = await fetch('/api/strategize/run', {method:'POST'});
+  const body = await res.json();
+  if (!body.ok){ alert('Error: ' + body.error); return; }
+  fetchStrategizeStatus();
+}
+
+// ── account detail popup ──────────────────────────────────────
+function fmtMoney(v){
+  if (v == null || v === '') return '—';
+  const n = Number(v);
+  if (isNaN(n)) return String(v);
+  if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+  if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return '$' + Math.round(n / 1e3) + 'K';
+  return '$' + n.toLocaleString();
+}
+const kv = (k, v) => `<div class="kv"><span class="k">${esc(k)}</span><span class="v">${v == null || v === '' ? '—' : esc(String(v))}</span></div>`;
+
+async function openAcctModal(name){
+  let d;
+  try { d = await (await fetch('/api/accounts/detail?name=' + encodeURIComponent(name))).json(); } catch(e){ return; }
+  document.getElementById('acctModalTitle').textContent = d.account;
+  const sc = d.sales_cloud, zi = d.zoominfo, sl = d.salesloft, ai = d.ai;
+  document.getElementById('acctModalBody').innerHTML = `
+    <div style="margin-bottom:12px;">${(d.tags || []).map(t => `<span class="tagpill ${tagClass(t)}">${esc(t)}</span>`).join(' ')}</div>
+    <div class="detail-grid">
+      <div class="panel ai-panel full"><h3>""" + _SPARKLE + """AI analysis</h3>
+        ${kv('Urgency', ai.urgency + (ai.score != null ? ` (score ${Number(ai.score).toFixed(1)}, tier ${ai.tier})` : ''))}
+        ${kv('Best product fit', ai.product_fit)}
+        ${kv('Recommended play', ai.play)}
+        ${ai.angle ? `<div style="font-size:12.5px; margin-top:10px; line-height:1.5;">${esc(ai.angle)}</div>` : ''}
+      </div>
+      <div class="panel"><h3>IBM Sales Cloud</h3>
+        ${kv('Industry', sc.industry)}${kv('Coverage ID', sc.coverage_id)}${kv('Relationship', sc.relationship)}
+        ${kv('IBM spend (current)', fmtMoney(sc.ibm_spend_current))}${kv('IBM spend (prior)', fmtMoney(sc.ibm_spend_prior))}
+        ${kv('Spend trend', sc.spend_trend)}${kv('Installs', sc.install_summary)}
+      </div>
+      <div class="panel"><h3>ZoomInfo</h3>
+        ${kv('Annual revenue', fmtMoney(zi.revenue))}${kv('Employees', zi.employees != null ? Number(zi.employees).toLocaleString() : null)}
+        <div style="margin-top:10px;">
+          ${(zi.contacts || []).map(c => `<div class="contact-row"><span class="cn">${esc(c.first_name)} ${esc(c.last_name)}</span><span class="ct">${esc(c.title)}</span>${c.decision_maker ? '<span class="dm-badge">Decision maker</span>' : ''}</div>`).join('') || '<div class="note">No contacts found.</div>'}
+        </div>
+      </div>
+      <div class="panel"><h3>Salesloft</h3>
+        ${kv('Cadence', sl.cadence)}${kv('Rank in cadence', sl.rank != null ? '#' + sl.rank : null)}
+        <div style="margin-top:10px;">
+          ${(sl.touches || []).map(t => `<div class="act-row"><span class="act-type ${esc(t.type)}">${esc(t.type)}</span><span>${esc(t.date)}</span><span style="color:var(--text3)">${esc(t.step)}</span></div>`).join('') || '<div class="note">No touches scheduled.</div>'}
+        </div>
+      </div>
+      <div class="panel"><h3>Signals &amp; news</h3>
+        ${(d.signals || []).map(s => `<div class="news-item"><span class="nd">${esc(s.date)}</span><div class="nb"><span class="na">${esc(s.type)}</span> — ${esc(s.summary)}</div></div>`).join('') || '<div class="note">No recent signals.</div>'}
+      </div>
+    </div>`;
+  document.getElementById('acctModal').classList.add('show');
+}
+function closeAcctModal(){ document.getElementById('acctModal').classList.remove('show'); }
+
+// ── plan calendar (quarter / month / week / day) ──────────────
+let _cal = {view: 'month', anchor: new Date(), data: null, sel: null};
+
+function isoOf(d){ return d.toISOString().slice(0, 10); }
+function dayInfo(iso){ return (_cal.data && _cal.data.days[iso]) || null; }
+
+async function fetchSchedule(){
+  let d;
+  try { d = await (await fetch('/api/schedule')).json(); } catch(e){ return; }
+  _cal.data = d.has_schedule ? d : null;
+  renderCal();
+}
+
+function setCalView(v){
+  _cal.view = v;
+  document.querySelectorAll('#page-plan .range-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  renderCal();
+}
+
+function calStep(dir){
+  const a = new Date(_cal.anchor);
+  if (_cal.view === 'month' || _cal.view === 'quarter') a.setMonth(a.getMonth() + dir * (_cal.view === 'quarter' ? 3 : 1));
+  else a.setDate(a.getDate() + dir * (_cal.view === 'week' ? 7 : 1));
+  _cal.anchor = a;
+  renderCal();
+}
+
+function selectCalDay(iso){
+  _cal.sel = iso;
+  renderCal();
+  const info = dayInfo(iso) || {emails: 0, calls: 0, accounts: [], items: []};
+  const dd = document.getElementById('dayDetail');
+  const d = new Date(iso + 'T00:00:00');
+  dd.style.display = '';
+  dd.innerHTML = `<h3>${d.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})}</h3>
+    <div class="sums"><b>${info.emails}</b> email${info.emails === 1 ? '' : 's'} &middot; <b>${info.calls}</b> call${info.calls === 1 ? '' : 's'} &middot; <b>${info.accounts.length}</b> account${info.accounts.length === 1 ? '' : 's'} touched</div>
+    ${(info.items || []).map(a => `<div class="act-row"><span class="act-type ${esc(a.type)}">${esc(a.type)}</span><span style="font-weight:500">${esc(a.account)}</span><span style="color:var(--text3)">${esc(a.step)} &middot; ${esc(a.cadence)}</span></div>`).join('') || '<div class="note">Nothing scheduled.</div>'}`;
+}
+
+function monthGridHTML(year, month, compact){
+  const first = new Date(year, month, 1);
+  const label = first.toLocaleDateString(undefined, {month: 'long', year: 'numeric'});
+  const todayIso = isoOf(new Date());
+  let cells = '<div class="cal-grid">' + ['S','M','T','W','T','F','S'].map(d => `<div class="dow">${d}</div>`).join('');
+  for (let i = 0; i < first.getDay(); i++) cells += '<div class="cal-cell out compact"></div>';
+  const dim = new Date(year, month + 1, 0).getDate();
+  for (let day = 1; day <= dim; day++){
+    const iso = isoOf(new Date(Date.UTC(year, month, day)));
+    const info = dayInfo(iso);
+    const n = info ? info.emails + info.calls : 0;
+    cells += `<div class="cal-cell ${compact ? 'compact' : ''} ${info ? 'has' : ''} ${iso === todayIso ? 'today' : ''} ${iso === _cal.sel ? 'sel' : ''}"
+      ${info ? `onclick="selectCalDay('${iso}')"` : ''}>
+      <span class="d">${day}</span>${info && !compact ? `<div class="acts">${info.emails}e &middot; ${info.calls}c</div>` : info ? `<div class="acts">${n}</div>` : ''}</div>`;
+  }
+  cells += '</div>';
+  return {label, html: cells};
+}
+
+function renderCal(){
+  const grid = document.getElementById('calGrid');
+  const label = document.getElementById('calLabel');
+  if (!grid) return;
+  if (!_cal.data){ grid.innerHTML = ''; return; }
+  const a = _cal.anchor;
+
+  if (_cal.view === 'quarter'){
+    const q = Math.floor(a.getMonth() / 3);
+    label.textContent = `Q${q + 1} ${a.getFullYear()}`;
+    grid.innerHTML = '<div class="cal-quarter">' + [0, 1, 2].map(i => {
+      const m = monthGridHTML(a.getFullYear(), q * 3 + i, true);
+      return `<div class="cal-month"><h4>${m.label}</h4>${m.html}</div>`;
+    }).join('') + '</div>';
+  } else if (_cal.view === 'month'){
+    const m = monthGridHTML(a.getFullYear(), a.getMonth(), false);
+    label.textContent = m.label;
+    grid.innerHTML = `<div class="cal-month">${m.html}</div>`;
+  } else if (_cal.view === 'week'){
+    const mon = new Date(a); mon.setDate(a.getDate() - ((a.getDay() + 6) % 7));
+    const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+    label.textContent = `${mon.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} – ${fri.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
+    grid.innerHTML = '<div class="cal-week">' + [0, 1, 2, 3, 4].map(i => {
+      const d = new Date(mon); d.setDate(mon.getDate() + i);
+      const iso = isoOf(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
+      const info = dayInfo(iso);
+      return `<div class="cal-weekday ${iso === _cal.sel ? 'sel' : ''}" onclick="selectCalDay('${iso}')">
+        <h5>${d.toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</h5>
+        <div class="cnt">${info ? `${info.emails} emails &middot; ${info.calls} calls` : 'Free'}</div>
+        ${info ? info.accounts.slice(0, 4).map(n => `<div style="font-size:11.5px; padding:2px 0;">${esc(n)}</div>`).join('') + (info.accounts.length > 4 ? `<div style="font-size:11px; color:var(--text3);">+${info.accounts.length - 4} more</div>` : '') : ''}
+      </div>`;
+    }).join('') + '</div>';
+  } else {
+    const iso = isoOf(new Date(Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())));
+    label.textContent = a.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'});
+    grid.innerHTML = '';
+    selectCalDay(iso);
+    return;
+  }
+  if (_cal.sel) selectCalDay(_cal.sel);
+}
+
+// ── gates: every tab needs accounts (and most need a strategy) ─
+async function refreshGates(){
+  let st, dash;
+  try { st = await (await fetch('/api/status')).json(); } catch(e){ return; }
+  const hasAccounts = st.segment && st.segment.state === 'done';
+  try { dash = await (await fetch('/api/dashboard')).json(); } catch(e){ dash = {has_schedule: false}; }
+  const hasPlan = !!dash.has_schedule;
+
+  const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+  show('dashboardEmpty', !hasAccounts);
+  show('dashboardStrat', hasAccounts && !hasPlan);
+  show('dashboardBody', hasAccounts && hasPlan);
+  show('planEmpty', !hasAccounts);
+  show('planStrat', hasAccounts && !hasPlan);
+  show('planBody', hasAccounts && hasPlan);
+  show('emailEmpty', !hasAccounts);
+  show('emailStub', hasAccounts);
+  show('callEmpty', !hasAccounts);
+  show('callStub', hasAccounts);
+  if (hasAccounts && hasPlan) renderDashboard(dash);
+  // Accounts landed since the last list fetch (import just finished) — refresh.
+  if (hasAccounts && (!_acctData || !_acctData.has_accounts)) fetchAccountsList();
+}
+
+function renderDashboard(d){
+  document.getElementById('dashTodayLabel').textContent = d.today.date_label;
+  document.getElementById('dashTodayEmails').textContent = d.today.emails;
+  document.getElementById('dashTodayCalls').textContent = d.today.calls;
+  document.getElementById('dashTodayAccounts').textContent = d.today.accounts;
+  document.getElementById('dashWeekEmails').textContent = d.week.emails;
+  document.getElementById('dashWeekCalls').textContent = d.week.calls;
+  document.getElementById('dashWeekAccounts').textContent = d.week.accounts;
+  document.getElementById('cadActive').textContent = d.cadences.active;
+  document.getElementById('cadPending').textContent = d.cadences.pending;
+  document.getElementById('cadCompleted').textContent = d.cadences.completed;
+  document.getElementById('dashTodayItems').innerHTML = (d.today.items || []).map(a =>
+    `<div class="act-row"><span class="act-type ${esc(a.type)}">${esc(a.type)}</span><span style="font-weight:500">${esc(a.account)}</span><span style="color:var(--text3)">${esc(a.step)}</span></div>`).join('')
+    || '<div class="note">Nothing scheduled today.</div>';
+  document.getElementById('dashNews').innerHTML = (d.news || []).map(s =>
+    `<div class="news-item"><span class="nd">${esc(s.date)}</span><div class="nb"><span class="na">${esc(s.account)}</span> &middot; ${esc(s.type)} — ${esc(s.summary)}</div></div>`).join('')
+    || '<div class="note">No notable news for this week\\'s accounts.</div>';
+}
+
+async function refreshDashboard(){ refreshGates(); }
+
 // ── app boot ──────────────────────────────────────────────────
 let _pollTimer = null;
 function startApp(){
   document.getElementById('app').style.display = 'block';
-  fetchStatus(); fetchSeller(); fetchLoginStatus(); fetchKpis();
-  if (!_pollTimer) _pollTimer = setInterval(() => { fetchStatus(); fetchLoginStatus(); fetchKpis(); }, 2000);
+  fetchStatus(); fetchSeller(); fetchLoginStatus(); refreshGates(); fetchStrategizeStatus(); fetchAccountsList(); fetchSchedule();
+  if (!_pollTimer) _pollTimer = setInterval(() => {
+    fetchStatus(); fetchLoginStatus(); refreshGates(); fetchStrategizeStatus();
+  }, 2000);
 }
 
-// ── seller identity / territory ─────────────────────────────────
+// ── seller identity ───────────────────────────────────────────
 async function fetchSeller(){
   let d = {};
   try { d = await (await fetch('/api/seller')).json(); } catch(e){ return; }
   const el = document.getElementById('gmaSeller');
   const signed = document.getElementById('signedAs');
-  const territory = document.getElementById('territoryBadge');
+  const profileBtn = document.getElementById('profileBtn');
   if (d.signed_in && d.seller_name && d.covids){
     el.innerHTML = `Signed in as <b>${esc(d.seller_name)}</b> &middot; ${d.covids} coverage ID${d.covids===1?'':'s'}`;
-    const industries = Object.keys(d.industries || {});
-    territory.textContent = industries.length ? `${industries[0]} territory` : `${d.seller_name}'s territory`;
   } else if (d.signed_in && !d.matched){
     el.innerHTML = `Signed in as <b>${esc(d.email||'')}</b> — no matching territory found.`;
   } else {
@@ -464,20 +1092,10 @@ async function fetchSeller(){
       ? `Signed in as <b>${esc(d.email||'')}</b>${d.seller_name ? ' &middot; ' + esc(d.seller_name) : ''}`
       : 'Not signed in.';
   }
-}
-
-// ── KPI hero row ────────────────────────────────────────────────
-function fmtNum(n){ return (n === null || n === undefined) ? '—' : n.toLocaleString(); }
-async function fetchKpis(){
-  let k;
-  try { k = await (await fetch('/api/kpis')).json(); } catch(e){ return; }
-  document.getElementById('kpiAccounts').textContent = fmtNum(k.accounts_analyzed);
-  document.getElementById('kpiTier1').textContent = fmtNum(k.tier1_accounts);
-  document.getElementById('kpiContacts').textContent = fmtNum(k.contacts_staged);
-  document.getElementById('kpiEmails').textContent = fmtNum(k.emails_generated);
-  document.getElementById('kpiTime').textContent = (k.time_saved_hours === null || k.time_saved_hours === undefined)
-    ? '—' : `${k.time_saved_hours} hrs`;
-  document.getElementById('roiEmails').textContent = fmtNum(k.emails_generated);
+  if (profileBtn && d.seller_name){
+    const initials = d.seller_name.trim().split(/\\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+    profileBtn.textContent = initials || '?';
+  }
 }
 
 // ── pipeline steps ──────────────────────────────────────────────
@@ -576,17 +1194,8 @@ async function fetchStatus(){
   const gmaRecords = gmaDone
     ? `${data.segment.rows ?? '—'} accounts &middot; <a class="link" href="/view/segment" target="_blank">View &#8599;</a>` : '';
   updateAction('gma', acts.get_my_accounts, data, gmaRecords);
-
-  const stratDone = (data.step2 && data.step2.state === 'done') || (data.step3 && data.step3.state === 'done');
-  const stratRecords = stratDone
-    ? `${data.step2 && data.step2.rows != null ? data.step2.rows + ' tiered &middot; ' : ''}<a class="link" href="/view/strategy" target="_blank">View &#8599;</a>` : '';
-  updateAction('strategy', acts.outbound_strategy, data, stratRecords);
-
-  const fillDone = acts.fill_contacts && acts.fill_contacts.done;
-  const fillRecords = fillDone
-    ? `<a class="link" href="/view/fill" target="_blank">View &#8599;</a>` : '';
-  updateAction('fill', acts.fill_contacts, data, fillRecords);
-  updateBobby(acts.bobby);
+  // Strategy/Contacts/Bobby AI move into the Email/Call tabs in the next pass —
+  // not wired to the Plan page's Import Accounts card, so nothing to update yet.
 }
 
 function updateBobby(a){
@@ -813,8 +1422,8 @@ STEP1_VIEW_TEMPLATE = """
   .trow{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
   .trow:last-child{ margin-bottom:0; }
   .trow .tl{ width:56px; flex:none; font-size:12.5px; color:var(--text2); }
-  .trow .track{ flex:1; height:8px; background:var(--layer2); border-radius:4px; overflow:hidden; }
-  .trow .fill{ height:100%; border-radius:4px; }
+  .trow .track{ flex:1; height:8px; background:var(--layer2); border-radius:0; overflow:hidden; }
+  .trow .fill{ height:100%; border-radius:0; }
   .trow .fill.t1{ background:var(--blue); } .trow .fill.t2{ background:var(--blue-text); } .trow .fill.t3{ background:var(--text3); }
   .trow .tc{ width:34px; text-align:right; font-family:var(--mono); font-size:12.5px; }
   input#filter{ font-size:13.5px; padding:9px 14px; width:320px; margin-bottom:16px; }

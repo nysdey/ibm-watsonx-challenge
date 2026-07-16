@@ -603,6 +603,7 @@ def api_status():
         "outbound_strategy": dict(_STRATEGY_STATE),
         "fill_contacts": dict(_FILL_STATE),
         "bobby": dict(_BOBBY_STATE),
+        "strategize": dict(_STRATEGIZE_STATE),
     }
     return jsonify(out)
 
@@ -830,13 +831,11 @@ def _seller_tier_rows(rows):
     return out, counts
 
 
-def _timeline_view(path):
-    """Simple week-by-week outreach timeline (today → year end) — deliberately
-    NOT a full calendar grid (per the BobBee redesign spec: easy to read in a
-    demo, no empty-cell clutter). Only days that actually have planned calls
-    appear, each with its account list inline."""
+def _accounts_by_date(path):
+    """{iso_date: [account dicts]} from a Call Plan sheet, each day's list sorted
+    best-first (tier, then sequence). Shared by the full timeline view and the
+    Dashboard's day/week/month action-items endpoint."""
     _, rows = _load_sheet_dicts(path, "Call Plan")
-
     accounts_by_date = {}
     for r in rows:
         iso = r.get("Planned_Call_Date")
@@ -852,6 +851,16 @@ def _timeline_view(path):
         })
     for lst in accounts_by_date.values():
         lst.sort(key=lambda a: (a["tier"], a["seq"]))
+    return accounts_by_date
+
+
+def _timeline_view(path):
+    """Simple week-by-week outreach timeline (today → year end) — deliberately
+    NOT a full calendar grid (per the BobBee redesign spec: easy to read in a
+    demo, no empty-cell clutter). Only days that actually have planned calls
+    appear, each with its account list inline."""
+    accounts_by_date = _accounts_by_date(path)
+    _, rows = _load_sheet_dicts(path, "Call Plan")
 
     meta = {}
     meta_path = path.parent / "plan_meta.json"
@@ -881,6 +890,34 @@ def _timeline_view(path):
         CALENDAR_TEMPLATE, weeks=weeks, meta=meta, total=len(rows),
         path=str(path.relative_to(REPO_ROOT)),
     )
+
+
+@app.route("/api/action_items")
+def api_action_items():
+    """The Dashboard's day/week/month view — accounts due a call, grouped by the
+    selected range, read straight from Call Planning's output. Returns
+    has_plan=False (not an error) when Strategy hasn't run yet; the Dashboard's
+    own empty state handles that, not this endpoint."""
+    range_ = request.args.get("range", "day")
+    if range_ not in ("day", "week", "month"):
+        range_ = "day"
+    path = REPO_ROOT / "Call_Planning" / "output" / "latest.xlsx"
+    if not path.exists():
+        return jsonify({"range": range_, "items": [], "has_plan": False})
+
+    accounts_by_date = _accounts_by_date(path)
+    today = date.today()
+    span = {"day": 0, "week": 6, "month": 29}[range_]
+    end = today + timedelta(days=span)
+
+    items = []
+    d = today
+    while d <= end:
+        for a in accounts_by_date.get(d.isoformat(), []):
+            items.append({**a, "date": d.isoformat(), "date_label": d.strftime("%a, %b %-d")})
+        d += timedelta(days=1)
+
+    return jsonify({"range": range_, "items": items, "has_plan": True})
 
 
 @app.route("/view/fill")
@@ -1482,6 +1519,259 @@ def _run_outbound_strategy():
                   message=f"Stopped: {e}")
 
 
+# ── Account Intelligence (Accounts tab: contacts filter → quarter split → ────
+# cadence/rank/tag) — the new 3-stage "Strategize" action, distinct from the
+# older Outbound Strategy button above. Reuses Account Tiering as the scoring
+# engine for stage 3 rather than re-deriving spend/revenue/signal scoring.
+_STRATEGIZE_STATE = {"active": False, "phase": "idle", "message": "", "error": None,
+                     "done": False, "counts": {}}
+
+# Real decision-maker roles (budget-holder-ish) vs. senior-but-influencer-only
+# roles. An account whose ZoomInfo contacts are ALL influencer-only never
+# actually got the outreach it needs — it stays in "No Contacts", not silently
+# routed to the wrong person.
+_DECISION_MAKER_TITLES = {
+    "VP of Infrastructure", "Director of IT", "Chief Information Officer",
+    "Head of Cloud Platform", "VP Engineering", "Director of Data & Analytics",
+    "Chief Technology Officer", "Director of Information Security", "VP Digital Transformation",
+}
+
+_INSTALL_CATEGORIES = ["Cloud", "Power", "Storage", "NonInfra", "Competitive"]
+
+# The Play Account Tiering already assigned -> the Salesloft cadence it feeds.
+_PLAY_TO_CADENCE = {
+    "Expand & Protect": "Enterprise Expansion Cadence",
+    "Hardware Refresh": "Enterprise Expansion Cadence",
+    "Displace Competitor": "Targeted Outreach Cadence 3",
+    "Land New Logo": "Targeted Outreach Cadence 4",
+    "Win-Back": "Whitespace Nurture Cadence",
+    "Nurture": "Whitespace Nurture Cadence",
+}
+
+_AI_OUTPUT_DIR = REPO_ROOT / "Account_Intelligence" / "output"
+
+# Top-N accounts kept per cadence; the rest are dropped to the leftovers list
+# (they rejoin the untouched pool for future-quarter re-runs).
+_CADENCE_CAP = 8
+
+# How many accounts begin their cadence per weekday when the schedule spreads
+# starts across the quarter.
+_STARTS_PER_DAY = 3
+
+
+def _quarter_bounds(q, year):
+    last_month = q * 3
+    last_day = {3: 31, 6: 30, 9: 30, 12: 31}[last_month]
+    return date(year, last_month - 2, 1), date(year, last_month, last_day)
+
+
+def _next_weekday(d):
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
+def _build_quarter_schedule(cadences, cur_q):
+    """Spread cadence starts across the remaining weekdays of the quarter
+    (interleaved by rank so every cadence's best accounts start first), then lay
+    each account's email/call touches on the cadence's own step days. Returns
+    {"quarter", "q_start", "q_end", "days": {iso: [activity, ...]}}."""
+    today = date.today()
+    _, q_end = _quarter_bounds(cur_q, today.year)
+
+    queue = []  # interleave: every cadence's #1 first, then every #2, ...
+    longest = max((len(m) for m in cadences.values()), default=0)
+    for i in range(longest):
+        for cname, members in cadences.items():
+            if i < len(members):
+                queue.append((cname, members[i]))
+
+    days = {}
+    start_day, started_today = _next_weekday(today), 0
+    for cname, m in queue:
+        if start_day > q_end:
+            break
+        steps = fake_data.salesloft_cadence_steps(cname)
+        for step in steps:
+            if step["type"] not in ("email", "phone"):
+                continue
+            act_day = _next_weekday(start_day + timedelta(days=step["day"] - 1))
+            if act_day > q_end:
+                continue
+            days.setdefault(act_day.isoformat(), []).append({
+                "account": m["account"],
+                "cadence": cname,
+                "type": "email" if step["type"] == "email" else "call",
+                "step": step["name"],
+            })
+        started_today += 1
+        if started_today >= _STARTS_PER_DAY:
+            start_day, started_today = _next_weekday(start_day + timedelta(days=1)), 0
+
+    return {"generated_at": datetime.now().isoformat(), "quarter": cur_q,
+            "q_start": today.isoformat(), "q_end": q_end.isoformat(),
+            "days": dict(sorted(days.items()))}
+
+
+def _has_decision_maker(account_name):
+    """True if ZoomInfo surfaces at least one real IT decision-maker contact
+    at this account (not just influencer-only roles like Enterprise Architect)."""
+    contacts = fake_data.contacts_for_accounts([account_name])
+    return any(c.get("title") in _DECISION_MAKER_TITLES for c in contacts)
+
+
+def _current_quarter(today=None):
+    today = today or date.today()
+    return (today.month - 1) // 3 + 1
+
+
+def _quarter_for(account_name):
+    """Deterministic Q1-4 assignment per account (stable across runs) — stands
+    in for real buyer-signal clustering/commonality analysis."""
+    return fake_data._rng("ai_quarter", account_name).randint(1, 4)
+
+
+def _account_tags(row):
+    """Notable, at-a-glance facts pulled straight from the account's own
+    segmentation/tiering fields — whitespace (no install in a product line yet,
+    i.e. expansion opportunity), Bluemix (existing Cloud footprint), competitive
+    displacement, and spend trajectory."""
+    tags = []
+    for cat in _INSTALL_CATEGORIES:
+        present = str(row.get(f"{cat}_Present", "")).strip().lower() in ("yes", "true", "1")
+        if cat == "Cloud" and present:
+            tags.append("Bluemix footprint")
+        elif not present and cat != "Competitive":
+            tags.append(f"Whitespace: {cat}")
+    if str(row.get("Competitive_Displacement", "")).startswith("Yes"):
+        tags.append("Competitive displacement")
+    if row.get("Spend_Trend") == "Growing":
+        tags.append("Growing spend")
+    elif row.get("Spend_Trend") in ("Declining", "Lapsed"):
+        tags.append("At-risk spend")
+    return tags
+
+
+def _run_strategize():
+    """Accounts tab's 'Strategize' action:
+      1. Contact check (ZoomInfo) — accounts with no IT decision-maker contact
+         are set aside into a 'No Contacts' list, not carried forward.
+      2. Buyer-signal segmentation — the remainder is split across the 4
+         calendar quarters; only the CURRENT quarter proceeds now, the other 3
+         quarters' lists are saved (not discarded) for later.
+      3. Cadence + rank + tag — current-quarter accounts get a Salesloft
+         cadence (from Account Tiering's Play), a rank within that cadence by
+         urgency (Tier_Score, which already weighs IT spend/revenue/signals),
+         and notable-fact tags."""
+    def set_state(**kw):
+        _STRATEGIZE_STATE.update(kw)
+
+    def bump_counts(**kw):
+        _STRATEGIZE_STATE["counts"] = {**_STRATEGIZE_STATE["counts"], **kw}
+
+    seg_path = REPO_ROOT / "Account_Segmentation" / "output" / "latest.xlsx"
+    set_state(active=True, phase="contacts", error=None, done=False, counts={},
+              message="Checking each account's contacts in ZoomInfo…")
+    try:
+        if not seg_path.exists():
+            raise RuntimeError("Import accounts first — there's nothing to strategize yet.")
+
+        # ── Stage 1: contacts ────────────────────────────────────────────
+        _, seg_rows = _load_sheet_dicts(seg_path, "Segmented Accounts")
+        all_names = [r.get("Account Name") for r in seg_rows if r.get("Account Name")]
+        no_contacts, has_contacts = [], []
+        pace = min(0.02, 2.0 / max(len(all_names), 1))
+        for i, name in enumerate(all_names, 1):
+            (has_contacts if _has_decision_maker(name) else no_contacts).append(name)
+            if i % 25 == 0 or i == len(all_names):
+                bump_counts(total=len(all_names), checked=i, no_contacts=len(no_contacts))
+                set_state(message=f"Checked {i}/{len(all_names)} accounts — "
+                                   f"{len(no_contacts)} with no IT decision-maker so far…")
+            time.sleep(pace)
+        _AI_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        (_AI_OUTPUT_DIR / "no_contacts.json").write_text(json.dumps(no_contacts, indent=2))
+        bump_counts(total=len(all_names), no_contacts=len(no_contacts), has_contacts=len(has_contacts))
+        set_state(message=f"{len(no_contacts)} of {len(all_names)} accounts had no IT "
+                           f"decision-maker — set aside into No Contacts.")
+
+        # ── scoring engine (stage 2/3 both lean on Account Tiering) ──────
+        set_state(phase="scoring", message="Scoring accounts — IT spend, revenue, buying signals…")
+        rc, err = _launch_and_wait("step2", [])
+        if err:
+            raise RuntimeError(f"Account Tiering couldn't start: {err}")
+        if rc != 0:
+            raise RuntimeError("Account Tiering finished with an error — see the log.")
+
+        tier_path = REPO_ROOT / "Account_Tiering" / "output" / "latest.xlsx"
+        _, tier_rows = _load_sheet_dicts(tier_path, "Tiered Accounts")
+        tier_by_name = {r.get("Account Name"): r for r in tier_rows if r.get("Account Name")}
+
+        # ── Stage 2: quarter segmentation (has-contacts accounts only) ──
+        set_state(phase="quarters", message="Segmenting by buyer signals into quarters…")
+        cur_q = _current_quarter()
+        by_quarter = {1: [], 2: [], 3: [], 4: []}
+        for name in has_contacts:
+            row = tier_by_name.get(name)
+            if row:
+                by_quarter[_quarter_for(name)].append(row)
+        current_rows = by_quarter[cur_q]
+        other_quarters = {f"Q{q}": [r.get("Account Name") for r in rows]
+                          for q, rows in by_quarter.items() if q != cur_q}
+        (_AI_OUTPUT_DIR / "other_quarters.json").write_text(json.dumps(
+            {"current_quarter": cur_q, "other": other_quarters}, indent=2))
+        bump_counts(current_quarter=len(current_rows),
+                    other_quarters=sum(len(v) for v in other_quarters.values()))
+        set_state(message=f"{len(current_rows)} accounts in Q{cur_q} (current) — "
+                           f"{sum(len(v) for v in other_quarters.values())} saved for later quarters.")
+
+        # ── Stage 3: cadence + rank + tag (top-N per cadence; rest → leftovers) ──
+        set_state(phase="cadences", message="Building cadences, ranking by urgency, tagging accounts…")
+        cadences = {}
+        for row in current_rows:
+            cadence = _PLAY_TO_CADENCE.get(row.get("Primary_Play"), "Targeted Outreach Cadence 3")
+            cadences.setdefault(cadence, []).append({
+                "account": row.get("Account Name"),
+                "industry": row.get("Industry"),
+                "tier": row.get("Tier"),
+                "score": row.get("Tier_Score"),
+                "play": row.get("Primary_Play"),
+                "tags": _account_tags(row),
+            })
+        # Per the account-intelligence spec: accounts that don't make a cadence's
+        # top slots are DROPPED from the strategy into their own list (revisited
+        # when the untouched pool re-runs for a future quarter) — not left as
+        # unreachable rank-20 entries the seller will never get to.
+        leftovers = []
+        for name, members in list(cadences.items()):
+            members.sort(key=lambda m: -(m["score"] or 0))
+            kept, dropped = members[:_CADENCE_CAP], members[_CADENCE_CAP:]
+            for i, m in enumerate(kept, 1):
+                m["rank"] = i
+            cadences[name] = kept
+            leftovers += [m["account"] for m in dropped]
+        (_AI_OUTPUT_DIR / "leftovers.json").write_text(json.dumps(leftovers, indent=2))
+
+        (_AI_OUTPUT_DIR / "latest.json").write_text(json.dumps({
+            "generated_at": datetime.now().isoformat(),
+            "current_quarter": cur_q,
+            "cadences": cadences,
+        }, indent=2))
+        bump_counts(cadences={k: len(v) for k, v in cadences.items()}, leftovers=len(leftovers))
+
+        # ── Stage 4: distribute over the quarter (who to email/call, daily) ──
+        set_state(phase="schedule", message="Distributing cadences across the quarter — who to call and email each day…")
+        schedule = _build_quarter_schedule(cadences, cur_q)
+        (_AI_OUTPUT_DIR / "schedule.json").write_text(json.dumps(schedule, indent=2))
+        n_acts = sum(len(v) for v in schedule["days"].values())
+        bump_counts(scheduled_activities=n_acts)
+
+        set_state(phase="done", done=True, active=False,
+                  message=f"Done — {sum(len(v) for v in cadences.values())} accounts across "
+                          f"{len(cadences)} cadence(s), {n_acts} touches scheduled through the quarter.")
+    except Exception as e:
+        set_state(phase="error", active=False, done=False, error=str(e), message=f"Stopped: {e}")
+
+
 def _run_fill_contacts(cadence):
     """ZoomInfo Contact Readiness → Salesloft, loading contacts into `cadence`."""
     def set_state(**kw):
@@ -1739,6 +2029,262 @@ def api_outbound_strategy_run():
     return jsonify({"ok": True})
 
 
+@app.route("/api/strategize/run", methods=["POST"])
+def api_strategize_run():
+    if _STRATEGIZE_STATE["active"]:
+        return jsonify({"ok": False, "error": "already running"})
+    threading.Thread(target=_run_strategize, daemon=True).start()
+    return jsonify({"ok": True})
+
+
+def _ai_file(name, default):
+    path = _AI_OUTPUT_DIR / name
+    if not path.exists():
+        return default
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return default
+
+
+def _tiering_rows_by_name():
+    tier_path = REPO_ROOT / "Account_Tiering" / "output" / "latest.xlsx"
+    if not tier_path.exists():
+        return {}
+    _, rows = _load_sheet_dicts(tier_path, "Tiered Accounts")
+    return {r.get("Account Name"): r for r in rows if r.get("Account Name")}
+
+
+@app.route("/api/accounts/list")
+def api_accounts_list():
+    """Accounts tab's data source. Before Strategize: the raw segmented list.
+    After: every account with its tags + which list it landed in (a cadence,
+    leftovers, no-contacts, or a future quarter), plus sidebar list counts."""
+    seg_path = REPO_ROOT / "Account_Segmentation" / "output" / "latest.xlsx"
+    if not seg_path.exists():
+        return jsonify({"has_accounts": False})
+
+    cols, rows = _segment_view_rows(seg_path, "Segmented Accounts")
+    ci = {c: i for i, c in enumerate(cols)}
+    base = [{
+        "account": r[ci["Account Name"]] if "Account Name" in ci else None,
+        "industry": r[ci["Industry"]] if "Industry" in ci else None,
+        "install": r[ci["Install_Types"]] if "Install_Types" in ci else None,
+    } for r in rows]
+
+    strategized = _ai_file("latest.json", None)
+    if not strategized:
+        return jsonify({"has_accounts": True, "strategized": False, "accounts": base})
+
+    cadences = strategized.get("cadences", {})
+    no_contacts = set(_ai_file("no_contacts.json", []))
+    leftovers = set(_ai_file("leftovers.json", []))
+    other_q = _ai_file("other_quarters.json", {"other": {}}).get("other", {})
+    future = {a for accts in other_q.values() for a in accts}
+    member_of = {m["account"]: (cname, m) for cname, members in cadences.items() for m in members}
+    tier_by_name = _tiering_rows_by_name()
+
+    accounts = []
+    for b in base:
+        name = b["account"]
+        cname, member = member_of.get(name, (None, None))
+        trow = tier_by_name.get(name)
+        tags = member["tags"] if member else (_account_tags(trow) if trow else [])
+        bucket = ("cadence" if cname else
+                  "no_contacts" if name in no_contacts else
+                  "leftovers" if name in leftovers else
+                  "future" if name in future else "unranked")
+        accounts.append({**b, "tags": tags, "cadence": cname,
+                         "rank": member["rank"] if member else None,
+                         "tier": member["tier"] if member else (trow.get("Tier") if trow else None),
+                         "bucket": bucket})
+
+    return jsonify({
+        "has_accounts": True, "strategized": True,
+        "current_quarter": strategized.get("current_quarter"),
+        "accounts": accounts,
+        "lists": {
+            "cadences": {k: len(v) for k, v in cadences.items()},
+            "leftovers": len(leftovers), "no_contacts": len(no_contacts),
+            "future": len(future), "all": len(accounts),
+        },
+    })
+
+
+@app.route("/api/accounts/detail")
+def api_accounts_detail():
+    """Everything BobBee knows about one account, per source system — IBM Sales
+    Cloud (segmentation), ZoomInfo (enrichment + contacts), Salesloft (cadence,
+    rank, scheduled touches), news signals — plus the AI analysis (urgency,
+    product fit, play, angle). All read from real pipeline output."""
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+
+    trow = _tiering_rows_by_name().get(name) or {}
+    strategized = _ai_file("latest.json", {}) or {}
+    cname, member = None, None
+    for cn, members in strategized.get("cadences", {}).items():
+        for m in members:
+            if m["account"] == name:
+                cname, member = cn, m
+                break
+
+    contacts = fake_data.contacts_for_accounts([name])
+    for c in contacts:
+        c["decision_maker"] = c.get("title") in _DECISION_MAKER_TITLES
+        c.pop("raw", None)
+
+    schedule = _ai_file("schedule.json", {"days": {}})
+    touches = [{"date": d, "type": a["type"], "step": a["step"]}
+               for d, acts in schedule.get("days", {}).items()
+               for a in acts if a["account"] == name]
+
+    signals = []
+    for n in (1, 2, 3):
+        if trow.get(f"Signal_{n}_Summary"):
+            signals.append({"type": trow.get(f"Signal_{n}_Type"),
+                            "date": str(trow.get(f"Signal_{n}_Date") or "")[:10],
+                            "summary": trow.get(f"Signal_{n}_Summary")})
+
+    tags = member["tags"] if member else (_account_tags(trow) if trow else [])
+    whitespace = [t.split(": ")[1] for t in tags if t.startswith("Whitespace")]
+    product_map = {"Cloud": "IBM Cloud", "Power": "IBM Power", "Storage": "IBM Storage",
+                   "NonInfra": "IBM Software"}
+    product = product_map.get(whitespace[0]) if whitespace else "Expand existing footprint"
+    tier, score = trow.get("Tier"), trow.get("Tier_Score")
+    urgency = ("High" if tier == 1 else "Medium" if tier == 2 else "Low") if tier else "Not yet scored"
+
+    return jsonify({
+        "account": name,
+        "sales_cloud": {
+            "industry": trow.get("Industry"),
+            "coverage_id": trow.get("Coverage ID"),
+            "relationship": trow.get("Technology Client Status"),
+            "ibm_spend_current": trow.get("IBM Spend Current Year"),
+            "ibm_spend_prior": trow.get("IBM Spend Prior Year"),
+            "spend_trend": trow.get("Spend_Trend"),
+            "install_summary": trow.get("Install_Summary"),
+        },
+        "zoominfo": {
+            "revenue": _first(trow, "ZI_Revenue_USD", "Location Annual Revenue"),
+            "employees": _first(trow, "ZI_Employee_Count", "Employee Count"),
+            "contacts": contacts,
+        },
+        "salesloft": {"cadence": cname, "rank": member["rank"] if member else None,
+                      "touches": sorted(touches, key=lambda t: t["date"])},
+        "signals": signals,
+        "tags": tags,
+        "ai": {"urgency": urgency, "tier": tier, "score": score,
+               "product_fit": product, "play": trow.get("Primary_Play"),
+               "angle": trow.get("Sales_Angle")},
+    })
+
+
+@app.route("/api/accounts/leftovers")
+def api_accounts_leftovers():
+    return jsonify({"accounts": _ai_file("leftovers.json", [])})
+
+
+@app.route("/api/schedule")
+def api_schedule():
+    """The strategize schedule for the whole quarter, summarized per day —
+    the Plan calendar renders all four view levels from this one payload."""
+    schedule = _ai_file("schedule.json", None)
+    if not schedule:
+        return jsonify({"has_schedule": False})
+    days = {}
+    for iso, acts in schedule.get("days", {}).items():
+        days[iso] = {
+            "emails": sum(1 for a in acts if a["type"] == "email"),
+            "calls": sum(1 for a in acts if a["type"] == "call"),
+            "accounts": sorted({a["account"] for a in acts}),
+            "items": acts,
+        }
+    return jsonify({"has_schedule": True, "quarter": schedule.get("quarter"),
+                    "q_start": schedule.get("q_start"), "q_end": schedule.get("q_end"),
+                    "days": days})
+
+
+@app.route("/api/dashboard")
+def api_dashboard():
+    """Dashboard payload: today's activities, this week's counts, cadence
+    status snapshot, and notable news for the accounts being worked."""
+    schedule = _ai_file("schedule.json", None)
+    if not schedule:
+        return jsonify({"has_schedule": False})
+
+    today = date.today()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    def _span(d0, d1):
+        emails = calls = 0
+        accts = set()
+        for iso, acts in schedule["days"].items():
+            d = datetime.strptime(iso, "%Y-%m-%d").date()
+            if d0 <= d <= d1:
+                for a in acts:
+                    emails += a["type"] == "email"
+                    calls += a["type"] == "call"
+                    accts.add(a["account"])
+        return {"emails": emails, "calls": calls, "accounts": len(accts)}
+
+    today_acts = schedule["days"].get(today.isoformat(), [])
+
+    # Cadence snapshot: pending (first touch still ahead), active (spans today),
+    # completed (last touch behind us).
+    spans = {}
+    for iso, acts in schedule["days"].items():
+        for a in acts:
+            lo, hi = spans.get(a["cadence"], (iso, iso))
+            spans[a["cadence"]] = (min(lo, iso), max(hi, iso))
+    snapshot = {"active": 0, "pending": 0, "completed": 0}
+    t = today.isoformat()
+    for lo, hi in spans.values():
+        snapshot["pending" if lo > t else "completed" if hi < t else "active"] += 1
+
+    # Notable news: most recent signals among accounts scheduled this week.
+    week_accounts = {a["account"] for iso, acts in schedule["days"].items()
+                     for a in acts
+                     if week_start <= datetime.strptime(iso, "%Y-%m-%d").date() <= week_end}
+    tier_by_name = _tiering_rows_by_name()
+    news = []
+    for name in week_accounts:
+        trow = tier_by_name.get(name) or {}
+        for n in (1, 2, 3):
+            if trow.get(f"Signal_{n}_Summary"):
+                news.append({"account": name, "type": trow.get(f"Signal_{n}_Type"),
+                             "date": str(trow.get(f"Signal_{n}_Date") or "")[:10],
+                             "summary": trow.get(f"Signal_{n}_Summary")})
+    news.sort(key=lambda s: s["date"], reverse=True)
+
+    return jsonify({
+        "has_schedule": True,
+        "today": {**_span(today, today),
+                  "items": today_acts, "date_label": today.strftime("%A, %B %-d")},
+        "week": _span(week_start, week_end),
+        "cadences": snapshot,
+        "news": news[:5],
+    })
+
+
+@app.route("/api/accounts/no_contacts")
+def api_accounts_no_contacts():
+    path = _AI_OUTPUT_DIR / "no_contacts.json"
+    if not path.exists():
+        return jsonify({"accounts": []})
+    return jsonify({"accounts": json.loads(path.read_text())})
+
+
+@app.route("/api/accounts/other_quarters")
+def api_accounts_other_quarters():
+    path = _AI_OUTPUT_DIR / "other_quarters.json"
+    if not path.exists():
+        return jsonify({"current_quarter": None, "other": {}})
+    return jsonify(json.loads(path.read_text()))
+
+
 @app.route("/api/fill_contacts/run", methods=["POST"])
 def api_fill_contacts_run():
     if _FILL_STATE["active"]:
@@ -1771,8 +2317,10 @@ def _reset_for_fresh_demo():
     touches generated-artifact folders, never source code or .env/auth
     files (those live outside these three subfolder names entirely)."""
     # STEPS dirs, plus Bobby (not a pipeline step) so its drafts never persist
-    # across restarts as a presaved view.
-    dirs = [REPO_ROOT / step["dir"] for step in STEPS.values()] + [REPO_ROOT / "Bobby_AI_Emailer"]
+    # across restarts as a presaved view, plus Account Intelligence so a stale
+    # strategize (lists/schedule) never outlives the accounts it was built from.
+    dirs = [REPO_ROOT / step["dir"] for step in STEPS.values()] \
+        + [REPO_ROOT / "Bobby_AI_Emailer", REPO_ROOT / "Account_Intelligence"]
     for step_dir in dirs:
         for sub in ("output", "logs", "checkpoints"):
             d = step_dir / sub

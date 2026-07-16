@@ -67,5 +67,6 @@ ZoomInfo_Contact_Readiness/output/*.xlsx
 Salesloft_Cadence_Readiness/output/*.xlsx
 Bobby_AI_Emailer/output/*.xlsx
 Bobby_AI_Emailer/output/*.json
+Account_Intelligence/output/*.json
 Pipeline_Review/output/*.xlsx
 Pipeline_Review/output/*.json

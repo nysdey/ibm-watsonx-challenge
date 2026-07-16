@@ -36,7 +36,9 @@ def _cadence_intent(step_number, day):
 
 
 def generate_email(person, step, cadence_name):
-    """Returns {"subject": str, "body": str, "source": "claude"|"template"}."""
+    """Returns {"subject": str, "body": str, "source": "claude"|"template", "ai_call": {...}}.
+    ai_call is this specific request's telemetry (model/latency/tokens/status) when
+    the live layer was used, else {}."""
     first = (person.get("first_name") or "there").strip()
     title = (person.get("title") or "").strip()
     company = (person.get("company") or "").strip()
@@ -56,14 +58,19 @@ def generate_email(person, step, cadence_name):
             'and a sign-off placeholder "[Your name]"}. Reference their role/company '
             "specifically; tie it to an IBM infrastructure angle."
         )
-        parsed = llm_advisor._extract_json(llm_advisor._complete(_SYSTEM, user, max_tokens=600))
+        text, call_meta = llm_advisor.complete_with_meta(_SYSTEM, user, max_tokens=600)
+        parsed = llm_advisor._extract_json(text)
         if isinstance(parsed, dict) and parsed.get("body"):
             return {
                 "subject": str(parsed.get("subject") or _fallback_subject(company, step_no)).strip(),
                 "body": str(parsed["body"]).strip(),
                 "source": "claude",
+                "ai_call": call_meta,
             }
         logger.info("Claude returned no usable email for %s — using template.", first)
+        result = _template_email(first, title, company, cadence_name, day, step_no)
+        result["ai_call"] = call_meta
+        return result
 
     return _template_email(first, title, company, cadence_name, day, step_no)
 

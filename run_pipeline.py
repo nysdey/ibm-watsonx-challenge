@@ -28,7 +28,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template_string, request
@@ -40,8 +40,8 @@ import seller_accounts
 import shared_auth
 from shared_auth import guard
 from ui_templates import (
-    PAGE_TEMPLATE, VIEW_TEMPLATE, TIER_VIEW_TEMPLATE, CALENDAR_TEMPLATE,
-    STRATEGY_TEMPLATE, BOBBY_PAGE_TEMPLATE,
+    PAGE_TEMPLATE, VIEW_TEMPLATE, STEP1_VIEW_TEMPLATE, TIER_VIEW_TEMPLATE, CALENDAR_TEMPLATE,
+    STRATEGY_TEMPLATE, FILL_VIEW_TEMPLATE, BOBBY_PAGE_TEMPLATE,
 )
 from mock_ui_templates import (
     MOCK_LOGIN_TEMPLATE, MOCK_CONNECTED_TEMPLATE, MOCK_SALESLOFT_TEMPLATE,
@@ -600,6 +600,86 @@ def api_status():
     return jsonify(out)
 
 
+_TIERCOUNT_CACHE = {}  # str(path) -> (mtime, {1: n, 2: n, 3: n})
+
+
+def _tier_counts(path):
+    """{1: n, 2: n, 3: n} from the Tiered Accounts sheet, cached by mtime like
+    _row_count — powers the KPI row's "Tier 1 Accounts" card and Step 1's tier
+    breakdown bars (opportunistically shown there once tiering has run)."""
+    try:
+        key = str(path)
+        mtime = path.stat().st_mtime
+        cached = _TIERCOUNT_CACHE.get(key)
+        if cached and cached[0] == mtime:
+            return cached[1]
+        _, rows = _load_sheet_dicts(path, "Tiered Accounts")
+        counts = {t: sum(1 for r in rows if r.get("Tier") == t) for t in (1, 2, 3)}
+        _TIERCOUNT_CACHE[key] = (mtime, counts)
+        return counts
+    except Exception:
+        return {1: 0, 2: 0, 3: 0}
+
+
+def _fill_contact_count():
+    """How many people currently sit in the mock Salesloft cadence Fill Contacts
+    last loaded — the one live number we have for "contacts staged" since Steps
+    6/7 don't produce a viewable workbook (output=None in STEPS)."""
+    cadence = _FILL_STATE.get("cadence")
+    if not cadence:
+        return 0
+    try:
+        return len(mock_salesloft.cadence_state(cadence).get("members") or [])
+    except Exception:
+        return 0
+
+
+def _bobby_drafted_count():
+    """Emails Bobby has drafted, read from disk (survives a page reload, unlike
+    the in-memory _BOBBY_STATE which resets when the server restarts)."""
+    path = REPO_ROOT / "Bobby_AI_Emailer" / "output" / "latest.json"
+    if not path.exists():
+        return 0
+    try:
+        return json.loads(path.read_text()).get("drafted", 0) or 0
+    except Exception:
+        return 0
+
+
+@app.route("/api/kpis")
+def api_kpis():
+    """The 5 hero KPI cards on the main dashboard — every number here is read
+    from a real pipeline output file or the mock Salesloft store, none of it
+    fabricated for the demo. 'Time saved' is the one heuristic: manual research
+    (~1.5 min/account) + manual personalization (~8 min/contact staged), minus
+    the run itself, per the productivity story in docs/WATSONX_CHALLENGE_PRD.md."""
+    seg_path = REPO_ROOT / "Account_Segmentation" / "output" / "latest.xlsx"
+    tier_path = REPO_ROOT / "Account_Tiering" / "output" / "latest.xlsx"
+
+    accounts = _row_count(seg_path, "Segmented Accounts") if seg_path.exists() else None
+    tier1 = None
+    if tier_path.exists():
+        tier1 = _tier_counts(tier_path).get(1, 0)
+    contacts_staged = _fill_contact_count()
+    emails_generated = _bobby_drafted_count()
+
+    time_saved_hours = None
+    if accounts is not None:
+        # ~30s/account for manual territory research + ~3.5 min/contact for manual
+        # email personalization, minus the run's own ~10-minute working target.
+        manual_minutes = accounts * 0.5 + contacts_staged * 3.5
+        run_minutes = 10
+        time_saved_hours = round(max(manual_minutes - run_minutes, 0) / 60, 1)
+
+    return jsonify({
+        "accounts_analyzed": accounts,
+        "tier1_accounts": tier1,
+        "contacts_staged": contacts_staged or None,
+        "emails_generated": emails_generated or None,
+        "time_saved_hours": time_saved_hours,
+    })
+
+
 @app.route("/api/step2/accounts")
 def api_step2_accounts():
     """For Step 4's manual mode — the full tiered account list to render as a
@@ -743,10 +823,11 @@ def _seller_tier_rows(rows):
     return out, counts
 
 
-def _calendar_view(path):
-    """Month-grid calendar (today → END_OF_YEAR) with each working day's account
-    count, color-coded by top tier; clicking a day lists its accounts."""
-    import calendar as _calmod
+def _timeline_view(path):
+    """Simple week-by-week outreach timeline (today → year end) — deliberately
+    NOT a full calendar grid (per the BobBee redesign spec: easy to read in a
+    demo, no empty-cell clutter). Only days that actually have planned calls
+    appear, each with its account list inline."""
     _, rows = _load_sheet_dicts(path, "Call Plan")
 
     accounts_by_date = {}
@@ -759,8 +840,6 @@ def _calendar_view(path):
             "tier": r.get("Planned_Tier") or r.get("Tier") or 3,
             "score": r.get("Tier_Score"),
             "play": r.get("Primary_Play") or "",
-            "industry": r.get("Industry") or "",
-            "install": r.get("Install_Summary") or "",
             "angle": r.get("Sales_Angle") or "",
             "seq": r.get("Day_Sequence_Number") or 0,
         })
@@ -775,55 +854,42 @@ def _calendar_view(path):
         except Exception:
             meta = {}
 
-    today = date.today()
-    end = date(2026, 12, 31)
-    try:
-        end = datetime.strptime(meta.get("window_end", ""), "%Y-%m-%d").date()
-    except Exception:
-        pass
-    start = today
-
-    # Holiday set (grey out) — reuse Call_Planning's rule-based holidays.
-    holidays = set()
-    try:
-        cp_dir = str(REPO_ROOT / "Call_Planning")
-        if cp_dir not in sys.path:
-            sys.path.insert(0, cp_dir)
-        import us_holidays
-        for yr in range(start.year, end.year + 1):
-            holidays |= us_holidays.federal_holidays(yr)
-    except Exception:
-        pass
-
-    cal = _calmod.Calendar(firstweekday=6)  # Sunday-first, US convention
-    months, y, m = [], start.year, start.month
-    while (y, m) <= (end.year, end.month):
-        weeks = []
-        for week in cal.monthdatescalendar(y, m):
-            cells = []
-            for d in week:
-                if d.month != m:
-                    cells.append({"blank": True})
-                    continue
-                accts = accounts_by_date.get(d.isoformat(), [])
-                cells.append({
-                    "blank": False, "day": d.day, "iso": d.isoformat(),
-                    "in_range": start <= d <= end,
-                    "weekend": d.weekday() >= 5,
-                    "holiday": d in holidays,
-                    "count": len(accts),
-                    "tier": min((a["tier"] for a in accts), default=0),
-                    "today": d == today,
-                })
-            weeks.append(cells)
-        months.append({"label": date(y, m, 1).strftime("%B %Y"), "weeks": weeks})
-        m, y = (1, y + 1) if m == 12 else (m + 1, y)
+    weeks = []
+    if accounts_by_date:
+        planned_dates = sorted(datetime.strptime(d, "%Y-%m-%d").date() for d in accounts_by_date)
+        cur = planned_dates[0] - timedelta(days=planned_dates[0].weekday())
+        last = planned_dates[-1]
+        while cur <= last:
+            days = []
+            for i in range(5):  # Monday–Friday only; calls never land on weekends
+                d = cur + timedelta(days=i)
+                accts = accounts_by_date.get(d.isoformat())
+                if accts:
+                    days.append({"label": d.strftime("%A"), "iso": d.isoformat(), "accounts": accts})
+            if days:
+                weeks.append({"label": f"Week of {cur.strftime('%B %-d')}", "days": days})
+            cur += timedelta(days=7)
 
     return render_template_string(
-        CALENDAR_TEMPLATE, months=months,
-        accounts_json=json.dumps(accounts_by_date),
-        meta=meta, total=len(rows),
+        CALENDAR_TEMPLATE, weeks=weeks, meta=meta, total=len(rows),
         path=str(path.relative_to(REPO_ROOT)),
+    )
+
+
+@app.route("/view/fill")
+def view_fill():
+    """Step 3's own results page — a funnel (accounts -> contacts identified ->
+    Salesloft ready) plus contact cards. Steps 6/7 (ZoomInfo/Salesloft) don't
+    produce a viewable workbook, so this reads the one place their combined
+    result actually lands: the mock Salesloft cadence Fill Contacts loaded."""
+    cadence = _FILL_STATE.get("cadence")
+    if not cadence or not _FILL_STATE.get("done"):
+        return "Fill Contacts hasn't run yet — click Fill Contacts to SalesLoft first.", 404
+    members = mock_salesloft.cadence_state(cadence).get("members") or []
+    accounts = sorted({m.get("company") for m in members if m.get("company")})
+    return render_template_string(
+        FILL_VIEW_TEMPLATE, cadence=cadence, members=members,
+        account_count=len(accounts), contact_count=len(members),
     )
 
 
@@ -848,14 +914,10 @@ def view_results(step_key):
             total=len(seller_rows), path=str(path.relative_to(REPO_ROOT)),
         )
     if step_key == "step3":
-        return _calendar_view(path)
+        return _timeline_view(path)
 
     if step_key == "segment":
-        header, rows = _segment_view_rows(path, step["sheet"])
-        return render_template_string(
-            VIEW_TEMPLATE, title="Get My Accounts — Your Accounts", header=header, rows=rows,
-            row_count=len(rows), path=str(path.relative_to(REPO_ROOT)),
-        )
+        return render_template_string(STEP1_VIEW_TEMPLATE, **_step1_view_data(path, step["sheet"]))
 
     import openpyxl
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
@@ -911,6 +973,64 @@ def _segment_view_rows(path, sheet):
     wb.close()
     _SEGMENT_VIEW_CACHE[key] = (mtime, (cols, out))
     return cols, out
+
+
+def _step1_view_data(seg_path, sheet):
+    """Everything Step 1's view (STEP1_VIEW_TEMPLATE) renders: summary cards,
+    tier breakdown bars, and the curated table. Tier/Spend Trend/Competitor are
+    Account Tiering's fields (Step 2), not Segmentation's — so they're joined in
+    opportunistically by account name when tiering has already run, and shown
+    as "Not yet scored" otherwise rather than fabricated."""
+    cols, rows = _segment_view_rows(seg_path, sheet)
+    ci = {c: i for i, c in enumerate(cols)}
+
+    def _get(row, col):
+        i = ci.get(col)
+        return row[i] if i is not None and i < len(row) else None
+
+    tier_path = REPO_ROOT / "Account_Tiering" / "output" / "latest.xlsx"
+    tiered = tier_path.exists()
+    tier_by_name = {}
+    if tiered:
+        _, tier_rows = _load_sheet_dicts(tier_path, "Tiered Accounts")
+        for r in tier_rows:
+            name = r.get("Account Name")
+            if name:
+                tier_by_name[name] = r
+
+    out_rows, install_matches, competitor_count = [], 0, 0
+    for r in rows:
+        name = _get(r, "Account Name") or ""
+        install_count = _get(r, "Install_Types_Count") or 0
+        try:
+            has_install = float(install_count) > 0
+        except (TypeError, ValueError):
+            has_install = False
+        if has_install:
+            install_matches += 1
+        t = tier_by_name.get(name)
+        competitor = (t.get("Competitive_Displacement") if t else None) or "Not yet scored"
+        if isinstance(competitor, str) and competitor.startswith("Yes"):
+            competitor_count += 1
+        out_rows.append({
+            "account": name,
+            "industry": _get(r, "Industry") or "",
+            "install": _get(r, "Install_Types") or "No IBM installs",
+            "spend_trend": (t.get("Spend_Trend") if t else None) or "Not yet scored",
+            "competitor": competitor,
+            "tier": t.get("Tier") if t else None,
+        })
+
+    tier_counts = _tier_counts(tier_path) if tiered else {1: 0, 2: 0, 3: 0}
+    return {
+        "rows": out_rows,
+        "total": len(out_rows),
+        "install_matches": install_matches,
+        "competitor_count": competitor_count,
+        "tiered": tiered,
+        "tier_counts": tier_counts,
+        "path": str(seg_path.relative_to(REPO_ROOT)),
+    }
 
 
 @app.route("/api/step4/run", methods=["POST"])

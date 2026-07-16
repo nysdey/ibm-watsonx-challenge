@@ -24,12 +24,28 @@ package dependency. Model defaults to Claude Opus 4.8 (override with LLM_MODEL).
 """
 import json
 import os
+import threading
+import time
 import urllib.error
 import urllib.request
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
 DEFAULT_MODEL = os.environ.get("LLM_MODEL", "claude-opus-4-8")
+
+# Telemetry for the last live call this process made — surfaced in the UI's AI
+# activity panel (Bobby, tiering) so the "is this actually calling a model"
+# claim is backed by a real request, not a static label. Thread-safe: Bobby
+# drafts emails from a pool of worker threads.
+_LAST_CALL_LOCK = threading.Lock()
+_LAST_CALL = {}
+
+
+def last_call_info():
+    """A copy of the most recent _complete() call's telemetry (model, latency_ms,
+    tokens, status), or {} if this process hasn't made a live call yet."""
+    with _LAST_CALL_LOCK:
+        return dict(_LAST_CALL)
 
 
 def available():
@@ -45,9 +61,18 @@ def _complete(system, user, max_tokens=2000, model=None, timeout=90):
     problem (missing key, network error, non-200, malformed body) — never
     raises, so it can be dropped into a pipeline step without a try/except at
     every call site."""
+    text, _meta = complete_with_meta(system, user, max_tokens=max_tokens, model=model, timeout=timeout)
+    return text
+
+
+def complete_with_meta(system, user, max_tokens=2000, model=None, timeout=90):
+    """Same call as _complete(), but returns (text, meta) with this specific
+    call's telemetry — race-free under concurrent callers (Bobby drafts emails
+    from a thread pool, so the shared _LAST_CALL global alone isn't enough to
+    attribute latency/tokens to the right person). meta is {} if no key is set."""
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
-        return None
+        return None, {}
     payload = {
         "model": model or DEFAULT_MODEL,
         "max_tokens": max_tokens,
@@ -64,14 +89,36 @@ def _complete(system, user, max_tokens=2000, model=None, timeout=90):
         },
         method="POST",
     )
+    started = time.monotonic()
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         parts = [b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"]
         text = "".join(parts).strip()
-        return text or None
+        usage = data.get("usage") or {}
+        meta = _record_call(payload["model"], started, ok=bool(text),
+                            tokens_in=usage.get("input_tokens"), tokens_out=usage.get("output_tokens"))
+        return (text or None), meta
     except Exception:
-        return None
+        return None, _record_call(payload["model"], started, ok=False)
+
+
+def _record_call(model, started_at, ok, tokens_in=None, tokens_out=None):
+    total_tokens = None
+    if tokens_in is not None and tokens_out is not None:
+        total_tokens = tokens_in + tokens_out
+    meta = {
+        "model": model,
+        "status": "success" if ok else "error",
+        "latency_ms": round((time.monotonic() - started_at) * 1000),
+        "tokens_in": tokens_in,
+        "tokens_out": tokens_out,
+        "tokens_total": total_tokens,
+        "at": time.time(),
+    }
+    with _LAST_CALL_LOCK:
+        _LAST_CALL.update(meta)
+    return meta
 
 
 def _extract_json(text):

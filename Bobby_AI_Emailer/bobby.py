@@ -15,11 +15,16 @@ run_bobby never sends — it only drafts.
 """
 import json
 import logging
+import sys
 from datetime import datetime
+from pathlib import Path
 
 import config
 import emailer
 import salesloft_api
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import llm_advisor  # noqa: E402
 
 logger = logging.getLogger("bobby")
 
@@ -28,6 +33,34 @@ SessionExpired = salesloft_api.SessionExpired
 
 class CadenceNotFound(RuntimeError):
     """The chosen cadence name isn't in this Salesloft account."""
+
+
+def _summarize_ai_calls(ai_calls):
+    """Aggregate this run's per-email AI telemetry into one block the UI's
+    Watsonx Activity panel renders directly. Model id is read from whatever
+    provider is actually configured (llm_advisor.DEFAULT_MODEL) — never
+    hardcoded — so swapping the backend to watsonx.ai/Granite updates this
+    label with no UI change. Empty (not live-called) when no key is set."""
+    if not ai_calls:
+        return {
+            "model": llm_advisor.DEFAULT_MODEL,
+            "request_type": "Email personalization",
+            "status": "not called" if not llm_advisor.available() else "no successful calls",
+            "calls": 0,
+        }
+    ok = [c for c in ai_calls if c.get("status") == "success"]
+    latencies = [c["latency_ms"] for c in ai_calls if c.get("latency_ms") is not None]
+    tokens = [c["tokens_total"] for c in ai_calls if c.get("tokens_total") is not None]
+    return {
+        "model": ai_calls[-1].get("model") or llm_advisor.DEFAULT_MODEL,
+        "request_type": "Email personalization",
+        "status": "success" if len(ok) == len(ai_calls) else ("partial" if ok else "error"),
+        "calls": len(ai_calls),
+        "successful_calls": len(ok),
+        "avg_latency_ms": round(sum(latencies) / len(latencies)) if latencies else None,
+        "last_latency_ms": ai_calls[-1].get("latency_ms"),
+        "total_tokens": sum(tokens) if tokens else None,
+    }
 
 
 def _company_of(person):
@@ -121,12 +154,15 @@ def run_bobby(cadence_name, on_progress=None):
             "body": email["body"],
             "written_by": "Claude" if email["source"] == "claude" else "Template",
             "sent": False,
-        }
+        }, email.get("ai_call") or {}
 
     by_step_people = {step["id"]: [] for step in email_steps}
+    ai_calls = []
     with ThreadPoolExecutor(max_workers=8) as pool:
-        for sid, person_row in pool.map(lambda t: _one(*t), tasks):
+        for sid, person_row, ai_call in pool.map(lambda t: _one(*t), tasks):
             by_step_people[sid].append(person_row)
+            if ai_call:
+                ai_calls.append(ai_call)
 
     steps_out = [{
         "step_id": step["id"],
@@ -146,6 +182,7 @@ def run_bobby(cadence_name, on_progress=None):
         "people_count": total_people,
         "drafted": written,
         "claude_written": sum(1 for s in steps_out for p in s["people"] if p["written_by"] == "Claude"),
+        "ai_activity": _summarize_ai_calls(ai_calls),
         "steps": steps_out,
     }
     _write_output(out)

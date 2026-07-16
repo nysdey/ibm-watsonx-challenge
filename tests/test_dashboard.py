@@ -75,7 +75,7 @@ def test_routes():
     import run_pipeline as rp
     c = rp.app.test_client()
     idx = c.get("/").get_data(as_text=True)
-    ok('data-page="outbound"' in idx, "outbound tab present")
+    ok('id="page-outbound"' in idx, "outbound page present")
     ok('data-page="meetings"' not in idx and 'data-page="pipeline"' not in idx, "no meetings/pipeline tabs")
     ok("{{ meeting_api }}" not in idx, "no unrendered placeholder")
     # removed routes 404

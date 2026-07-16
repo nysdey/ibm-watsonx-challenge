@@ -4,6 +4,7 @@ __pycache__/
 *.pyc
 .venv/
 .claude/
+node_modules/
 
 # per-step state that must never be committed
 **/checkpoints/

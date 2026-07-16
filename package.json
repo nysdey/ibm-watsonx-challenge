@@ -1,0 +1,15 @@
+{
+  "name": "bobbee",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BobBee — AI-powered outbound planning and personalization for IBM sellers (Flask/Python backend, launched via npm).",
+  "scripts": {
+    "setup": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt",
+    "start": "test -x .venv/bin/python3 || npm run setup && .venv/bin/python3 run_pipeline.py",
+    "dev": "npm run start",
+    "test": ".venv/bin/python3 -m pytest tests/ -q"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

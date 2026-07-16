@@ -1,9 +1,13 @@
-# WatsonX Clone — self-contained demo of the Seller Dashboard
+# BobBee — self-contained demo of the Seller Dashboard
 
-A **fully mocked, offline clone** of the Seller Dashboard. It looks and behaves like
-the real app — the same IBM sign-in, the same three Outbound buttons, the same
-results screens and Bobby the AI Emailer — but **every external connection is faked**,
-so it runs on any machine with no logins, no VPN, and no internet.
+A **fully mocked, offline clone** of the Seller Dashboard, rebranded and redesigned
+as **BobBee**: a four-step AI-powered outbound workflow (Accounts → Strategy →
+Contacts → Bobby AI). It looks and behaves like the real app — the same IBM sign-in,
+the same three Outbound actions, the same results screens and Bobby the AI Emailer —
+but **every external connection is faked**, so it runs on any machine with no logins,
+no VPN, and no internet.
+
+Run it with `npm start` (see [Quick start](#quick-start)).
 
 What's different from the original (by design):
 

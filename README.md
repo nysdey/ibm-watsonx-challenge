@@ -36,7 +36,7 @@ Equivalent manual steps, run from this repo's root:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt   # just Flask + openpyxl
+.venv/bin/pip install -r requirements.txt   # Flask + openpyxl + python-dotenv
 .venv/bin/python3 run_pipeline.py
 ```
 
@@ -54,9 +54,29 @@ deterministic templates when they aren't, so the app runs fine either way.
 2. Fill in `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, and `WATSONX_URL` (your
    project's region endpoint) — see the comments in `.env.example` for where to find
    each in the watsonx.ai console. `WATSONX_MODEL_ID` defaults to
-   `ibm/granite-3-8b-instruct`.
-3. Restart the app. Logs will say `LLM advisor: querying watsonx.ai (...)` instead of
-   falling back to deterministic text.
+   `ibm/granite-4-h-small`.
+3. Restart the app — `run_pipeline.py` loads `.env` itself (via `python-dotenv`) at
+   startup, so no manual `export` is needed. Every pipeline step runs as its own
+   subprocess and inherits this environment, so one `.env` at the repo root covers
+   Bobby, Account Tiering, and Call Planning.
+4. Check it actually worked: run **Bobby**, then look at its **Watsonx Activity**
+   panel — `status: success` with a real `latency`/`tokens` means the live call
+   went through; `status: error` means credentials are set but the call itself is
+   failing (see troubleshooting below); `status: not called` means credentials
+   aren't set at all.
+
+**Troubleshooting a failed call** (`status: error` in the Watsonx Activity panel) —
+these are the two errors this project actually hit setting it up:
+
+- `container_not_found: Failed to find project_id ...` — either the project ID is
+  wrong, or `WATSONX_URL`'s region doesn't match where the project actually lives
+  (`us-south`, `eu-de`, `eu-gb`, `jp-tok`). Re-copy the Project ID from **watsonx.ai
+  console → Project → Manage → General**, and match the region in the URL bar.
+- `no_associated_service_instance_error: project_id ... is not associated with a WML
+  instance` — the project exists and the ID is right, but it has no **Watson Machine
+  Learning** service instance associated with it (that's the actual compute that runs
+  inference). Fix in the console: **Project → Manage → Services & integrations** →
+  associate (or create) a Watson Machine Learning instance.
 
 ## What you see
 

@@ -20,20 +20,32 @@ requirement:
      deterministic text and the pipeline runs exactly as before.
 
 Uses the stdlib urllib against the IBM watsonx.ai REST API (IAM token exchange
-+ POST /ml/v1/text/chat), so there is no new package dependency. Model defaults
-to an IBM Granite instruct model (override with WATSONX_MODEL_ID).
++ POST /ml/v1/text/chat). Model defaults to an IBM Granite instruct model
+(override with WATSONX_MODEL_ID).
+
+Loads the repo-root .env itself (via python-dotenv) so WATSONX_* credentials
+are picked up whether this module is imported by run_pipeline.py (the web app)
+or run standalone (e.g. `python3 Account_Tiering/run.py` from a terminal,
+which has no parent process to load .env for it). Never overrides a variable
+already set in the real environment.
 """
 import json
 import os
+import random
 import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 IAM_TOKEN_URL = "https://iam.cloud.ibm.com/identity/token"
 WATSONX_API_VERSION = os.environ.get("WATSONX_API_VERSION", "2024-05-31")
-DEFAULT_MODEL = os.environ.get("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
+DEFAULT_MODEL = os.environ.get("WATSONX_MODEL_ID", "ibm/granite-4-h-small")
 
 # Telemetry for the last live call this process made — surfaced in the UI's AI
 # activity panel (Bobby, tiering) so the "is this actually calling a model"
@@ -155,31 +167,68 @@ def complete_with_meta(system, user, max_tokens=2000, model=None, timeout=90):
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
-    try:
+    # Bobby drafts emails from an 8-way thread pool, all hitting watsonx.ai at
+    # once — on a Lite-plan project that reliably trips rate limiting, so most
+    # of a burst would silently fall back to the template without a retry.
+    # Retry transient failures (429 rate limit, 5xx, network hiccups) with
+    # backoff + jitter (jitter matters: 8 threads retrying in lockstep would
+    # just re-trigger the same rate limit together).
+    data = None
+    for attempt in range(_MAX_ATTEMPTS):
         try:
             data = _call(token)
+            break
         except urllib.error.HTTPError as e:
             if e.code == 401:
-                # Token may have just expired — force one refresh and retry once.
+                # Token may have just expired — refresh and retry immediately.
                 token = _get_iam_token(api_key, force=True)
-                if not token:
-                    raise
-                data = _call(token)
-            else:
-                raise
-        choices = data.get("choices") or []
-        text = ""
-        if choices:
-            text = (choices[0].get("message") or {}).get("content", "") or ""
-        text = text.strip()
-        usage = data.get("usage") or {}
-        meta = _record_call(
-            model_id, started, ok=bool(text),
-            tokens_in=usage.get("prompt_tokens"), tokens_out=usage.get("completion_tokens"),
-        )
-        return (text or None), meta
-    except Exception:
+                if token:
+                    continue
+                break
+            if e.code in _RETRYABLE_STATUS and attempt < _MAX_ATTEMPTS - 1:
+                time.sleep(_retry_delay(e, attempt))
+                continue
+            break
+        except Exception:
+            if attempt < _MAX_ATTEMPTS - 1:
+                time.sleep(_retry_delay(None, attempt))
+                continue
+            break
+
+    if data is None:
         return None, _record_call(model_id, started, ok=False)
+
+    choices = data.get("choices") or []
+    text = ""
+    if choices:
+        text = (choices[0].get("message") or {}).get("content", "") or ""
+    text = text.strip()
+    usage = data.get("usage") or {}
+    meta = _record_call(
+        model_id, started, ok=bool(text),
+        tokens_in=usage.get("prompt_tokens"), tokens_out=usage.get("completion_tokens"),
+    )
+    return (text or None), meta
+
+
+_MAX_ATTEMPTS = 4  # 1 initial try + 3 retries
+_RETRYABLE_STATUS = {408, 409, 429, 500, 502, 503, 504}
+
+
+def _retry_delay(http_error, attempt):
+    """Seconds to wait before the next retry attempt (0-indexed). Honors the
+    server's Retry-After header on a 429 if present; otherwise exponential
+    backoff (0.5s, 1s, 2s, ...) with jitter so parallel callers don't all
+    retry in lockstep and re-trigger the same rate limit together."""
+    if http_error is not None and http_error.headers:
+        retry_after = http_error.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return min(float(retry_after), 10.0)
+            except ValueError:
+                pass
+    base = 0.5 * (2 ** attempt)
+    return base + random.uniform(0, base * 0.5)
 
 
 def _record_call(model, started_at, ok, tokens_in=None, tokens_out=None):

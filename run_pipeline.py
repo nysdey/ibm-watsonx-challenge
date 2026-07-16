@@ -31,7 +31,14 @@ import urllib.request
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template_string, request
+
+# Load the repo-root .env before anything below reads os.environ (TEST_MODE,
+# WATSONX_*, ZOOMINFO_*, SALESLOFT_*, PIPELINE_*, ...). Every pipeline step
+# runs as a subprocess of this process (see _launch()) and inherits its
+# environment, so loading it once here is enough for the whole app.
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 import credential_store
 import fake_data

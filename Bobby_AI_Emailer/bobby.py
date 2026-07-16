@@ -7,7 +7,8 @@ Flow for a chosen Salesloft cadence:
   4. For each email step, read every person currently sitting on it (name, title,
      company) — this mirrors the per-step people counts in Salesloft's cadence view.
   5. Write a personalized email for every one of those people, keyed to their cadence
-     day + title + company (Claude if a key is set, else a deterministic template).
+     day + title + company (watsonx.ai if credentials are set, else a deterministic
+     template).
   6. Save the result grouped by email step to output/latest.json (rendered at /bobby).
 
 `send_all` (a separate, explicit action) then sends the drafts one-by-one in Salesloft.
@@ -152,7 +153,7 @@ def run_bobby(cadence_name, on_progress=None):
             "email": pdata["email"],
             "subject": email["subject"],
             "body": email["body"],
-            "written_by": "Claude" if email["source"] == "claude" else "Template",
+            "written_by": "watsonx" if email["source"] == "watsonx" else "Template",
             "sent": False,
         }, email.get("ai_call") or {}
 
@@ -181,7 +182,7 @@ def run_bobby(cadence_name, on_progress=None):
         "email_step_count": len(email_steps),
         "people_count": total_people,
         "drafted": written,
-        "claude_written": sum(1 for s in steps_out for p in s["people"] if p["written_by"] == "Claude"),
+        "watsonx_written": sum(1 for s in steps_out for p in s["people"] if p["written_by"] == "watsonx"),
         "ai_activity": _summarize_ai_calls(ai_calls),
         "steps": steps_out,
     }

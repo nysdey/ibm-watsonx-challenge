@@ -1,4 +1,4 @@
-"""Storage Install sub-scraper — MOCKED for the WatsonX Clone.
+"""Storage Install sub-scraper — MOCKED for the BobBee.
 
 The real module drove the CID Dashboard (cid.ibm.com) to download four storage-family
 CSVs and unioned them. Here it synthesizes the same shape (a ``Storage Category`` tag

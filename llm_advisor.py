@@ -1,4 +1,4 @@
-"""Optional live-Claude enrichment shared by Account Tiering (Step 4) and Call
+"""Optional live-watsonx enrichment shared by Account Tiering (Step 4) and Call
 Planning (Step 5).
 
 Two-layer design, per the pipeline's "involve an LLM in the planning logic"
@@ -10,28 +10,30 @@ requirement:
      required. This is what runs in the demo, and what decides tier numbers and
      calendar dates.
 
-  2. This module adds a live Claude layer ON TOP that turns the numeric result
-     into seller-facing judgment: for each account a Primary Play + a one-line
-     Sales Angle, and for the call plan a short strategy note. It only ENRICHES
-     the human-readable narrative — it never changes a tier number or a planned
-     date, so results stay reproducible. It is fully fail-soft: if
-     ANTHROPIC_API_KEY isn't set, the network is unavailable, or the API errors,
-     callers keep their deterministic text and the pipeline runs exactly as
-     before.
+  2. This module adds a live watsonx.ai layer ON TOP that turns the numeric
+     result into seller-facing judgment: for each account a Primary Play + a
+     one-line Sales Angle, and for the call plan a short strategy note. It only
+     ENRICHES the human-readable narrative — it never changes a tier number or
+     a planned date, so results stay reproducible. It is fully fail-soft: if
+     WATSONX_API_KEY / WATSONX_PROJECT_ID / WATSONX_URL aren't all set, the
+     network is unavailable, or the API errors, callers keep their
+     deterministic text and the pipeline runs exactly as before.
 
-Uses the stdlib urllib against the Anthropic Messages API, so there is no new
-package dependency. Model defaults to Claude Opus 4.8 (override with LLM_MODEL).
+Uses the stdlib urllib against the IBM watsonx.ai REST API (IAM token exchange
++ POST /ml/v1/text/chat), so there is no new package dependency. Model defaults
+to an IBM Granite instruct model (override with WATSONX_MODEL_ID).
 """
 import json
 import os
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
-ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-ANTHROPIC_VERSION = "2023-06-01"
-DEFAULT_MODEL = os.environ.get("LLM_MODEL", "claude-opus-4-8")
+IAM_TOKEN_URL = "https://iam.cloud.ibm.com/identity/token"
+WATSONX_API_VERSION = os.environ.get("WATSONX_API_VERSION", "2024-05-31")
+DEFAULT_MODEL = os.environ.get("WATSONX_MODEL_ID", "ibm/granite-3-8b-instruct")
 
 # Telemetry for the last live call this process made — surfaced in the UI's AI
 # activity panel (Bobby, tiering) so the "is this actually calling a model"
@@ -39,6 +41,12 @@ DEFAULT_MODEL = os.environ.get("LLM_MODEL", "claude-opus-4-8")
 # drafts emails from a pool of worker threads.
 _LAST_CALL_LOCK = threading.Lock()
 _LAST_CALL = {}
+
+# Cached IAM bearer token — valid up to 60 minutes; refreshed a little early
+# (55 min) to avoid racing expiry mid-request. Shared across the thread pool
+# Bobby drafts emails from, guarded by the same lock.
+_TOKEN_LOCK = threading.Lock()
+_TOKEN_CACHE = {"access_token": None, "expires_at": 0.0}
 
 
 def last_call_info():
@@ -49,18 +57,57 @@ def last_call_info():
 
 
 def available():
-    """True when a live Claude call can be attempted (an API key is present).
-    Callers use this only to log which path they took — every function here is
-    already safe to call unconditionally and returns an empty result if the key
-    is missing."""
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+    """True when a live watsonx.ai call can be attempted (API key, project id,
+    and region URL are all present). Callers use this only to log which path
+    they took — every function here is already safe to call unconditionally
+    and returns an empty result if credentials are missing."""
+    return bool(
+        os.environ.get("WATSONX_API_KEY")
+        and os.environ.get("WATSONX_PROJECT_ID")
+        and os.environ.get("WATSONX_URL")
+    )
+
+
+def _get_iam_token(api_key, force=False):
+    """Exchange (or reuse a cached) IBM Cloud API key for an IAM bearer token.
+    Returns the token string, or None on any failure — never raises."""
+    with _TOKEN_LOCK:
+        now = time.monotonic()
+        if not force and _TOKEN_CACHE["access_token"] and now < _TOKEN_CACHE["expires_at"]:
+            return _TOKEN_CACHE["access_token"]
+        data = urllib.parse.urlencode({
+            "grant_type": "urn:ibm:params:oauth:grant-type:apikey",
+            "apikey": api_key,
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            IAM_TOKEN_URL,
+            data=data,
+            headers={
+                "content-type": "application/x-www-form-urlencoded",
+                "accept": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            return None
+        token = body.get("access_token")
+        if not token:
+            return None
+        # expires_in is ~3600s; refresh 5 minutes early to be safe.
+        expires_in = body.get("expires_in", 3600)
+        _TOKEN_CACHE["access_token"] = token
+        _TOKEN_CACHE["expires_at"] = now + max(60, expires_in - 300)
+        return token
 
 
 def _complete(system, user, max_tokens=2000, model=None, timeout=90):
-    """Single Messages API call. Returns the assistant text, or None on ANY
-    problem (missing key, network error, non-200, malformed body) — never
-    raises, so it can be dropped into a pipeline step without a try/except at
-    every call site."""
+    """Single watsonx.ai chat completion. Returns the assistant text, or None on
+    ANY problem (missing credentials, network error, non-200, malformed body)
+    — never raises, so it can be dropped into a pipeline step without a
+    try/except at every call site."""
     text, _meta = complete_with_meta(system, user, max_tokens=max_tokens, model=model, timeout=timeout)
     return text
 
@@ -69,38 +116,70 @@ def complete_with_meta(system, user, max_tokens=2000, model=None, timeout=90):
     """Same call as _complete(), but returns (text, meta) with this specific
     call's telemetry — race-free under concurrent callers (Bobby drafts emails
     from a thread pool, so the shared _LAST_CALL global alone isn't enough to
-    attribute latency/tokens to the right person). meta is {} if no key is set."""
-    key = os.environ.get("ANTHROPIC_API_KEY")
-    if not key:
+    attribute latency/tokens to the right person). meta is {} if credentials
+    aren't set."""
+    api_key = os.environ.get("WATSONX_API_KEY")
+    project_id = os.environ.get("WATSONX_PROJECT_ID")
+    base_url = os.environ.get("WATSONX_URL")
+    if not (api_key and project_id and base_url):
         return None, {}
+
+    model_id = model or DEFAULT_MODEL
     payload = {
-        "model": model or DEFAULT_MODEL,
+        "model_id": model_id,
+        "project_id": project_id,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
         "max_tokens": max_tokens,
-        "system": system,
-        "messages": [{"role": "user", "content": user}],
     }
-    req = urllib.request.Request(
-        ANTHROPIC_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "content-type": "application/json",
-            "x-api-key": key,
-            "anthropic-version": ANTHROPIC_VERSION,
-        },
-        method="POST",
-    )
+    url = base_url.rstrip("/") + f"/ml/v1/text/chat?version={WATSONX_API_VERSION}"
+
     started = time.monotonic()
-    try:
+    token = _get_iam_token(api_key)
+    if not token:
+        return None, _record_call(model_id, started, ok=False)
+
+    def _call(bearer):
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "content-type": "application/json",
+                "accept": "application/json",
+                "authorization": f"Bearer {bearer}",
+            },
+            method="POST",
+        )
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        parts = [b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"]
-        text = "".join(parts).strip()
+            return json.loads(resp.read().decode("utf-8"))
+
+    try:
+        try:
+            data = _call(token)
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                # Token may have just expired — force one refresh and retry once.
+                token = _get_iam_token(api_key, force=True)
+                if not token:
+                    raise
+                data = _call(token)
+            else:
+                raise
+        choices = data.get("choices") or []
+        text = ""
+        if choices:
+            text = (choices[0].get("message") or {}).get("content", "") or ""
+        text = text.strip()
         usage = data.get("usage") or {}
-        meta = _record_call(payload["model"], started, ok=bool(text),
-                            tokens_in=usage.get("input_tokens"), tokens_out=usage.get("output_tokens"))
+        meta = _record_call(
+            model_id, started, ok=bool(text),
+            tokens_in=usage.get("prompt_tokens"), tokens_out=usage.get("completion_tokens"),
+        )
         return (text or None), meta
     except Exception:
-        return None, _record_call(payload["model"], started, ok=False)
+        return None, _record_call(model_id, started, ok=False)
 
 
 def _record_call(model, started_at, ok, tokens_in=None, tokens_out=None):

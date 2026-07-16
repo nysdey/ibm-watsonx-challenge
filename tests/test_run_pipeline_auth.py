@@ -80,7 +80,7 @@ def test_index_still_renders(client):
     assert r.status_code == 200
 
 
-# ── Mocked auth (WatsonX Clone) ───────────────────────────────────────────────
+# ── Mocked auth (BobBee) ───────────────────────────────────────────────
 # In the clone every service is mocked, so the JIT session gate is a no-op: it always
 # reports ready (there is no real session to be missing or to expire), and the
 # per-service probe always returns "valid". A demo never dead-ends on a login.

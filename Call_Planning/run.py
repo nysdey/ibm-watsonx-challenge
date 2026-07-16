@@ -19,7 +19,7 @@ import config
 import schema_io
 import us_holidays
 
-# Shared live-Claude enrichment lives at the repo root — put it on the path.
+# Shared live-watsonx enrichment lives at the repo root — put it on the path.
 sys.path.insert(0, str(config.STEP_DIR.parent))
 import llm_advisor  # noqa: E402
 
@@ -35,17 +35,18 @@ def _setup_logging():
 
 
 def _plan_summary(stats, logger):
-    """One-line coaching note atop the calendar. Live Claude when a key is set,
-    else a deterministic sentence — never blank, never raises."""
+    """One-line coaching note atop the calendar. Live watsonx.ai when credentials
+    are set, else a deterministic sentence — never blank, never raises."""
     if llm_advisor.available():
-        logger.info("LLM advisor: asking Claude (%s) for the plan coaching note...",
+        logger.info("LLM advisor: asking watsonx.ai (%s) for the plan coaching note...",
                     llm_advisor.DEFAULT_MODEL)
         note = llm_advisor.advise_plan_summary(stats)
         if note:
             return note
         logger.info("LLM advisor: no note returned — using deterministic summary.")
     else:
-        logger.info("LLM advisor: no ANTHROPIC_API_KEY — using deterministic plan summary.")
+        logger.info("LLM advisor: no WATSONX_API_KEY/WATSONX_PROJECT_ID/WATSONX_URL — "
+                    "using deterministic plan summary.")
     t1 = stats["tier_counts"].get("1", stats["tier_counts"].get(1, 0))
     return (f"{stats['total_accounts']} accounts scheduled across {stats['working_days']} "
             f"working days to year-end at up to {stats['per_day']}/day. The {t1} Tier-1 "

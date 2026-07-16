@@ -1,17 +1,18 @@
 """Bobby's email writer.
 
 Given a prospect (first name, title, company) and the cadence email step they're on
-(which day / step number), produce a personalized {subject, body}. Uses Claude when
-ANTHROPIC_API_KEY is set (via the repo-root llm_advisor's Anthropic client), and
-otherwise falls back to a deterministic, still-personalized template — so Bobby always
-produces real, per-person emails whether or not a key is configured.
+(which day / step number), produce a personalized {subject, body}. Uses watsonx.ai
+(Granite) when WATSONX_API_KEY/WATSONX_PROJECT_ID/WATSONX_URL are set (via the
+repo-root llm_advisor's watsonx.ai client), and otherwise falls back to a
+deterministic, still-personalized template — so Bobby always produces real,
+per-person emails whether or not credentials are configured.
 """
 import json
 import logging
 import sys
 from pathlib import Path
 
-# Reuse the shared Anthropic client (stdlib urllib, fail-soft) from the repo root.
+# Reuse the shared watsonx.ai client (stdlib urllib, fail-soft) from the repo root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import llm_advisor  # noqa: E402
 
@@ -36,7 +37,7 @@ def _cadence_intent(step_number, day):
 
 
 def generate_email(person, step, cadence_name):
-    """Returns {"subject": str, "body": str, "source": "claude"|"template", "ai_call": {...}}.
+    """Returns {"subject": str, "body": str, "source": "watsonx"|"template", "ai_call": {...}}.
     ai_call is this specific request's telemetry (model/latency/tokens/status) when
     the live layer was used, else {}."""
     first = (person.get("first_name") or "there").strip()
@@ -64,10 +65,10 @@ def generate_email(person, step, cadence_name):
             return {
                 "subject": str(parsed.get("subject") or _fallback_subject(company, step_no)).strip(),
                 "body": str(parsed["body"]).strip(),
-                "source": "claude",
+                "source": "watsonx",
                 "ai_call": call_meta,
             }
-        logger.info("Claude returned no usable email for %s — using template.", first)
+        logger.info("watsonx.ai returned no usable email for %s — using template.", first)
         result = _template_email(first, title, company, cadence_name, day, step_no)
         result["ai_call"] = call_meta
         return result

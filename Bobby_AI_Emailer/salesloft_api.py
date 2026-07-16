@@ -1,4 +1,4 @@
-"""Salesloft REST client for Bobby — MOCKED for the WatsonX Clone.
+"""Salesloft REST client for Bobby — MOCKED for the BobBee.
 
 The real client opened the saved Salesloft browser session headless, lifted the app's
 bearer JWT, and called ``api.salesloft.com/v2`` read-only. Here the cadences, steps, and

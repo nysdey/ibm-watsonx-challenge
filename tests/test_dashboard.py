@@ -1,4 +1,4 @@
-"""Per-function tests for the WatsonX Clone dashboard code (run with the clone .venv).
+"""Per-function tests for the BobBee dashboard code (run with the clone .venv).
 
     .venv/bin/python3 tests/test_dashboard.py
 

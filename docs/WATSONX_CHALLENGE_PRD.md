@@ -217,9 +217,15 @@ actual watsonx call happen — all inside 180 seconds. Suggested shot list:
 
 ## 8. Deliverables checklist
 
-- [ ] watsonx.ai swap complete (`WATSONX_*` env vars, Granite model live in
-      Bobby + tiering + call-plan enrichment), verified end-to-end.
-- [ ] README/UI copy scrubbed of "Claude"/"Anthropic" references.
+- [x] watsonx.ai swap complete (`WATSONX_*` env vars, Granite model live in
+      Bobby + tiering + call-plan enrichment) — code done in `llm_advisor.py`
+      (IAM token exchange + `/ml/v1/text/chat`); **not yet verified against a
+      real watsonx.ai project** — run the pipeline once with real
+      `WATSONX_API_KEY`/`WATSONX_PROJECT_ID`/`WATSONX_URL` set to confirm.
+- [x] README/UI copy scrubbed of "Claude"/"Anthropic" references (root app —
+      `docs/ARCHITECTURE.md`/`OPERATIONS.md`/`SECURITY.md` still reference
+      Claude for the unrelated, already-removed Meetings-tab live-transcribe
+      bot; out of scope here).
 - [ ] Full pipeline run rehearsed at least 3x for demo reliability.
 - [ ] 3:00 demo video recorded, edited, captioned.
 - [ ] 599-word problem statement (draft in §1).

@@ -1,4 +1,4 @@
-"""Advance everyone at cadence step 1 into the call step — MOCKED for the WatsonX Clone.
+"""Advance everyone at cadence step 1 into the call step — MOCKED for the BobBee.
 
 The real module drove the Salesloft web UI to bulk-move step-1 members. Here it acts on
 the clone's mock Salesloft store (the same one Fill Contacts loaded contacts into), so

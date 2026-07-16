@@ -29,7 +29,12 @@ original, running on the fake/mock data.
 ## Quick start
 
 ```bash
-cd "…/WatsonX Clone"
+npm start   # first run: creates .venv, installs Flask + openpyxl, launches the app
+```
+
+Equivalent manual steps, run from this repo's root:
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt   # just Flask + openpyxl
 .venv/bin/python3 run_pipeline.py
@@ -38,6 +43,20 @@ python3 -m venv .venv
 Opens the dashboard at `http://127.0.0.1:5488` (auto-opens a browser tab). On the
 **IBM Login gate**, sign in with *any* email (e.g. `demo.seller@ibm.com`) and any
 password — the email picks your (demo) territory; nothing is sent anywhere.
+
+### Configuring live AI (watsonx.ai)
+
+Bobby's email drafts, the tiering Play/Angle, and the call-plan coaching note are all
+enriched by a live watsonx.ai call when credentials are present — and fall back to
+deterministic templates when they aren't, so the app runs fine either way.
+
+1. `cp .env.example .env` at the repo root.
+2. Fill in `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, and `WATSONX_URL` (your
+   project's region endpoint) — see the comments in `.env.example` for where to find
+   each in the watsonx.ai console. `WATSONX_MODEL_ID` defaults to
+   `ibm/granite-3-8b-instruct`.
+3. Restart the app. Logs will say `LLM advisor: querying watsonx.ai (...)` instead of
+   falling back to deterministic text.
 
 ## What you see
 
@@ -52,8 +71,8 @@ password — the email picks your (demo) territory; nothing is sent anywhere.
    | **Fill Contacts to SalesLoft** | ZoomInfo Contact Readiness (mock) → Salesloft advance (mock) | loads contacts into a mock cadence |
 
    Plus **Bobby, the AI Emailer** — reads a (mock) Salesloft cadence's email steps and
-   drafts a personalized email per person (Claude if `ANTHROPIC_API_KEY` is set, else a
-   deterministic template).
+   drafts a personalized email per person (watsonx.ai Granite if `WATSONX_API_KEY`,
+   `WATSONX_PROJECT_ID`, and `WATSONX_URL` are set, else a deterministic template).
 3. **Details** (top-right) → **Access** — all sessions show "logged in" (mocked). The
    **Log in** buttons open in-app mock sign-in pages; **Open** buttons open the mock tools.
 

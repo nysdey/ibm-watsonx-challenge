@@ -1,4 +1,4 @@
-"""Deterministic fake-data generator for the WatsonX Clone demo.
+"""Deterministic fake-data generator for the BobBee demo.
 
 Everything the real dashboard would have pulled over the network — IBM ISC
 (Salesforce) accounts, the five IBM install-base files, ZoomInfo revenue/employee

@@ -2,7 +2,7 @@
 
 Bobby reads a Salesloft cadence's email steps + enrolled people via Salesloft's
 REST API (authenticated by a bearer token lifted from the saved browser session),
-writes a personalized email per person with Claude (fail-soft to a deterministic
+writes a personalized email per person with watsonx.ai (fail-soft to a deterministic
 template), and records them for review / best-effort push back into Salesloft.
 """
 import os

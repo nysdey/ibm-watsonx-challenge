@@ -1,5 +1,5 @@
 """IBM Non-Infra Install + Competitive Install sub-scrapers — MOCKED for the
-WatsonX Clone.
+BobBee.
 
 The real module replayed the ISC CRM-Analytics "Client Install (Territory)" /wave/query
 REST calls. Here both files are synthesized from the shared fake-data pool, with

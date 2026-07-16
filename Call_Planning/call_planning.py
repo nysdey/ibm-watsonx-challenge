@@ -16,7 +16,7 @@ Strategy: front-loaded, tier-ordered fill.
     dropped or double-booked (hard invariant, asserted below — same philosophy
     as ISC_Scraper_App/_internal/dedup.py: never silently ship a broken plan).
 
-A live-Claude pass (see ../llm_advisor.py) optionally writes the one-line
+A live-watsonx pass (see ../llm_advisor.py) optionally writes the one-line
 coaching note shown atop the calendar; it never changes a planned date.
 """
 import logging

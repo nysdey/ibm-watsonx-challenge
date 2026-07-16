@@ -28,7 +28,7 @@ then cut by percentile within the pool (top 20% -> Tier 1, next 35% -> Tier 2).
 On top of the number, every account gets a PRIMARY PLAY (Expand & Protect /
 Displace Competitor / Hardware Refresh / Land New Logo / Win-Back / Nurture) and
 a one-line SALES ANGLE — the two things a seller reads before dialing. Those are
-deterministic here and optionally rewritten by a live Claude pass in run.py (see
+deterministic here and optionally rewritten by a live watsonx pass in run.py (see
 ../llm_advisor.py); the tier NUMBER stays deterministic and reproducible.
 """
 import math
@@ -240,7 +240,7 @@ def classify_play(row, trend):
 
 
 def build_sales_angle(row, play, trend):
-    """Deterministic one-liner reason-to-call. Overwritten by the live Claude
+    """Deterministic one-liner reason-to-call. Overwritten by the live watsonx
     pass when available (see run.py), but always present so the column is never
     blank."""
     name_bits = []
@@ -274,7 +274,7 @@ def build_sales_angle(row, play, trend):
 
 
 def llm_intel(rows):
-    """Compact per-account intel for the optional live-Claude pass. Only the
+    """Compact per-account intel for the optional live-watsonx pass. Only the
     signals that inform a call — never the 600 raw install-detail columns."""
     out = []
     for r in rows:
@@ -297,7 +297,7 @@ def llm_intel(rows):
 
 
 def apply_llm_advice(rows, advice):
-    """Overwrite Primary_Play / Sales_Angle with the live-Claude judgment where
+    """Overwrite Primary_Play / Sales_Angle with the live-watsonx judgment where
     the model returned something for that account. No-op for accounts the model
     skipped, so a partial reply degrades gracefully."""
     if not advice:
@@ -309,7 +309,7 @@ def apply_llm_advice(rows, advice):
             continue
         if a.get("angle"):
             r["Sales_Angle"] = a["angle"]
-            r["_angle_source"] = "claude"
+            r["_angle_source"] = "watsonx"
         if a.get("play"):
             r["Primary_Play"] = a["play"]
         applied += 1

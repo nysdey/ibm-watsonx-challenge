@@ -21,7 +21,7 @@ import schema_io
 import signal_scraper
 import tiering
 
-# Shared live-Claude enrichment lives at the repo root — put it on the path.
+# Shared live-watsonx enrichment lives at the repo root — put it on the path.
 sys.path.insert(0, str(config.STEP_DIR.parent))
 import llm_advisor  # noqa: E402
 
@@ -50,13 +50,14 @@ def _needs_zoominfo(row):
 
 
 def _apply_llm_advice(rows, logger):
-    """Fail-soft live-Claude enrichment of Primary Play + Sales Angle. Never
+    """Fail-soft live-watsonx enrichment of Primary Play + Sales Angle. Never
     raises and never changes a tier number."""
     if not llm_advisor.available():
-        logger.info("LLM advisor: no ANTHROPIC_API_KEY — using deterministic play/angle "
-                    "(set ANTHROPIC_API_KEY to enable live Claude enrichment).")
+        logger.info("LLM advisor: no WATSONX_API_KEY/WATSONX_PROJECT_ID/WATSONX_URL — "
+                    "using deterministic play/angle (set all three to enable live "
+                    "watsonx.ai enrichment).")
         return
-    logger.info("LLM advisor: querying Claude (%s) for %d accounts' play/angle...",
+    logger.info("LLM advisor: querying watsonx.ai (%s) for %d accounts' play/angle...",
                 llm_advisor.DEFAULT_MODEL, len(rows))
     try:
         advice = llm_advisor.advise_accounts(tiering.llm_intel(rows))
@@ -169,10 +170,10 @@ def main():
         if row["Account Name"] in blocked_names:
             row["Tier_Reasoning"] += "; WARNING: signal search was blocked this run, zero-signal result is not reliable"
 
-    # Optional live-Claude pass: enrich each account's Primary Play + Sales Angle
+    # Optional live-watsonx pass: enrich each account's Primary Play + Sales Angle
     # with LLM judgment (see ../llm_advisor.py). Fully fail-soft — with no
-    # ANTHROPIC_API_KEY it's a no-op and the deterministic play/angle stand, so
-    # tier numbers stay reproducible either way.
+    # WATSONX_* credentials it's a no-op and the deterministic play/angle stand,
+    # so tier numbers stay reproducible either way.
     _apply_llm_advice(rows, logger)
 
     for row in rows:

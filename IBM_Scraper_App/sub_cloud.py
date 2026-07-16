@@ -1,4 +1,4 @@
-"""Cloud Install sub-scraper — MOCKED for the WatsonX Clone.
+"""Cloud Install sub-scraper — MOCKED for the BobBee.
 
 The real module replayed the GTM Navigator Revenue Analysis Dash callbacks per CovID.
 Here it synthesizes the fixed 8-column Cloud schema from the shared fake-data pool,

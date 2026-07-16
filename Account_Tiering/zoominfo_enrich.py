@@ -1,4 +1,4 @@
-"""ZoomInfo enrichment — MOCKED for the WatsonX Clone.
+"""ZoomInfo enrichment — MOCKED for the BobBee.
 
 The real module drove a headless ZoomInfo browser session to read each account's
 revenue + employee count. Here those come from the shared deterministic fake-data

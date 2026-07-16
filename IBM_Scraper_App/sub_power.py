@@ -1,4 +1,4 @@
-"""Power Install sub-scraper — MOCKED for the WatsonX Clone.
+"""Power Install sub-scraper — MOCKED for the BobBee.
 
 The real module filtered a local monthly POWER_INSTALL_ALL export by CovID. Here it
 synthesizes Power install rows from the shared fake-data pool instead, keyed to the

@@ -1,4 +1,4 @@
-"""Local identity store for the WatsonX Clone's sign-in gate.
+"""Local identity store for the BobBee's sign-in gate.
 
 In the real app this wrapped the macOS Keychain to hold the seller's IBM W3ID
 email + password for the automated logins. The clone has no real logins — every

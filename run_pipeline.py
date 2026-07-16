@@ -53,7 +53,7 @@ VENV_PYTHON = REPO_ROOT / ".venv" / "bin" / "python3"
 STATE_PATH = REPO_ROOT / ".orum_pipeline_state.json"
 LOGIN_CONTROL_DIR = REPO_ROOT / ".orum_login_control"
 
-# WatsonX Clone: the Meetings tab (live_transcribe_bot) and the Pipeline tab
+# BobBee: the Meetings tab (live_transcribe_bot) and the Pipeline tab
 # (Pipeline_Review) are both removed. All external connectivity is mocked — see
 # fake_data.py / mock_salesloft.py and the "MOCK" notes throughout.
 
@@ -159,14 +159,14 @@ def _login_status(service):
     'ready' now means *verified live*, not just 'a file exists on disk' — that
     old check reported ready forever even after the session died server-side,
     which is exactly the 'says logged in when it isn't' bug this replaces."""
-    # WatsonX Clone: sessions are mocked and never expire — always 'ready'. The
+    # BobBee: sessions are mocked and never expire — always 'ready'. The
     # Details ▸ Access "Log in" button opens the in-app mock login page (for show).
     return {"state": "ready", "updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "mock": True}
 
 
 def _probe_login_once(service):
-    """WatsonX Clone: sessions are mocked — no real probe. Always valid."""
+    """BobBee: sessions are mocked — no real probe. Always valid."""
     return "valid"
 
 
@@ -175,7 +175,7 @@ def _svc_label(service):
 
 
 def _ensure_services_ready(services):
-    """WatsonX Clone: every service is mocked, so there is no real session to probe —
+    """BobBee: every service is mocked, so there is no real session to probe —
     always ready. (In the real app this JIT-probed each saved session before a step ran.)"""
     return True, None
 
@@ -342,7 +342,7 @@ def _isc_progress():
     since done can reach total after the first pass while retry sweeps for
     empty-CovID cache misses (see launcher.py) are still re-running some of
     them before the final output is actually written."""
-    # WatsonX Clone: there is no separate ISC launcher/endpoint. Step 1 status is
+    # BobBee: there is no separate ISC launcher/endpoint. Step 1 status is
     # derived from the output file in _step_status, so there's never a live scrape
     # to report here.
     return None, False
@@ -520,7 +520,7 @@ def _launch(step_key, args):
 
 
 def _step1_watcher():
-    """WatsonX Clone: there is no separate long-lived ISC launcher to watch — Get My
+    """BobBee: there is no separate long-lived ISC launcher to watch — Get My
     Accounts drives the mock ISC generation in-process and chains the next steps
     itself. Kept as a no-op so main()'s (now removed) thread start would be harmless."""
     return
@@ -712,14 +712,14 @@ _ISC_HANDSHAKE = Path("~/.isc_scraper/launcher_port.json").expanduser()
 
 
 def _ensure_isc_launcher_running():
-    """WatsonX Clone: the separate ISC scraper app is gone — Get My Accounts
+    """BobBee: the separate ISC scraper app is gone — Get My Accounts
     generates the fake ISC output in-process (see _isc_scrape). No-op."""
     return None
 
 
 @app.route("/api/step1/launch", methods=["POST"])
 def api_step1_launch():
-    """WatsonX Clone: there is no separate ISC app to open — the ISC scrape is mocked
+    """BobBee: there is no separate ISC app to open — the ISC scrape is mocked
     and driven headlessly by Get My Accounts."""
     return jsonify({"ok": False, "port": None,
                     "message": "The ISC scraper is mocked in this clone — use “Get My Accounts.”"})
@@ -1108,7 +1108,7 @@ def api_auth_health():
 
 
 def _start_login_proc(service):
-    """WatsonX Clone: no real browser login — the Details ▸ Access "Log in" button
+    """BobBee: no real browser login — the Details ▸ Access "Log in" button
     opens the in-app mock login page (/mock/<service>/login). Returns (ok, message)."""
     return True, "mock"
 
@@ -1360,7 +1360,7 @@ def _last_step_error(step_key, fallback):
 
 
 def _isc_scrape(covids, on_progress, timeout=1200):
-    """WatsonX Clone: the ISC (Salesforce) scrape is MOCKED. Instead of driving a
+    """BobBee: the ISC (Salesforce) scrape is MOCKED. Instead of driving a
     headless Aura/Playwright scrape, generate the identical handoff artifacts
     (ISC_Scraper_App/output/latest.xlsx 'Company Rollup' + 'Companies by Industry',
     selected_covids.json, account_crosswalk.json) from the deterministic fake-data
@@ -1396,7 +1396,7 @@ def _run_get_my_accounts():
         covids = seller.get("covids") or []
         seller_name = seller.get("seller_name")
         if not seller.get("matched") or not covids:
-            # WatsonX Clone: any email works. When it isn't a real rep in Name
+            # BobBee: any email works. When it isn't a real rep in Name
             # Match.xlsx, assign a stable demo territory so the flow never dead-ends.
             covids = fake_data.demo_covids_for_email(email)
             seller_name = seller_name or email.split("@")[0].replace(".", " ").title()
@@ -1701,7 +1701,7 @@ def api_seller():
     covids = seller.get("covids") or []
     seller_name = seller.get("seller_name")
     if not seller.get("matched") or not covids:
-        # WatsonX Clone: any email works — show its stable demo territory (matching
+        # BobBee: any email works — show its stable demo territory (matching
         # what Get My Accounts will actually pull), so the card never says "no territory".
         covids = fake_data.demo_covids_for_email(email)
         seller_name = seller_name or email.split("@")[0].replace(".", " ").title()
@@ -1794,7 +1794,7 @@ def main():
         guard.harden_perms()
     except Exception:
         pass
-    # WatsonX Clone: no Meetings backend to launch, no separate ISC launcher to watch,
+    # BobBee: no Meetings backend to launch, no separate ISC launcher to watch,
     # and no real auth watchdog (all sessions are mocked and always 'ready').
 
     port = 5488

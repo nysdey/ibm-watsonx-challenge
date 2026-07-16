@@ -1,4 +1,4 @@
-"""Shared mock "Salesloft server" state for the WatsonX Clone.
+"""Shared mock "Salesloft server" state for the BobBee.
 
 There is no real Salesloft in the clone, but several parts of the app act on one:
 Fill Contacts loads people into a cadence, the cadence-advance step (Step 7) moves

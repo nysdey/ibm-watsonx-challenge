@@ -1333,7 +1333,7 @@ function selectPerson(idx){
   document.getElementById('hSignals').innerHTML = signals.map(s =>
     `<div class="signal">${SIGNAL_ICON}${esc(s)}</div>`).join('');
   const badge = document.getElementById('hBadge');
-  badge.style.display = p.written_by === 'Claude' ? 'inline-flex' : 'none';
+  badge.style.display = p.written_by === 'watsonx' ? 'inline-flex' : 'none';
   document.getElementById('eSubject').textContent = p.subject || '—';
   document.getElementById('eBody').textContent = p.body || '—';
   document.getElementById('eSig').textContent = '[Your name]';
@@ -1395,7 +1395,7 @@ function renderSteps(steps){
       return `
       <div class="card email-card" onclick="selectPerson(${idx})">
         <div class="who"><span class="name">${esc(p.name)}</span>
-          <span class="by ${p.written_by==='Claude'?'':'tmpl'}">${esc(p.written_by)}</span></div>
+          <span class="by ${p.written_by==='watsonx'?'':'tmpl'}">${esc(p.written_by)}</span></div>
         <div class="role">${esc(p.title||'')}${p.company?' &middot; '+esc(p.company):''}</div>
         <div class="subj"><span>Subject:</span> ${esc(p.subject)}</div>
         <div class="body">${esc(p.body)}</div>

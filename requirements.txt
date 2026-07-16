@@ -1,9 +1,11 @@
-# WatsonX Clone — dependencies.
+# BobBee — dependencies.
 #
 # This is a self-contained demo clone of the Seller Dashboard: every external
 # connection (IBM ISC, the IBM install-base portals, ZoomInfo, Salesloft, Google
 # News) is MOCKED with deterministic fake data (see fake_data.py / mock_salesloft.py),
 # so there is NO browser automation and NO provider SDKs — just Flask + openpyxl.
+# The one live integration is IBM watsonx.ai (llm_advisor.py), called over plain
+# stdlib urllib/REST, so it doesn't add a dependency either.
 #
 # Install:  python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 #           .venv/bin/python3 run_pipeline.py

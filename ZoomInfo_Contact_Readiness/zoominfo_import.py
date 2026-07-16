@@ -1,4 +1,4 @@
-"""ZoomInfo side of Step 6 — MOCKED for the WatsonX Clone.
+"""ZoomInfo side of Step 6 — MOCKED for the BobBee.
 
 The real module drove a headless ZoomInfo browser to upload the day's account list,
 apply the "Infra Outbound" buyer-group filter, pull the resulting contacts, and fire

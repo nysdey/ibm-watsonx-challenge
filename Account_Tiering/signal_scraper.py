@@ -41,7 +41,7 @@ import config
 
 import sys as _sys
 _sys.path.insert(0, str(config.STEP_DIR.parent))
-import fake_data  # noqa: E402  (WatsonX Clone: buying signals are mocked)
+import fake_data  # noqa: E402  (BobBee: buying signals are mocked)
 
 logger = logging.getLogger("signal_scraper")
 
@@ -179,7 +179,7 @@ def gather_signals_for_account(account_name):
     per taxonomy type (the most recent), capped at MAX_SIGNALS_PER_ACCOUNT and ordered
     most-recent-first. Date is a real ISO date from the news item's pubDate.
 
-    WatsonX Clone: signals are synthesized deterministically per account name by
+    BobBee: signals are synthesized deterministically per account name by
     ``fake_data`` instead of fetched from Google News — no network. The search/
     classify/recency helpers above are kept intact (unused by this mock) so the module's
     public surface and taxonomy are unchanged.

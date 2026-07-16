@@ -3,9 +3,16 @@
 A **fully mocked, offline clone** of the Seller Dashboard, rebranded and redesigned
 as **BobBee**: a four-step AI-powered outbound workflow (Accounts → Strategy →
 Contacts → Bobby AI). It looks and behaves like the real app — the same IBM sign-in,
-the same three Outbound actions, the same results screens and Bobby the AI Emailer —
-but **every external connection is faked**, so it runs on any machine with no logins,
-no VPN, and no internet.
+the same three underlying Outbound actions, the same results screens and Bobby the
+AI Emailer — but **every external connection is faked** (ISC, IBM install base,
+ZoomInfo, Salesloft), so it runs on any machine with no logins, no VPN, and no
+internet.
+
+The one connection that's **real**: **IBM watsonx.ai**. Bobby's email drafts and
+the tiering Play/Angle are live model calls (Granite, `ibm/granite-4-h-small`) when
+`.env` is configured — confirmed working end-to-end, including a retry-with-backoff
+layer so watsonx.ai's rate limits on lower service tiers don't silently degrade every
+call to the deterministic fallback (see [Configuring live AI](#configuring-live-ai-watsonxai)).
 
 Run it with `npm start` (see [Quick start](#quick-start)).
 
@@ -59,11 +66,21 @@ deterministic templates when they aren't, so the app runs fine either way.
    startup, so no manual `export` is needed. Every pipeline step runs as its own
    subprocess and inherits this environment, so one `.env` at the repo root covers
    Bobby, Account Tiering, and Call Planning.
-4. Check it actually worked: run **Bobby**, then look at its **Watsonx Activity**
-   panel — `status: success` with a real `latency`/`tokens` means the live call
-   went through; `status: error` means credentials are set but the call itself is
+4. Check it actually worked: run **Bobby** (Step 4), then look at its **Watsonx
+   Activity** panel — `status: success` with a real `latency`/`tokens` means the
+   live call went through; `status: partial` means some of that run's calls
+   succeeded and some fell back to the template after exhausting retries (see
+   below); `status: error` means credentials are set but the call itself is
    failing (see troubleshooting below); `status: not called` means credentials
    aren't set at all.
+
+**On rate limits:** Bobby drafts emails from an 8-way parallel thread pool, which
+reliably trips rate limiting on a Lite-plan watsonx.ai project. `llm_advisor.py`
+retries a rate-limited or transient-error call up to 3 times with exponential
+backoff + jitter before falling back to the template for that one person — in
+testing this took a cadence from ~15% live-AI emails to ~92%. `status: partial`
+with a handful of template fallbacks in a large batch is expected on a Lite plan,
+not a bug.
 
 **Troubleshooting a failed call** (`status: error` in the Watsonx Activity panel) —
 these are the two errors this project actually hit setting it up:
@@ -80,20 +97,26 @@ these are the two errors this project actually hit setting it up:
 
 ## What you see
 
+A single dark, IBM-themed dashboard — no tabs. The visual language is deliberate:
+**blue** is deterministic pipeline data, **purple + a sparkle icon** is anything
+watsonx.ai actually generated. Nothing in the UI blurs that line.
+
 1. **IBM Login gate** — a demo sign-in. Any email works; a stable demo territory is
    assigned when the email isn't a real rep in `Name Match.xlsx`.
-2. **Outbound tab** (the only tab) with three combined action buttons:
+2. **A 4-step pipeline**, each step its own card with a live status dot and a
+   **Run step** button:
 
-   | Button | Runs | Result |
+   | Step | Runs | Result |
    |---|---|---|
-   | **Get My Accounts** | ISC (fake) → IBM install base (fake) → Account Segmentation | ~280 segmented accounts |
-   | **Outbound Strategy** | Account Tiering (mock ZoomInfo + signals) → Call Planning | tier table + dial calendar |
-   | **Fill Contacts to SalesLoft** | ZoomInfo Contact Readiness (mock) → Salesloft advance (mock) | loads contacts into a mock cadence |
+   | **1. Accounts** | ISC (fake) → IBM install base (fake) → Account Segmentation | ~280 segmented accounts, viewable with tier breakdown bars |
+   | **2. Strategy** | Account Tiering (mock ZoomInfo + signals, watsonx.ai Play/Angle) → Call Planning | tier table (blue deterministic Score/Tier + purple watsonx Play/Angle) + a weekly call-plan timeline |
+   | **3. Contacts** | ZoomInfo Contact Readiness (mock) → Salesloft advance (mock) | a funnel view (accounts → contacts identified → Salesloft-ready) + contact cards |
+   | **4. Bobby AI** | reads a (mock) Salesloft cadence's email steps and drafts a personalized email per person via watsonx.ai (falls back to a deterministic template per-person if the live call fails) | a 3-panel review page: contact + signals, the generated email, and a **Watsonx Activity** panel showing the real model/latency/tokens/status of that email's live call |
 
-   Plus **Bobby, the AI Emailer** — reads a (mock) Salesloft cadence's email steps and
-   drafts a personalized email per person (watsonx.ai Granite if `WATSONX_API_KEY`,
-   `WATSONX_PROJECT_ID`, and `WATSONX_URL` are set, else a deterministic template).
-3. **Details** (top-right) → **Access** — all sessions show "logged in" (mocked). The
+3. **5 KPI cards** (accounts analyzed, Tier 1 accounts, contacts staged, emails
+   generated, time saved) and a **productivity-impact** section below the pipeline —
+   both update live as steps complete.
+4. **Details** (top-right) → **Access** — all sessions show "logged in" (mocked). The
    **Log in** buttons open in-app mock sign-in pages; **Open** buttons open the mock tools.
 
 ## The mock tool UIs

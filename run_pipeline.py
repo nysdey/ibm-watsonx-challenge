@@ -1,12 +1,12 @@
 """Seller Dashboard pipeline dashboard — a real web page, same pattern as
 ISC_Scraper_App/launcher.py (Flask, auto-opens a browser tab).
 
-    python3 run_pipeline.py
+    npm start          # or: .venv/bin/python3 run_pipeline.py
 
-Opens http://127.0.0.1:5488 showing the status of all 5 steps (present even if
-a step hasn't run yet), auto-skips Steps 1/2 if they're already done (redo
-buttons offered regardless), and lets you trigger Steps 3-5 with auto/manual
-modes, watching each step's live log output right on the page.
+Opens http://127.0.0.1:3000 (fixed port; override with BOBBEE_PORT). The Flask
+auto-reloader is on, so editing a file and refreshing the page shows the change
+without a manual restart. Shows the status of the pipeline steps, and lets you
+trigger them from the page.
 
 Converted from a CLI dashboard to a web page 2026-07-05 per explicit user
 request. Steps 4/5 have no interactive confirmation gate (removed the same
@@ -42,6 +42,7 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 import credential_store
 import fake_data
+import llm_advisor
 import mock_salesloft
 import seller_accounts
 import shared_auth
@@ -2181,6 +2182,192 @@ def api_accounts_detail():
     })
 
 
+def _brief_context(name):
+    """Everything the pre-call brief draws on for one account, pulled together
+    from every source BobBee has: IBM Sales Cloud (segmentation/tiering),
+    ZoomInfo (enrichment + the decision-maker), Salesloft (cadence + rank), and
+    recent news/buying signals. Returns (context_dict, deterministic_bullets)."""
+    trow = _tiering_rows_by_name().get(name) or {}
+    strategized = _ai_file("latest.json", {}) or {}
+    cname, member = None, None
+    for cn, members in strategized.get("cadences", {}).items():
+        for m in members:
+            if m["account"] == name:
+                cname, member = cn, m
+                break
+
+    contacts = fake_data.contacts_for_accounts([name])
+    dm = next((c for c in contacts if c.get("title") in _DECISION_MAKER_TITLES), None)
+
+    signals = []
+    for n in (1, 2, 3):
+        if trow.get(f"Signal_{n}_Summary"):
+            signals.append({"type": trow.get(f"Signal_{n}_Type"),
+                            "date": str(trow.get(f"Signal_{n}_Date") or "")[:10],
+                            "summary": trow.get(f"Signal_{n}_Summary")})
+
+    tags = member["tags"] if member else (_account_tags(trow) if trow else [])
+    whitespace = [t.split(": ")[1] for t in tags if t.startswith("Whitespace")]
+    product_map = {"Cloud": "IBM Cloud", "Power": "IBM Power", "Storage": "IBM Storage",
+                   "NonInfra": "IBM Software"}
+    product = product_map.get(whitespace[0]) if whitespace else "expanding the existing footprint"
+    tier = trow.get("Tier")
+    urgency = ("High" if tier == 1 else "Medium" if tier == 2 else "Low") if tier else "Not yet scored"
+    spend_cur, spend_prior = trow.get("IBM Spend Current Year"), trow.get("IBM Spend Prior Year")
+
+    context = {
+        "account": name,
+        "sales_cloud": {
+            "industry": trow.get("Industry"),
+            "relationship": trow.get("Technology Client Status"),
+            "ibm_spend_current": spend_cur, "ibm_spend_prior": spend_prior,
+            "spend_trend": trow.get("Spend_Trend"),
+            "install_base": trow.get("Install_Summary"),
+            "competitor": trow.get("Competitive_Displacement"),
+        },
+        "zoominfo": {
+            "annual_revenue": _first(trow, "ZI_Revenue_USD", "Location Annual Revenue"),
+            "employees": _first(trow, "ZI_Employee_Count", "Employee Count"),
+            "decision_maker": (f"{dm['first_name']} {dm['last_name']}, {dm['title']}" if dm else None),
+        },
+        "salesloft": {"cadence": cname, "rank_in_cadence": member["rank"] if member else None},
+        "recent_news": signals,
+        "recommended_play": trow.get("Primary_Play"),
+        "best_product_fit": product,
+        "urgency": urgency,
+        "sales_angle": trow.get("Sales_Angle"),
+    }
+
+    # Deterministic fallback bullets — richer than a single sentence, and always
+    # available even without watsonx. Pull from every source, news included.
+    det = []
+    rel = trow.get("Technology Client Status")
+    if rel or spend_cur is not None:
+        trend = f" ({trow.get('Spend_Trend')})" if trow.get("Spend_Trend") else ""
+        det.append(f"Relationship: {rel or 'Unknown'} · IBM spend {_fmt_money(spend_cur)}"
+                   f" vs {_fmt_money(spend_prior)} prior year{trend}.")
+    if trow.get("Install_Summary"):
+        comp = trow.get("Competitive_Displacement")
+        comp_txt = f" · competitor present ({comp})" if comp and str(comp).startswith("Yes") else ""
+        det.append(f"Install base: {trow.get('Install_Summary')}{comp_txt}.")
+    rev = _first(trow, "ZI_Revenue_USD", "Location Annual Revenue")
+    emp = _first(trow, "ZI_Employee_Count", "Employee Count")
+    if rev or emp:
+        det.append(f"Company: {_fmt_money(rev)} revenue · {_fmt_int(emp)} employees (ZoomInfo).")
+    if dm:
+        det.append(f"Key contact: {dm['first_name']} {dm['last_name']}, {dm['title']}.")
+    if signals:
+        s0 = signals[0]
+        det.append(f"Recent news ({s0['date']}): {s0['type']} — {s0['summary']}")
+    det.append(f"Play: {trow.get('Primary_Play') or 'Nurture'} · best fit {product} · urgency {urgency}.")
+    if trow.get("Sales_Angle"):
+        det.append(f"Why call now: {trow.get('Sales_Angle')}")
+    return context, [b for b in det if b]
+
+
+@app.route("/api/call_brief")
+def api_call_brief():
+    """A pre-call brief for one account as bullet points — generated by watsonx.ai
+    (Granite) from every connected source (IBM Sales Cloud, ZoomInfo, Salesloft,
+    recent news signals), and fail-soft to deterministic bullets built from the
+    same data when watsonx isn't configured or errors."""
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    context, det = _brief_context(name)
+    ai = []
+    try:
+        ai = llm_advisor.advise_call_brief(context)
+    except Exception:
+        ai = []
+    bullets = ai or det
+    return jsonify({"account": name, "bullets": bullets,
+                    "source": "watsonx" if ai else "deterministic"})
+
+
+def _cadence_step_intent(step_name):
+    """Coarse intent tag for the email step, so both watsonx and the deterministic
+    fallback tailor the touch (intro vs. follow-up vs. break-up)."""
+    s = (step_name or "").lower()
+    if "break" in s:
+        return "later touch — short, gives an easy out"
+    if "follow" in s or "value" in s or "case" in s:
+        return "follow-up — add one concrete proof point and a soft ask"
+    return "first touch — a specific, insight-led intro that earns a reply"
+
+
+def _deterministic_email(context, first, step_name):
+    """Fail-soft email when watsonx is unavailable — grounded in the same sources
+    (install base, spend trend, news, product fit), varied by cadence step."""
+    sc = context.get("sales_cloud", {})
+    news = (context.get("recent_news") or [])
+    account = context.get("account", "your team")
+    product = context.get("best_product_fit") or "IBM infrastructure"
+    intent = _cadence_step_intent(step_name)
+
+    # Lead with the strongest available signal: recent news > install base > spend.
+    if news:
+        lead = (f"I saw the recent news about {account} — {news[0].get('summary')} "
+                f"Worth a quick look at how this shifts your infrastructure priorities.")
+    elif sc.get("install_base") and sc.get("install_base") != "No IBM installs":
+        lead = (f"I noticed {account} already runs {sc.get('install_base')} with IBM — "
+                f"there's a clean path to modernize and extend that footprint.")
+    elif sc.get("spend_trend") in ("Declining", "Lapsed"):
+        lead = (f"I was reviewing {account}'s account and noticed IBM engagement has "
+                f"tapered off — I'd like to make sure you're getting full value.")
+    else:
+        lead = (f"I lead the IBM infrastructure account for {account}, and I think "
+                f"there's a strong fit worth 15 minutes of your time.")
+
+    if "break" in (step_name or "").lower():
+        body = (f"Hi {first},\n\n"
+                f"I'll keep this short — if modernizing infrastructure at {account} isn't a "
+                f"priority right now, no worries at all and I'll circle back later in the year. "
+                f"But if {product} is worth a look, I'd still love 15 minutes.\n\n"
+                f"Either way, just let me know.\n\nBest,\n[Your name]")
+    else:
+        proof = ("We've helped similar teams cut total cost of ownership meaningfully while "
+                 "tightening resiliency — happy to share the specifics." if "follow" in intent
+                 else f"I think {product} lines up well with where you're headed.")
+        body = (f"Hi {first},\n\n{lead}\n\n{proof}\n\n"
+                f"Open to a quick chat this week or next?\n\nBest,\n[Your name]")
+
+    subj_core = account.split(" Holdings")[0].split(" Group")[0].strip()
+    subject = (f"Following up — {subj_core}" if "follow" in intent
+               else f"Quick idea for {subj_core}" if "break" not in (step_name or "").lower()
+               else f"Worth a quick chat, {first}?")
+    return {"subject": subject, "body": body}
+
+
+@app.route("/api/email_draft")
+def api_email_draft():
+    """An AI-drafted outbound email for one account/contact — written by watsonx.ai
+    (Granite) from every connected source (IBM Sales Cloud, ZoomInfo, Salesloft,
+    recent news) in a real seller's insight-led style, tailored to the cadence step.
+    Fail-soft to a deterministic template grounded in the same data."""
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    first = request.args.get("first", "").strip() or "there"
+    step_name = request.args.get("step", "").strip()
+
+    context, _ = _brief_context(name)
+    context = dict(context)
+    context["contact_first_name"] = first
+    context["email_step"] = step_name
+    context["step_intent"] = _cadence_step_intent(step_name)
+
+    ai = {}
+    try:
+        ai = llm_advisor.advise_email(context)
+    except Exception:
+        ai = {}
+    result = ai or _deterministic_email(context, first, step_name)
+    return jsonify({"account": name, "subject": result.get("subject", ""),
+                    "body": result.get("body", ""),
+                    "source": "watsonx" if ai else "deterministic"})
+
+
 @app.route("/api/accounts/leftovers")
 def api_accounts_leftovers():
     return jsonify({"accounts": _ai_file("leftovers.json", [])})
@@ -2416,26 +2603,41 @@ def main():
     import threading as _threading
     import webbrowser
 
-    _reset_for_fresh_demo()
-    # Re-secure any session/secret file to owner-only on every launch (I19), in
-    # case one was written 0644 by older code or a service added since last run.
-    try:
-        guard.harden_perms()
-    except Exception:
-        pass
-    # BobBee: no Meetings backend to launch, no separate ISC launcher to watch,
-    # and no real auth watchdog (all sessions are mocked and always 'ready').
+    # Fixed, predictable port so the URL is always the same and bookmarkable.
+    # Override with BOBBEE_PORT=xxxx (or PORT=xxxx) if 3000 clashes with another
+    # dev server. We deliberately do NOT fall back to a random port when it's
+    # busy — a moving URL is worse than a clear error.
+    port = int(os.environ.get("BOBBEE_PORT") or os.environ.get("PORT") or 3000)
 
-    port = 3000
-    with socket.socket() as s:
-        if s.connect_ex(("127.0.0.1", port)) == 0:
-            s2 = socket.socket()
-            s2.bind(("", 0))
-            port = s2.getsockname()[1]
-            s2.close()
-    print(f"\n  BobBee → http://127.0.0.1:{port}\n")
-    _threading.Timer(0.9, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
-    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False, threaded=True)
+    # The Werkzeug auto-reloader runs this file twice: once in the supervisor
+    # process, and once in the reloaded child (WERKZEUG_RUN_MAIN=true) — the child
+    # is what gets re-spawned on every file save. Only the supervisor's first pass
+    # should wipe to a clean demo slate, check the port, and open a browser tab, so
+    # editing a file and refreshing keeps your imported/strategized data and
+    # doesn't pop a new tab on every save.
+    is_reload_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+    if not is_reload_child:
+        _reset_for_fresh_demo()
+        # Re-secure any session/secret file to owner-only on launch (I19).
+        try:
+            guard.harden_perms()
+        except Exception:
+            pass
+        with socket.socket() as s:
+            if s.connect_ex(("127.0.0.1", port)) == 0:
+                print(f"\n  Port {port} is already in use — another BobBee (or app) is "
+                      f"running there.\n"
+                      f"  Free it:   lsof -ti:{port} | xargs kill\n"
+                      f"  Or pick another port:   BOBBEE_PORT=3001 npm start\n")
+                sys.exit(1)
+        print(f"\n  BobBee → http://127.0.0.1:{port}   "
+              f"(edit a file and refresh the page — it live-reloads)\n")
+        _threading.Timer(0.9, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
+
+    # use_reloader=True: watches the .py files (templates live in ui_templates.py)
+    # and restarts on save, so a browser refresh shows your edits without a manual
+    # restart. debug stays False (no interactive debugger exposed on localhost).
+    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=True, threaded=True)
 
 
 if __name__ == "__main__":

@@ -350,6 +350,15 @@ PAGE_TEMPLATE = """
   .day-panel-close:hover{ color:#fff; }
   .day-panel-sums{ padding:14px 20px 10px; flex:none; border-bottom:1px solid var(--border); font-size:13px; color:#ffffff; }
   .day-panel-items{ flex:1; overflow-y:auto; padding:10px 20px 20px; }
+  .day-panel-section{ font-size:11px; font-weight:600; color:var(--text2); text-transform:none;
+                      padding:14px 0 6px; border-bottom:1px solid var(--border-strong); margin-bottom:2px; }
+  .panel-act{ display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--border); }
+  .panel-act:first-child{ border-top:none; }
+  .day-panel-section + .panel-act{ border-top:none; }
+  .panel-act .act-type{ margin-top:1px; }
+  .panel-act-body{ flex:1; min-width:0; }
+  .panel-act-body .pa-acct{ font-weight:500; font-size:12.5px; color:#fff; word-break:break-word; }
+  .panel-act-body .pa-step{ font-size:11px; color:var(--text3); margin-top:2px; }
   /* legacy inline detail (kept for day-view fallback, hidden by default) */
   .day-detail{ margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:none; }
   .day-detail h3{ font-size:14px; margin-bottom:6px; }
@@ -412,6 +421,8 @@ PAGE_TEMPLATE = """
   .email-card-addr{ font-size:11.5px; color:var(--blue-text); font-family:var(--mono); margin-top:1px; }
   .email-card-sub{ font-size:12px; color:var(--text3); margin-top:3px; }
   .email-card-cadence{ font-size:11px; color:var(--purple-text); margin-top:2px; }
+  .email-card-subject{ font-size:12.5px; font-weight:600; color:#fff; margin:8px 0 2px; }
+  .email-card-subject span{ font-weight:400; color:var(--text3); }
   .email-body-wrap{ border-top:1px solid var(--border); padding-top:10px; flex:1; }
   .email-body-text{ font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2); min-height:100px; }
   .email-body-text.empty{ color:var(--text3); font-style:italic; font-family:var(--font); font-size:12.5px; }
@@ -452,6 +463,9 @@ PAGE_TEMPLATE = """
   .call-brief h4{ font-size:11.5px; font-weight:600; color:var(--purple-text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
   .call-brief p{ font-size:12px; line-height:1.6; margin:0; }
   .call-brief.loading p{ color:var(--text3); font-style:italic; }
+  .brief-bullets{ margin:0; padding-left:16px; list-style:disc; }
+  .brief-bullets li{ font-size:12px; line-height:1.55; margin-bottom:5px; color:#fff; }
+  .brief-bullets li:last-child{ margin-bottom:0; }
   @media(max-width:700px){ .call-card-body{ grid-template-columns:1fr; } .email-grid{ grid-template-columns:1fr; } }
 
   /* ── account detail modal ──────────────────────────────────── */
@@ -814,7 +828,7 @@ PAGE_TEMPLATE = """
           <span id="emailCountLabel" style="font-size:13px;"></span>
           <div style="display:flex;gap:8px;">
             <button class="btn ai" id="generateEmailsBtn" onclick="generateAllEmails()">""" + _SPARKLE + """ Draft all emails</button>
-            <button class="btn primary" id="sendAllBtn" onclick="sendAllEmails()">Send all</button>
+            <button class="btn primary" id="sendAllBtn" onclick="sendAllEmails()" disabled>Send all</button>
           </div>
         </div>
         <div class="email-grid" id="emailGrid"></div>
@@ -869,7 +883,7 @@ PAGE_TEMPLATE = """
             <div class="field-grid">
               <div class="field">
                 <label>Full name</label>
-                <input type="text" id="prof-name" value="Tim Zhou" readonly>
+                <input type="text" id="prof-name" value="Tim" readonly>
               </div>
               <div class="field">
                 <label>IBM email</label>
@@ -1406,19 +1420,33 @@ function calStep(dir){
   renderCal();
 }
 
-function selectCalDay(iso){
-  _cal.sel = iso;
-  renderCal();
+// Fill + open the right-side day panel. Pure (no renderCal) so it can be called
+// from both selectCalDay and renderCal's day-view branch without recursion.
+function fillDayPanel(iso){
   const info = dayInfo(iso) || {emails: 0, calls: 0, accounts: [], items: []};
   const d = new Date(iso + 'T00:00:00');
-  const panel = document.getElementById('dayPanel');
   document.getElementById('dayPanelTitle').textContent = d.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'});
   document.getElementById('dayPanelSums').innerHTML =
     `<b>${info.emails}</b> email${info.emails === 1 ? '' : 's'} &middot; <b>${info.calls}</b> call${info.calls === 1 ? '' : 's'} &middot; <b>${info.accounts.length}</b> account${info.accounts.length === 1 ? '' : 's'} touched`;
+  // Group by activity type — all emails under an "Emails" header, then all calls
+  // under a "Calls" header — instead of interleaving them with per-row tags.
+  const items = info.items || [];
+  const row = a => `<div class="panel-act"><div class="panel-act-body"><div class="pa-acct">${esc(a.account)}</div><div class="pa-step">${esc(a.step)} &middot; ${esc(a.cadence)}</div></div></div>`;
+  const section = (label, arr) => arr.length
+    ? `<div class="day-panel-section">${label} (${arr.length})</div>` + arr.map(row).join('')
+    : '';
+  const emails = items.filter(a => a.type === 'email');
+  const calls = items.filter(a => a.type === 'call');
   document.getElementById('dayPanelItems').innerHTML =
-    (info.items || []).map(a => `<div class="act-row"><span class="act-type ${esc(a.type)}">${esc(a.type)}</span><span style="font-weight:500">${esc(a.account)}</span><span style="color:var(--text3)">${esc(a.step)} &middot; ${esc(a.cadence)}</span></div>`).join('')
-    || '<div class="note" style="padding-top:14px;">Nothing scheduled.</div>';
-  panel.classList.add('open');
+    items.length ? section('Emails', emails) + section('Calls', calls)
+                 : '<div class="note" style="padding-top:14px;">Nothing scheduled.</div>';
+  document.getElementById('dayPanel').classList.add('open');
+}
+
+function selectCalDay(iso){
+  _cal.sel = iso;
+  renderCal();       // re-highlight the selected cell (renderCal never calls back)
+  fillDayPanel(iso); // then open the right-side panel
 }
 
 function closeDayPanel(){
@@ -1479,13 +1507,13 @@ function renderCal(){
       </div>`;
     }).join('') + '</div>';
   } else {
+    // Day view: no grid, just drive the right-side panel to the anchor day.
     const iso = isoOf(new Date(Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())));
     label.textContent = a.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'});
     grid.innerHTML = '';
-    selectCalDay(iso);
-    return;
+    _cal.sel = iso;
+    fillDayPanel(iso);
   }
-  if (_cal.sel) selectCalDay(_cal.sel);
 }
 
 // ── gates: every tab needs accounts (and most need a strategy) ─
@@ -1665,25 +1693,6 @@ async function fetchTodayEmail(){
   renderEmailGrid();
 }
 
-function _emailDraftText(a){
-  // Build a draft from account detail — shared between draft-all and redraft-one.
-  const d = a.acctDetail || {};
-  const ai = d.ai || {};
-  const c = a.contact;
-  const firstName = c ? c.first_name : 'there';
-  return [
-    `Hi ${firstName},`,
-    ``,
-    `I wanted to reach out regarding ${a.account}'s technology roadmap. ${ai.angle || "I believe there is a strong fit with IBM's portfolio."}`,
-    ``,
-    `${ai.product_fit ? `We see a compelling opportunity around ${ai.product_fit}` : 'Our team has identified a relevant opportunity'} that aligns with your current priorities.`,
-    ``,
-    `Would you have 20 minutes this week to connect?`,
-    ``,
-    `Best,`,
-  ].join('\\n');
-}
-
 function _saveEditIfOpen(i){
   // Flush any in-progress edit back to the item before re-rendering.
   const ta = document.getElementById('emailedit-' + i);
@@ -1707,9 +1716,18 @@ function saveEmailEdit(i){
   renderEmailGrid();
 }
 
+// "Send all" is only available once at least one email is actually drafted and
+// not yet sent — you can't send emails that haven't been written.
+function updateSendAllBtn(){
+  const btn = document.getElementById('sendAllBtn');
+  if (!btn) return;
+  btn.disabled = !_emailItems.some(a => a.draft != null && !a.draft.startsWith('…') && !a.sent);
+}
+
 function renderEmailGrid(){
   const host = document.getElementById('emailGrid');
   if (!host) return;
+  updateSendAllBtn();
   if (!_emailItems.length){
     host.innerHTML = '<div class="aitems-empty" style="grid-column:1/-1;">No emails scheduled for today.</div>';
     return;
@@ -1754,6 +1772,7 @@ function renderEmailGrid(){
           ${pencilBtn}${redraftBtn}
         </div>
       </div>
+      ${hasDraft && a.subject ? `<div class="email-card-subject"><span>Subject:</span> ${esc(a.subject)}</div>` : ''}
       <div class="email-body-wrap">${bodySection}</div>
       <div class="email-foot">
         <button class="btn" onclick="openAcctModal('${esc(a.account)}')">View account</button>
@@ -1772,7 +1791,17 @@ async function _draftOne(i, force){
   a.editing = false;
   renderEmailGrid();
   try {
-    a.draft = _emailDraftText(a);
+    // watsonx.ai drafts the email from every connected source (Sales Cloud,
+    // ZoomInfo, Salesloft, news), tailored to the contact + cadence step.
+    // Fail-soft to a deterministic template server-side.
+    const first = a.contact ? a.contact.first_name : 'there';
+    const url = '/api/email_draft?name=' + encodeURIComponent(a.account)
+      + '&step=' + encodeURIComponent(a.step || '')
+      + '&first=' + encodeURIComponent(first);
+    const r = await (await fetch(url)).json();
+    a.draft = r.body || 'Could not generate a draft.';
+    a.subject = r.subject || '';
+    a.draftSource = r.source;
   } catch(e){
     a.draft = 'Error generating draft.';
   }
@@ -1864,7 +1893,7 @@ function renderCallList(){
     const d = a.acctDetail || {};
     const zi = d.zoominfo || {};
     const ai = d.ai || {};
-    const brief = _callBriefs[a.account];
+    const brief = _callBriefs[a.account];   // array of bullet strings, a status string, or undefined
     const contacts = (zi.contacts || []);
     const dm = contacts.find(c => c.decision_maker);
     // Show DM first, then others.
@@ -1884,9 +1913,11 @@ function renderCallList(){
         </div>
       </div>`;
     }).join('') || '<div class="note">No contacts on record.</div>';
-    const briefHtml = brief
-      ? `<p>${esc(brief)}</p>`
-      : `<p style="color:var(--text3);font-style:italic;">Not yet generated.</p>`;
+    const briefHtml = Array.isArray(brief)
+      ? `<ul class="brief-bullets">${brief.map(b => `<li>${esc(b)}</li>`).join('')}</ul>`
+      : (typeof brief === 'string'
+          ? `<p style="color:var(--text3);font-style:italic;">${esc(brief)}</p>`
+          : `<p style="color:var(--text3);font-style:italic;">Not yet generated.</p>`);
     return `<div class="call-card" id="callcard-${i}">
       <div class="call-card-head">
         <span class="call-card-rank">${i + 1}</span>
@@ -1916,25 +1947,16 @@ async function generateAllBriefs(){
   const btn = document.getElementById('generateBriefsBtn');
   if (btn) btn.disabled = true;
   for (const a of _callItems){
-    if (_callBriefs[a.account]) continue;
-    _callBriefs[a.account] = '…generating…';
+    if (Array.isArray(_callBriefs[a.account])) continue;   // already generated
+    _callBriefs[a.account] = 'Generating brief…';           // status string
     renderCallList();
     try {
-      const d = a.acctDetail || {};
-      const ai = d.ai || {};
-      const sc = d.sales_cloud || {};
-      const zi = d.zoominfo || {};
-      const dm = (zi.contacts || []).find(c => c.decision_maker);
-      _callBriefs[a.account] = [
-        dm ? `Key contact: ${dm.first_name} ${dm.last_name}, ${dm.title}.` : 'No confirmed decision-maker on record.',
-        `Urgency: ${ai.urgency || 'N/A'}.`,
-        `Best product fit: ${ai.product_fit || 'N/A'}.`,
-        `Recommended play: ${ai.play || 'N/A'}.`,
-        ai.angle ? `Angle: ${ai.angle}` : '',
-        sc.ibm_spend_current ? `Current IBM spend: ${sc.ibm_spend_current}.` : '',
-      ].filter(Boolean).join(' ');
+      // Backend synthesizes every connected source (IBM Sales Cloud, ZoomInfo,
+      // Salesloft, recent news) into bullet points via watsonx.ai, fail-soft.
+      const r = await (await fetch('/api/call_brief?name=' + encodeURIComponent(a.account))).json();
+      _callBriefs[a.account] = (r.bullets && r.bullets.length) ? r.bullets : ['No brief available.'];
     } catch(e){
-      _callBriefs[a.account] = 'Error generating brief.';
+      _callBriefs[a.account] = ['Error generating brief.'];
     }
     renderCallList();
   }
@@ -1961,12 +1983,9 @@ async function fetchSeller(){
       : 'Not signed in.';
   }
   if (profileBtn){
-    try {
-      const saved = JSON.parse(localStorage.getItem('bobbee_profile') || '{}');
-      const name = saved.name || d.seller_name || 'Tim Zhou';
-      const initials = name.trim().split(/\\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
-      profileBtn.textContent = initials || 'TZ';
-    } catch(e){ profileBtn.textContent = 'TZ'; }
+    // Fixed demo persona: Tim (avatar always "TZ"), independent of whichever
+    // IBM email the demo happens to be signed in under.
+    profileBtn.textContent = 'TZ';
   }
 }
 

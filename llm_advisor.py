@@ -337,3 +337,97 @@ def advise_plan_summary(stats):
         return ""
     text = _complete(_PLAN_SYSTEM, json.dumps(stats, default=str), max_tokens=250)
     return (text or "").strip()
+
+
+_BRIEF_SYSTEM = (
+    "You are an IBM infrastructure sales strategist preparing a phone-based seller "
+    "for a call. You are given everything known about the account, pulled together "
+    "from IBM Sales Cloud (relationship, IBM spend + trend, install base), ZoomInfo "
+    "(company revenue/size + the decision-maker contact), Salesloft (the cadence "
+    "and where they are in it), and recent news / buying signals about the company. "
+    "Write a tight pre-call brief the seller can skim in 15 seconds: 4-6 short "
+    "bullet points, each ONE line, concrete and specific — cite the actual numbers, "
+    "installs, competitor presence, and news, and end with the single sharpest "
+    "reason to call now. Do not invent facts not present in the context. "
+    "Return ONLY a JSON array of bullet strings, nothing else."
+)
+
+
+def advise_call_brief(context, max_bullets=6):
+    """context: a dict of everything known about one account (see
+    run_pipeline api_call_brief). Returns a list of concise bullet strings from
+    watsonx.ai, or [] when the live layer is unavailable/errored (caller falls
+    back to its own deterministic bullets). One call per account."""
+    if not context or not available():
+        return []
+    user = ("Account context (JSON):\n" + json.dumps(context, indent=2, default=str) +
+            "\n\nReturn a JSON array of 4-6 concise one-line bullet strings.")
+    parsed = _extract_json(_complete(_BRIEF_SYSTEM, user, max_tokens=600))
+    if not isinstance(parsed, list):
+        return []
+    return [str(b).strip() for b in parsed if str(b).strip()][:max_bullets]
+
+
+# Style exemplars (real seller emails) — anchor Granite's tone and structure:
+# an insight-led opener on a specific signal, one quantified/estimated value tied
+# to a concrete IBM offering, casual & human, soft low-pressure CTA. These are for
+# DIFFERENT accounts; the model must write fresh copy for the target account.
+_EMAIL_EXEMPLARS = """Example 1 (install-base end-of-support signal):
+Hi Carlo, I work for IBM and am the Account Lead for Mission FCU — nice to meet you!
+I noticed you currently have 3 units of Power9 installed, which reached End of Standard
+Support on 1/31/2026, as officially announced by IBM. I'd love to understand where
+you're planning to go from here — staying on-prem or moving to cloud. Open to a quick
+chat sometime? Best,
+
+Example 2 (news + data-growth estimate + product fit):
+Hi G, I've been following your recent news on the STELA project — very cool work pushing
+the frontier of AI in bioscience. Based on your 100k-specimen target, we estimate a
+conservative 2-5PB generated over 5 years; with standard enterprise replication your
+effective footprint could approach 15PB, and I saw leadership has an Opex-reduction goal
+this year. With both in mind I'd recommend IBM deep archival, which aligns with the
+mission and the margin goal — typically ~70% TCO savings vs cloud/HDD. Feels like a fit —
+open to a chat? Best,"""
+
+_EMAIL_SYSTEM = (
+    "You are an IBM infrastructure account executive writing a short, highly "
+    "personalized outbound email to one contact. You are given everything known about "
+    "the account from IBM Sales Cloud (relationship, IBM spend + trend, install base, "
+    "competitor), ZoomInfo (revenue, size, the contact), Salesloft (the cadence and "
+    "which email step this is), and recent news / buying signals — plus the recommended "
+    "play and best product fit.\n\n"
+    "Write like a real seller, not a marketer:\n"
+    "- Open with ONE specific, current observation about THIS account: a recent news "
+    "item, an install-base fact (e.g. hardware nearing end-of-support), a spend trend, "
+    "or a revenue/size signal. Name it concretely.\n"
+    "- Connect it to a specific IBM offering and ONE quantified, clearly-estimated value "
+    "(storage footprint from data growth, ~70% TCO savings, revenue recovery, a hardware "
+    "refresh, etc.). If a number is an estimate, say so in a few words.\n"
+    "- Keep it to ~3-4 short paragraphs. Warm, direct, low-pressure, first-name basis, "
+    "contractions fine. No 'I hope this finds you well', no corporate filler.\n"
+    "- Tailor to the cadence step: an intro is a first touch; a follow-up adds one proof "
+    "point; a later/break-up step is short and gives an easy out.\n"
+    "- End with a soft CTA (e.g. 'Open to a quick chat?').\n"
+    "- Use only facts consistent with the context; grounded estimates are fine, wild "
+    "fabrication is not.\n\n"
+    "Match the tone and structure of these examples (they are for OTHER accounts — do "
+    "not reuse their specifics):\n" + _EMAIL_EXEMPLARS + "\n\n"
+    "Return ONLY JSON: {\"subject\": a specific subject <=70 chars, \"body\": the full "
+    "email body ending with a sign-off line \"Best,\" then \"[Your name]\"}."
+)
+
+
+def advise_email(context):
+    """context: everything known about one account + the contact + the cadence step
+    (see run_pipeline api_email_draft). Returns {"subject": str, "body": str} from
+    watsonx.ai, or {} when the live layer is unavailable/errored (caller falls back
+    to a deterministic template). One call per email."""
+    if not context or not available():
+        return {}
+    user = ("Account + contact + step context (JSON):\n" +
+            json.dumps(context, indent=2, default=str) +
+            "\n\nWrite the email now. Return ONLY the JSON object.")
+    parsed = _extract_json(_complete(_EMAIL_SYSTEM, user, max_tokens=700))
+    if not isinstance(parsed, dict) or not parsed.get("body"):
+        return {}
+    return {"subject": str(parsed.get("subject") or "").strip(),
+            "body": str(parsed["body"]).strip()}

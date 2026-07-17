@@ -27,9 +27,8 @@ _DESIGN_CSS = """
   :root{
     --bg:#0a0a0c; --layer1:#18181b; --layer2:#212124; --layer3:#29292d;
     --border:#3a3a40; --border-strong:#55555c;
-    /* All-white type ramp (IBM Carbon dark theme reads white-on-gray10) —
-       gray body text was hard to read on the dark layers. */
-    --text1:#ffffff; --text2:#f4f4f4; --text3:#e0e0e0;
+    /* Full-white type ramp — all text is white on dark layers per IBM Carbon dark theme. */
+    --text1:#ffffff; --text2:#ffffff; --text3:#ffffff;
     --blue:#0f62fe; --blue-text:#78a9ff; --blue-soft:rgba(15,98,254,.14); --blue-border:rgba(120,169,255,.4);
     --purple:#8a3ffc; --purple-text:#be95ff; --purple-soft:rgba(138,63,252,.14); --purple-border:rgba(190,149,255,.4);
     --green:#42be65; --amber:#f1c21b; --red:#fa4d56;
@@ -121,6 +120,46 @@ PAGE_TEMPLATE = """
   .gate-err{ color:var(--red); font-size:13.5px; min-height:18px; text-align:left; }
   .gate-note{ color:var(--text3); font-size:12px; line-height:1.55; margin-top:20px; }
 
+  /* ── profile page ───────────────────────────────────────────── */
+  .profile-page{ max-width:760px; }
+  .profile-tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:28px; }
+  .profile-tab{ font:inherit; font-size:13.5px; font-weight:500; color:var(--text3); background:none; border:none;
+                border-bottom:2px solid transparent; cursor:pointer; padding:10px 20px; margin-bottom:-1px; }
+  .profile-tab:hover{ color:#fff; }
+  .profile-tab.active{ color:#fff; border-bottom-color:#fff; }
+  .profile-section{ display:none; }
+  .profile-section.active{ display:block; }
+  .prof-card{ background:var(--layer1); border:1px solid var(--border); padding:24px 26px; margin-bottom:16px; }
+  .prof-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .prof-card-head h3{ font-size:14px; font-weight:600; margin:0; }
+  .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
+  .field-grid.single{ grid-template-columns:1fr; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--text3); }
+  .field input[type=text],.field input[type=email],.field textarea,.field select{
+    font:inherit; font-size:13.5px; border:1px solid var(--border); background:var(--layer2);
+    color:#fff; padding:9px 12px; outline:none; width:100%; resize:vertical; }
+  .field input:focus,.field textarea:focus,.field select:focus{
+    border-color:var(--blue-text); box-shadow:0 0 0 2px var(--blue-soft); }
+  .field input[readonly]{ color:var(--text3); background:var(--layer1); cursor:default; }
+  .field textarea{ min-height:80px; font-family:var(--font); font-size:13px; line-height:1.55; }
+  .field .hint{ font-size:11.5px; color:var(--text3); margin-top:2px; }
+  .pref-row{ display:flex; align-items:center; gap:14px; padding:11px 0; border-top:1px solid var(--border); }
+  .pref-row:first-of-type{ border-top:none; }
+  .pref-row label{ font-size:13px; flex:1; min-width:0; }
+  .pref-row .pref-hint{ font-size:11.5px; color:var(--text3); }
+  .pref-row input[type=number]{ width:72px; font:inherit; font-size:13.5px; border:1px solid var(--border);
+    background:var(--layer2); color:#fff; padding:7px 10px; outline:none; text-align:center; }
+  .pref-row input[type=number]:focus{ border-color:var(--blue-text); }
+  .pref-row select{ width:180px; font:inherit; font-size:13px; border:1px solid var(--border);
+    background:var(--layer2); color:#fff; padding:7px 10px; outline:none; }
+  .reset-link{ font:inherit; font-size:12px; color:var(--text3); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
+  .reset-link:hover{ color:#fff; }
+  .access-link{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--blue-text); background:none;
+                border:none; cursor:pointer; font:inherit; padding:0; margin-top:4px; }
+  .access-link:hover{ text-decoration:underline; }
+  @media(max-width:640px){ .field-grid{ grid-template-columns:1fr; } }
+
   /* ── top bar ────────────────────────────────────────────────── */
   .topbar{ position:sticky; top:0; z-index:50; background:rgba(10,10,12,.9); backdrop-filter:saturate(160%) blur(16px);
            border-bottom:1px solid #ffffff; display:flex; align-items:center; justify-content:space-between;
@@ -129,10 +168,10 @@ PAGE_TEMPLATE = """
   .brand-logo{ width:30px; height:30px; flex:none; }
   .brand-name{ font-size:16px; font-weight:600; letter-spacing:-.01em; color:var(--text1); }
   .topnav{ display:flex; align-items:center; gap:2px; flex:1; }
-  .navlink{ font:inherit; font-size:13.5px; font-weight:500; color:var(--text2); background:none; border:none;
+  .navlink{ font:inherit; font-size:13.5px; font-weight:500; color:#ffffff; background:none; border:none;
             cursor:pointer; padding:8px 14px; border-radius:var(--r-sm); transition:color .15s,background .15s; }
-  .navlink:hover{ color:var(--text1); background:var(--layer2); }
-  .navlink.active{ color:var(--text1); background:var(--layer2); }
+  .navlink:hover{ color:#ffffff; background:var(--layer2); }
+  .navlink.active{ color:#ffffff; background:var(--layer2); }
   .profile-wrap{ position:relative; flex:none; }
   .profile-btn{ width:32px; height:32px; border-radius:50%; background:var(--layer2); border:1px solid var(--border);
                 color:var(--text1); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer;
@@ -153,19 +192,19 @@ PAGE_TEMPLATE = """
   .page{ display:none; } .page.active{ display:block; }
   .page-head{ margin-bottom:24px; }
   .page-head h2{ font-size:24px; }
-  .page-head p{ color:var(--text3); font-size:14.5px; margin:5px 0 0; }
+  .page-head p{ color:#ffffff; font-size:14.5px; margin:5px 0 0; }
 
   /* ── dashboard ──────────────────────────────────────────────── */
   .empty-state{ text-align:center; padding:70px 20px; background:var(--layer1); border:1px solid var(--border);
                 border-radius:var(--r-lg); }
   .empty-state h3{ font-size:18px; margin-bottom:8px; }
-  .empty-state p{ color:var(--text3); font-size:14px; margin:0 0 20px; }
+  .empty-state p{ color:#ffffff; font-size:14px; margin:0 0 20px; }
   .empty-state .btn{ width:auto; }
   .range-toggle{ display:inline-flex; background:var(--layer2); border:1px solid var(--border); border-radius:var(--r-sm);
                  padding:3px; gap:2px; margin-bottom:18px; }
-  .range-btn{ font:inherit; font-size:12.5px; font-weight:500; color:var(--text2); background:none; border:none;
+  .range-btn{ font:inherit; font-size:12.5px; font-weight:500; color:#ffffff; background:none; border:none;
               cursor:pointer; padding:6px 15px; border-radius:0; }
-  .range-btn.active{ background:var(--layer1); color:var(--text1); }
+  .range-btn.active{ background:var(--layer1); color:#ffffff; }
   .aitem{ display:flex; align-items:center; gap:14px; padding:13px 16px; background:var(--layer1); border:1px solid var(--border);
           border-radius:var(--r-md); margin-bottom:8px; }
   .aitem .adate{ width:78px; flex:none; font-size:11px; color:var(--text3); font-family:var(--mono); }
@@ -173,19 +212,20 @@ PAGE_TEMPLATE = """
   .aitem .aplay{ font-size:11px; color:var(--text3); flex:none; }
   .aitems-empty{ color:var(--text3); font-size:13.5px; padding:26px; text-align:center; background:var(--layer1);
                  border:1px dashed var(--border); border-radius:var(--r-md); }
-  .stub{ text-align:center; padding:110px 20px; color:var(--text3); }
-  .stub h3{ color:var(--text1); font-size:18px; margin-bottom:6px; }
+  .stub{ text-align:center; padding:110px 20px; color:#ffffff; }
+  .stub h3{ color:#ffffff; font-size:18px; margin-bottom:6px; }
 
   /* ── accounts tab ───────────────────────────────────────────── */
   .accts-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
-  .accts-count{ color:var(--text3); font-size:13px; }
+  .accts-count{ color:#ffffff; font-size:13px; }
   .acct-list{ max-height:600px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--r-lg);
               background:var(--layer1); }
-  .acct-row{ display:flex; align-items:center; gap:16px; padding:11px 18px; border-bottom:1px solid var(--border); }
+  .acct-row{ display:flex; align-items:center; gap:0; padding:11px 18px; border-bottom:1px solid var(--border); }
   .acct-row:last-child{ border-bottom:none; }
-  .acct-row .an{ flex:1; min-width:0; font-weight:500; font-size:13.5px; }
-  .acct-row .ai{ width:180px; flex:none; color:var(--text3); font-size:12.5px; }
-  .acct-row .aiv{ flex:1; color:var(--text3); font-size:12px; }
+  .acct-row .an{ flex:1; min-width:0; font-weight:500; font-size:13.5px; padding-right:12px; }
+  .acct-row .ai{ width:160px; flex:none; color:var(--text3); font-size:12.5px; padding-right:12px; }
+  .acct-row .aiv{ width:180px; flex:none; color:var(--text3); font-size:12px; padding-right:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .acct-row .atags{ flex:none; display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; max-width:300px; }
 
   .stages{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
   .stage{ display:flex; align-items:flex-start; gap:12px; padding:15px 18px; background:var(--layer1);
@@ -198,10 +238,10 @@ PAGE_TEMPLATE = """
   .stage .smsg{ color:var(--text3); font-size:12.5px; margin-top:3px; }
 
   .side-lists{ display:flex; gap:10px; margin-bottom:24px; }
-  .side-badge{ font:inherit; font-size:12.5px; color:var(--text2); background:var(--layer1); border:1px solid var(--border);
+  .side-badge{ font:inherit; font-size:12.5px; color:#ffffff; background:var(--layer1); border:1px solid var(--border);
                border-radius:var(--r-sm); padding:8px 14px; cursor:pointer; }
-  .side-badge:hover{ border-color:var(--border-strong); color:var(--text1); }
-  .side-badge b{ color:var(--text1); font-family:var(--mono); }
+  .side-badge:hover{ border-color:var(--border-strong); color:#ffffff; }
+  .side-badge b{ color:#ffffff; font-family:var(--mono); }
 
   .cadence-group{ margin-bottom:22px; }
   .cadence-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
@@ -217,21 +257,41 @@ PAGE_TEMPLATE = """
   /* Tags: white text on a transparent box (border-only), IBM Carbon style —
      the border color alone carries the category. */
   .tagpill{ font-size:10.5px; font-weight:500; color:#fff; background:transparent; border:1px solid var(--border-strong);
-            border-radius:0; padding:3px 9px; white-space:nowrap; cursor:pointer; }
+            border-radius:0; padding:3px 9px; white-space:nowrap; cursor:pointer; position:relative; }
   .tagpill.white{ border-color:var(--blue-border); }
   .tagpill.risk{ border-color:rgba(250,77,86,.55); }
   .tagpill.up{ border-color:rgba(66,190,101,.55); }
   .tagpill.on{ background:#fff; color:#0a0a0c; border-color:#fff; }
+  /* tag tooltip */
+  .tagpill[data-tip]:hover::after{
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    background:var(--layer3); color:#fff; border:1px solid var(--border-strong);
+    font-size:11px; font-weight:400; line-height:1.45; padding:6px 10px; white-space:normal;
+    width:200px; z-index:100; pointer-events:none; text-align:left; }
+  /* tag dots in account rows — compact colored circles replacing full pills */
+  .tagdot{ display:inline-block; width:9px; height:9px; border-radius:50%; flex:none; cursor:default; position:relative; }
+  .tagdot[data-tip]:hover::after{
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+    background:var(--layer3); color:#fff; border:1px solid var(--border-strong);
+    font-size:11px; font-weight:400; line-height:1.45; padding:6px 10px; white-space:normal;
+    width:190px; z-index:100; pointer-events:none; text-align:left; }
+  .tagdot.white{ background:var(--blue-text); }
+  .tagdot.risk{ background:var(--red); }
+  .tagdot.up{ background:var(--green); }
+  .tagdot.neutral{ background:var(--border-strong); }
+  /* tag legend row */
+  .tag-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-top:8px; padding:8px 0 2px; border-top:1px solid var(--border); }
+  .tag-legend-item{ display:flex; align-items:center; gap:5px; color:var(--text3); }
 
   /* ── accounts layout (sidebar lists + search/filter) ─────────── */
   .accts-layout{ display:flex; gap:18px; align-items:flex-start; }
   .accts-sidebar{ width:230px; flex:none; background:var(--layer1); border:1px solid var(--border); }
   .accts-sidebar h4{ font-size:11.5px; font-weight:600; color:var(--text3); padding:12px 14px 6px; }
-  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; color:var(--text2); background:none;
+  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; color:#ffffff; background:none;
           border:none; border-left:3px solid transparent; padding:9px 14px; cursor:pointer; }
-  .slist:hover{ background:var(--layer2); color:var(--text1); }
-  .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:600; }
-  .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:var(--text3); }
+  .slist:hover{ background:var(--layer2); color:#ffffff; }
+  .slist.active{ background:var(--layer2); color:#ffffff; border-left-color:var(--blue); font-weight:600; }
+  .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:#ffffff; }
   .accts-main{ flex:1; min-width:0; }
   .accts-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
   .accts-tools input{ width:320px; max-width:100%; }
@@ -268,8 +328,8 @@ PAGE_TEMPLATE = """
   .cal-cell.has{ cursor:pointer; border-color:var(--blue-border); }
   .cal-cell.has:hover{ background:var(--layer3); }
   .cal-cell.sel{ background:var(--blue-soft); border-color:var(--blue); }
-  .cal-cell .d{ font-family:var(--mono); font-size:11px; color:var(--text3); }
-  .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:var(--text2); }
+  .cal-cell .d{ font-family:var(--mono); font-size:11px; color:#ffffff; }
+  .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:#ffffff; }
   .cal-cell.compact{ min-height:34px; }
   .cal-quarter{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
   .cal-week{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
@@ -277,16 +337,122 @@ PAGE_TEMPLATE = """
   .cal-weekday:hover{ background:var(--layer2); }
   .cal-weekday.sel{ border-color:var(--blue); }
   .cal-weekday h5{ font-size:12px; margin-bottom:8px; }
-  .cal-weekday .cnt{ font-size:11.5px; color:var(--text3); margin-bottom:8px; }
-  .day-detail{ margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
+  .cal-weekday .cnt{ font-size:11.5px; color:#ffffff; margin-bottom:8px; }
+  /* ── day-detail side panel (Plan tab) ──────────────────────── */
+  .day-panel{ position:fixed; top:0; right:0; width:360px; max-width:100vw; height:100vh; background:var(--layer1);
+              border-left:1px solid var(--border); z-index:120; transform:translateX(100%);
+              transition:transform .22s ease; display:flex; flex-direction:column; overflow:hidden; }
+  .day-panel.open{ transform:translateX(0); }
+  .day-panel-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px;
+                   border-bottom:1px solid var(--border); flex:none; }
+  .day-panel-head h3{ font-size:14px; margin:0; }
+  .day-panel-close{ font:inherit; font-size:18px; background:none; border:none; color:var(--text3); cursor:pointer; padding:0 4px; line-height:1; }
+  .day-panel-close:hover{ color:#fff; }
+  .day-panel-sums{ padding:14px 20px 10px; flex:none; border-bottom:1px solid var(--border); font-size:13px; color:#ffffff; }
+  .day-panel-items{ flex:1; overflow-y:auto; padding:10px 20px 20px; }
+  /* legacy inline detail (kept for day-view fallback, hidden by default) */
+  .day-detail{ margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:none; }
   .day-detail h3{ font-size:14px; margin-bottom:6px; }
-  .day-detail .sums{ color:var(--text2); font-size:13px; margin-bottom:12px; }
+  .day-detail .sums{ color:#ffffff; font-size:13px; margin-bottom:12px; }
   .act-row{ display:flex; gap:12px; align-items:center; padding:8px 0; border-top:1px solid var(--border); font-size:12.5px; }
   .act-row:first-of-type{ border-top:none; }
   .act-type{ width:52px; flex:none; font-size:10.5px; font-weight:600; text-align:center; border:1px solid var(--border-strong); padding:2px 0; }
   .act-type.email{ border-color:var(--purple-border); }
   .act-type.call{ border-color:var(--blue-border); }
   @media(max-width:980px){ .cal-quarter{ grid-template-columns:1fr; } .cal-week{ grid-template-columns:1fr; } .accts-layout{ flex-direction:column; } .accts-sidebar{ width:100%; } }
+
+  /* ── cadences tab ───────────────────────────────────────────── */
+  .cad-card{ background:var(--layer1); border:1px solid var(--border); margin-bottom:12px; }
+  .cad-header{ display:flex; align-items:center; gap:14px; padding:18px 20px; cursor:pointer; }
+  .cad-header:hover{ background:var(--layer2); }
+  .cad-chevron{ font-size:11px; flex:none; transition:transform .2s; color:var(--text3); }
+  .cad-card.open .cad-chevron{ transform:rotate(90deg); }
+  .cad-meta{ flex:1; min-width:0; }
+  .cad-name{ font-weight:600; font-size:14.5px; }
+  .cad-desc{ font-size:12.5px; color:var(--text3); margin-top:3px; line-height:1.5; }
+  .cad-count{ font-family:var(--mono); font-size:12px; flex:none; }
+  .cad-status{ display:flex; gap:10px; flex:none; }
+  .cad-body{ display:none; border-top:1px solid var(--border); }
+  .cad-card.open .cad-body{ display:block; }
+  .cad-steps{ padding:16px 20px 10px; border-bottom:1px solid var(--border); }
+  .cad-steps h4{ font-size:11.5px; font-weight:600; color:var(--text3); margin-bottom:12px; }
+  .step-timeline{ display:flex; gap:0; align-items:flex-start; overflow-x:auto; padding-bottom:4px; }
+  .step-node{ display:flex; flex-direction:column; align-items:center; min-width:90px; position:relative; }
+  .step-node:not(:last-child)::after{ content:''; position:absolute; top:12px; left:calc(50% + 12px);
+    right:calc(-50% + 12px); height:1px; background:var(--border); }
+  .step-dot{ width:24px; height:24px; border:1px solid var(--border-strong); background:var(--layer2);
+             display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:600; z-index:1; }
+  .step-dot.email{ border-color:var(--purple-border); background:var(--purple-soft); }
+  .step-dot.call{ border-color:var(--blue-border); background:var(--blue-soft); }
+  .step-label{ font-size:10px; margin-top:5px; text-align:center; color:var(--text3); max-width:80px; line-height:1.35; }
+  .step-day{ font-family:var(--mono); font-size:9.5px; color:var(--text3); margin-top:2px; }
+  .cad-accounts{ padding:0; }
+  .cad-acct-row{ display:flex; align-items:center; gap:0; padding:10px 20px; border-bottom:1px solid var(--border);
+                 font-size:12.5px; }
+  .cad-acct-row:last-child{ border-bottom:none; }
+  .cad-acct-row:hover{ background:var(--layer2); }
+  .cad-acct-rank{ width:28px; flex:none; font-family:var(--mono); font-size:11.5px; color:var(--text3); }
+  .cad-acct-name{ flex:1; font-weight:500; cursor:pointer; padding-right:12px; }
+  .cad-acct-name:hover{ color:var(--blue-text); text-decoration:underline; }
+  .cad-acct-ind{ width:150px; flex:none; color:var(--text3); font-size:11.5px; padding-right:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cad-acct-next{ flex:1; font-size:11.5px; color:var(--text3); }
+  .cad-acct-status{ width:90px; flex:none; }
+  .status-pill{ font-size:10.5px; font-weight:600; padding:2px 9px; border:1px solid transparent; }
+  .status-pill.not_started{ border-color:var(--border-strong); color:var(--text3); }
+  .status-pill.in_progress{ border-color:var(--blue-border); color:var(--blue-text); }
+  .status-pill.completed{ border-color:rgba(66,190,101,.4); color:var(--green); }
+
+  /* ── email tab ──────────────────────────────────────────────── */
+  .email-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
+  .email-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(380px, 1fr)); gap:14px; }
+  .email-card{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+  .email-card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .email-card-head-actions{ display:flex; align-items:center; gap:6px; flex:none; }
+  .email-card-to{ font-weight:600; font-size:13.5px; }
+  .email-card-addr{ font-size:11.5px; color:var(--blue-text); font-family:var(--mono); margin-top:1px; }
+  .email-card-sub{ font-size:12px; color:var(--text3); margin-top:3px; }
+  .email-card-cadence{ font-size:11px; color:var(--purple-text); margin-top:2px; }
+  .email-body-wrap{ border-top:1px solid var(--border); padding-top:10px; flex:1; }
+  .email-body-text{ font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2); min-height:100px; }
+  .email-body-text.empty{ color:var(--text3); font-style:italic; font-family:var(--font); font-size:12.5px; }
+  .email-body-edit{ font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2);
+                    background:var(--layer2); border:1px solid var(--border); padding:10px 12px;
+                    min-height:130px; width:100%; resize:vertical; outline:none; display:none; }
+  .email-body-edit.active{ display:block; }
+  .email-body-edit:focus{ border-color:var(--blue-text); box-shadow:0 0 0 2px var(--blue-soft); }
+  .email-foot{ display:flex; gap:8px; border-top:1px solid var(--border); padding-top:10px; align-items:center; }
+  .email-sent{ font-size:12px; color:var(--green); display:none; }
+  .email-sent.show{ display:inline; }
+  .icon-btn{ font:inherit; font-size:14px; background:none; border:none; cursor:pointer; color:var(--text3); padding:4px 6px; line-height:1; }
+  .icon-btn:hover{ color:#fff; }
+
+  /* ── call tab ───────────────────────────────────────────────── */
+  .call-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
+  .call-list{ display:flex; flex-direction:column; gap:10px; }
+  .call-card{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
+  .call-card-head{ display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+  .call-card-rank{ font-family:var(--mono); font-size:12px; color:var(--text3); width:24px; flex:none; }
+  .call-card-acct{ font-size:12px; color:var(--text3); }
+  .call-card-name{ font-weight:600; font-size:14px; flex:1; cursor:pointer; }
+  .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
+  .call-card-step{ font-size:11.5px; color:var(--blue-text); }
+  .call-card-body{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .call-contacts{ background:var(--layer2); border:1px solid var(--border); padding:12px 14px; }
+  .call-contacts h4{ font-size:11.5px; font-weight:600; color:var(--text3); margin-bottom:10px; }
+  .call-person{ padding:8px 0; border-top:1px solid var(--border); }
+  .call-person:first-of-type{ border-top:none; }
+  .call-person-name{ font-weight:600; font-size:13px; display:flex; align-items:center; gap:8px; }
+  .call-person-title{ font-size:11.5px; color:var(--text3); margin-top:2px; }
+  .call-person-info{ display:flex; gap:14px; margin-top:6px; flex-wrap:wrap; }
+  .call-person-phone{ font-family:var(--mono); font-size:11.5px; color:var(--blue-text); }
+  .call-person-email{ font-family:var(--mono); font-size:11px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+  .btn.call{ background:var(--green); border-color:var(--green); color:#000; font-weight:600; padding:4px 12px; font-size:12px; }
+  .btn.call:hover{ background:#37a659; }
+  .call-brief{ background:var(--purple-soft); border:1px solid var(--purple-border); padding:12px 14px; }
+  .call-brief h4{ font-size:11.5px; font-weight:600; color:var(--purple-text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+  .call-brief p{ font-size:12px; line-height:1.6; margin:0; }
+  .call-brief.loading p{ color:var(--text3); font-style:italic; }
+  @media(max-width:700px){ .call-card-body{ grid-template-columns:1fr; } .email-grid{ grid-template-columns:1fr; } }
 
   /* ── account detail modal ──────────────────────────────────── */
   .modal-card.wide{ width:820px; }
@@ -341,7 +507,7 @@ PAGE_TEMPLATE = """
   .kpi.ai{ border-color:var(--purple-border); }
   .kval{ font-family:var(--mono); font-size:30px; font-weight:600; color:var(--text1); line-height:1; }
   .kpi.ai .kval{ color:var(--purple-text); }
-  .klabel{ color:var(--text3); font-size:12px; margin-top:9px; display:flex; align-items:center; gap:5px; }
+  .klabel{ color:#ffffff; font-size:12px; margin-top:9px; display:flex; align-items:center; gap:5px; }
 
   /* ── ROI ────────────────────────────────────────────────────── */
   .roi-head{ margin:8px 0 14px; }
@@ -350,7 +516,7 @@ PAGE_TEMPLATE = """
   .roi{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
   .roi-card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px 20px; }
   .roi-card.ai{ border-color:var(--purple-border); }
-  .rlabel{ color:var(--text3); font-size:12px; }
+  .rlabel{ color:#ffffff; font-size:12px; }
   .rval{ font-family:var(--mono); font-size:22px; font-weight:600; margin-top:8px; color:var(--text1); }
   .rval.blue{ color:var(--blue-text); }
   .roi-card.ai .rval{ color:var(--purple-text); }
@@ -384,7 +550,7 @@ PAGE_TEMPLATE = """
   .alert{ background:rgba(250,77,86,.12); color:#ff8790; border-radius:var(--r-sm); padding:11px 15px; margin-bottom:10px;
           font-size:13px; font-weight:500; display:none; }
   .alert.show{ display:block; }
-  .note{ color:var(--text3); font-size:12.5px; line-height:1.55; margin-bottom:6px; }
+  .note{ color:#ffffff; font-size:12.5px; line-height:1.55; margin-bottom:6px; }
   .panel input[type=text],.panel input[type=password]{ margin:8px 8px 4px 0; }
 </style>
 </head>
@@ -416,14 +582,12 @@ PAGE_TEMPLATE = """
     <nav class="topnav">
       <button class="navlink" data-page="plan" onclick="showPage('plan')">Plan</button>
       <button class="navlink" data-page="accounts" onclick="showPage('accounts')">Accounts</button>
+      <button class="navlink" data-page="cadences" onclick="showPage('cadences')">Cadences</button>
       <button class="navlink" data-page="email" onclick="showPage('email')">Email</button>
       <button class="navlink" data-page="call" onclick="showPage('call')">Call</button>
     </nav>
     <div class="profile-wrap">
-      <button class="profile-btn" id="profileBtn" onclick="toggleProfileMenu()">?</button>
-      <div class="profile-menu" id="profileMenu">
-        <button onclick="openDetails(); closeProfileMenu();">Settings<span class="warndot" id="detailsWarn" style="display:none"></span></button>
-      </div>
+      <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">?</button>
     </div>
   </header>
 
@@ -516,7 +680,6 @@ PAGE_TEMPLATE = """
           </div>
         </div>
         <div id="calGrid"></div>
-        <div class="day-detail" id="dayDetail" style="display:none"></div>
       </div>
     </section>
 
@@ -546,7 +709,30 @@ PAGE_TEMPLATE = """
       <div id="acctsBody" style="display:none">
         <div class="accts-head">
           <span class="accts-count" id="acctsCount"></span>
-          <button class="btn primary" id="strategizeBtn" onclick="runStrategize()">Strategize</button>
+          <button class="btn primary" id="strategizeBtn" onclick="runStrategize()">Sort accounts into cadences</button>
+        </div>
+
+        <!-- Refresh cadences confirmation modal -->
+        <div class="modal" id="refreshModal" onclick="if(event.target===this) closeRefreshModal()">
+          <div class="modal-card" style="max-width:520px;">
+            <div class="modal-head">
+              <h2>Refresh cadences?</h2>
+              <button class="link" onclick="closeRefreshModal()">Cancel</button>
+            </div>
+            <p style="font-size:13.5px; line-height:1.6; margin:0 0 14px;">
+              This will re-run account intelligence on all accounts that haven't been touched yet —
+              pulling in the latest signals, news, and market data. Granite will re-evaluate urgency,
+              re-rank accounts, and adjust cadence groupings based on what's changed since the last run.
+            </p>
+            <p style="font-size:13px; color:var(--blue-text); margin:0 0 22px; line-height:1.55;">
+              Accounts already contacted this quarter will <strong>stay in their current cadence and plan</strong> —
+              only untouched accounts are re-evaluated.
+            </p>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+              <button class="btn" onclick="closeRefreshModal()">Cancel</button>
+              <button class="btn primary" onclick="confirmRefresh()">Yes, refresh cadences</button>
+            </div>
+          </div>
         </div>
 
         <div class="stages" id="stages" style="display:none">
@@ -573,7 +759,12 @@ PAGE_TEMPLATE = """
           <div class="accts-main">
             <div class="accts-tools" id="acctsTools" style="display:none">
               <input type="text" id="acctSearch" placeholder="Search accounts..." oninput="renderAccounts()">
-              <div class="tag-filters" id="tagFilters"></div>
+              <div class="tag-legend" id="tagLegend" style="display:none">
+                <span class="tag-legend-item"><span class="tagdot white"></span> Whitespace / Bluemix footprint</span>
+                <span class="tag-legend-item"><span class="tagdot up"></span> Growing spend</span>
+                <span class="tag-legend-item"><span class="tagdot risk"></span> At-risk / Competitive</span>
+                <span class="tag-legend-item"><span class="tagdot neutral"></span> Other signal</span>
+              </div>
             </div>
             <div id="acctList"></div>
           </div>
@@ -581,26 +772,252 @@ PAGE_TEMPLATE = """
       </div>
     </section>
 
-    <!-- Email -->
-    <section id="page-email" class="page">
-      <div id="emailEmpty" class="empty-state" style="display:none">
-        <h3>Import accounts to get started</h3>
-        <p>Email campaigns are built from your strategized cadences.</p>
+    <!-- Cadences -->
+    <section id="page-cadences" class="page">
+      <div class="page-head">
+        <h2>Cadences</h2>
+        <p>Your active outreach sequences — steps, timeline, and account progress.</p>
+      </div>
+      <div id="cadencesEmpty" class="empty-state" style="display:none">
+        <h3>Upload accounts to get started</h3>
+        <p>Go to Accounts, import your accounts, and run Sort accounts into cadences. Your cadences will appear here once strategizing is complete.</p>
         <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
       </div>
-      <div id="emailStub" class="stub" style="display:none"><h3>Email</h3><p>Coming soon.</p></div>
+      <div id="cadencesStratEmpty" class="empty-state" style="display:none">
+        <h3>Sort accounts into cadences first</h3>
+        <p>Your accounts are in — run "Sort accounts into cadences" on the Accounts tab to build your outreach sequences.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="cadencesBody" style="display:none">
+        <div id="cadencesList"></div>
+      </div>
+    </section>
+
+    <!-- Email -->
+    <section id="page-email" class="page">
+      <div class="page-head">
+        <h2>Email</h2>
+        <p id="emailDateLabel">Today's outbound emails across all cadences.</p>
+      </div>
+      <div id="emailEmpty" class="empty-state" style="display:none">
+        <h3>Upload accounts to get started</h3>
+        <p>Go to the Accounts tab, import your accounts, and run Sort accounts into cadences. Email drafts will appear here once your quarter is planned.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="emailStratEmpty" class="empty-state" style="display:none">
+        <h3>Sort accounts into cadences first</h3>
+        <p>Your accounts are in — run "Sort accounts into cadences" on the Accounts tab to build cadences and unlock email drafts.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="emailBody" style="display:none">
+        <div class="email-toolbar">
+          <span id="emailCountLabel" style="font-size:13px;"></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn ai" id="generateEmailsBtn" onclick="generateAllEmails()">""" + _SPARKLE + """ Draft all emails</button>
+            <button class="btn primary" id="sendAllBtn" onclick="sendAllEmails()">Send all</button>
+          </div>
+        </div>
+        <div class="email-grid" id="emailGrid"></div>
+      </div>
     </section>
 
     <!-- Call -->
     <section id="page-call" class="page">
+      <div class="page-head">
+        <h2>Call</h2>
+        <p id="callDateLabel">Today's call list across all cadences.</p>
+      </div>
       <div id="callEmpty" class="empty-state" style="display:none">
-        <h3>Import accounts to get started</h3>
-        <p>Call plans are built from your strategized cadences.</p>
+        <h3>Upload accounts to get started</h3>
+        <p>Go to the Accounts tab, import your accounts, and run Sort accounts into cadences. Call plans will appear here once your quarter is planned.</p>
         <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
       </div>
-      <div id="callStub" class="stub" style="display:none"><h3>Call</h3><p>Coming soon.</p></div>
+      <div id="callStratEmpty" class="empty-state" style="display:none">
+        <h3>Sort accounts into cadences first</h3>
+        <p>Your accounts are in — run "Sort accounts into cadences" on the Accounts tab to build cadences and unlock call plans.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="callBody" style="display:none">
+        <div class="call-toolbar">
+          <span id="callCountLabel" style="font-size:13px;"></span>
+          <button class="btn ai" id="generateBriefsBtn" onclick="generateAllBriefs()">""" + _SPARKLE + """ Generate all briefings</button>
+        </div>
+        <div class="call-list" id="callList"></div>
+      </div>
+    </section>
+
+    <!-- Profile -->
+    <section id="page-profile" class="page">
+      <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h2>Profile</h2>
+          <p>Your identity, territory, and AI personalization preferences.</p>
+        </div>
+        <button class="access-link" onclick="openDetails()">&#128274; Manage access &amp; sessions</button>
+      </div>
+      <div class="profile-page">
+        <div class="profile-tabs">
+          <button class="profile-tab active" data-ptab="profile" onclick="switchProfileTab('profile')">Profile</button>
+          <button class="profile-tab" data-ptab="personalization" onclick="switchProfileTab('personalization')">Personalization</button>
+        </div>
+
+        <!-- ── Profile tab ── -->
+        <div class="profile-section active" id="ptab-profile">
+
+          <div class="prof-card">
+            <div class="prof-card-head"><h3>Identity</h3></div>
+            <div class="field-grid">
+              <div class="field">
+                <label>Full name</label>
+                <input type="text" id="prof-name" value="Tim Zhou" readonly>
+              </div>
+              <div class="field">
+                <label>IBM email</label>
+                <input type="email" id="prof-email" value="tim.zhou@ibm.com" readonly>
+              </div>
+              <div class="field">
+                <label>Slack handle</label>
+                <input type="text" id="prof-slack" value="@timzhou" readonly>
+              </div>
+              <div class="field">
+                <label>Role</label>
+                <input type="text" id="prof-role" value="Client Executive" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="prof-card">
+            <div class="prof-card-head"><h3>Territory &amp; market</h3></div>
+            <div class="field-grid">
+              <div class="field">
+                <label>Territory</label>
+                <input type="text" id="prof-territory" value="California" readonly>
+              </div>
+              <div class="field">
+                <label>Market</label>
+                <input type="text" id="prof-market" value="FSS/PUB" readonly>
+              </div>
+              <div class="field">
+                <label>Client segment</label>
+                <input type="text" id="prof-segment" value="Select Territory" readonly>
+              </div>
+              <div class="field">
+                <label>Portfolio</label>
+                <input type="text" id="prof-portfolio" value="Infrastructure" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:4px;font-size:12px;color:var(--text3);">Profile data sourced from IBM W3. Contact your manager to update territory or role.</div>
+        </div>
+
+        <!-- ── Personalization tab ── -->
+        <div class="profile-section" id="ptab-personalization">
+
+          <!-- Email style -->
+          <div class="prof-card">
+            <div class="prof-card-head">
+              <h3>""" + _SPARKLE + """ Email writing style</h3>
+              <button class="reset-link" onclick="resetPref('email')">Reset to default</button>
+            </div>
+            <div class="field-grid single" style="gap:14px;">
+              <div class="field">
+                <label>Tone</label>
+                <select id="pref-email-tone">
+                  <option value="professional">Professional</option>
+                  <option value="conversational">Conversational</option>
+                  <option value="direct">Direct &amp; concise</option>
+                  <option value="warm">Warm &amp; relationship-first</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Context / framing</label>
+                <textarea id="pref-email-context" placeholder="e.g. Always open with a reference to the account's recent news or financial results. Avoid mentioning competitors by name."></textarea>
+                <span class="hint">Granite will use this as a standing instruction when drafting every email.</span>
+              </div>
+              <div class="field">
+                <label>Example email (optional)</label>
+                <textarea id="pref-email-example" rows="6" placeholder="Paste a real email you've sent that reflects your preferred style. Granite will match its structure, length, and voice."></textarea>
+              </div>
+              <div class="field">
+                <label>Behavior notes</label>
+                <textarea id="pref-email-behavior" placeholder="e.g. Keep emails under 150 words. Always end with a specific ask. Never use bullet points."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call briefings -->
+          <div class="prof-card">
+            <div class="prof-card-head">
+              <h3>""" + _SPARKLE + """ Pre-call briefings</h3>
+              <button class="reset-link" onclick="resetPref('call')">Reset to default</button>
+            </div>
+            <div class="field-grid single" style="gap:14px;">
+              <div class="field">
+                <label>What to know before each call</label>
+                <textarea id="pref-call-know" placeholder="e.g. Recent news about the company, current IBM spend and trend, any open opportunities or past deals."></textarea>
+                <span class="hint">Granite will always surface these data points in the pre-call brief.</span>
+              </div>
+              <div class="field">
+                <label>What AI should provide</label>
+                <textarea id="pref-call-provide" placeholder="e.g. A one-sentence opening line I can use. The top objection I might face and a response. A suggested product to mention."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cadence preferences -->
+          <div class="prof-card">
+            <div class="prof-card-head">
+              <h3>Cadence defaults</h3>
+              <button class="reset-link" onclick="resetPref('cadence')">Reset to default</button>
+            </div>
+            <div class="pref-row">
+              <label>Number of touches per cadence</label>
+              <span class="pref-hint">steps</span>
+              <input type="number" id="pref-cad-steps" min="3" max="20" value="7">
+            </div>
+            <div class="pref-row">
+              <label>Cadence duration</label>
+              <span class="pref-hint">days</span>
+              <input type="number" id="pref-cad-days" min="7" max="90" value="14">
+            </div>
+            <div class="pref-row">
+              <label>Preferred first touch type</label>
+              <select id="pref-cad-first">
+                <option value="email">Email</option>
+                <option value="call">Call</option>
+                <option value="either">Either</option>
+              </select>
+            </div>
+            <div class="pref-row">
+              <label>Accounts started per day</label>
+              <span class="pref-hint">accounts</span>
+              <input type="number" id="pref-cad-starts" min="1" max="10" value="3">
+            </div>
+            <div class="pref-row">
+              <label>Max accounts per cadence</label>
+              <span class="pref-hint">accounts</span>
+              <input type="number" id="pref-cad-cap" min="3" max="30" value="8">
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
+            <button class="btn primary" onclick="savePrefs()">Save preferences</button>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
+</div>
+
+<!-- ── Day-detail side panel (Plan tab) — outside #app so position:fixed is always viewport-relative ── -->
+<div class="day-panel" id="dayPanel">
+  <div class="day-panel-head">
+    <h3 id="dayPanelTitle">—</h3>
+    <button class="day-panel-close" onclick="closeDayPanel()">&#10005;</button>
+  </div>
+  <div class="day-panel-sums" id="dayPanelSums"></div>
+  <div class="day-panel-items" id="dayPanelItems"></div>
 </div>
 
 <!-- ── account detail modal ─────────────────────────────────────── -->
@@ -696,22 +1113,17 @@ function closeDetails(){
 }
 
 // ── page nav ──────────────────────────────────────────────────
-function showPage(name){
+function showPage(name, opts){
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   document.querySelectorAll('.navlink').forEach(b => b.classList.toggle('active', b.dataset.page === name));
-  closeProfileMenu();
   if (name === 'accounts'){ fetchAccountsList(); fetchStrategizeStatus(); }
   if (name === 'dashboard'){ refreshDashboard(); }
   if (name === 'plan'){ fetchSchedule(); }
+  if (name === 'cadences'){ fetchCadences(opts && opts.open); }
+  if (name === 'email'){ fetchTodayEmail(); }
+  if (name === 'call'){ fetchTodayCall(); }
+  if (name === 'profile'){ loadProfilePage(); }
 }
-
-// ── profile menu ──────────────────────────────────────────────
-function toggleProfileMenu(){ document.getElementById('profileMenu').classList.toggle('show'); }
-function closeProfileMenu(){ document.getElementById('profileMenu').classList.remove('show'); }
-document.addEventListener('click', (ev) => {
-  const wrap = document.querySelector('.profile-wrap');
-  if (wrap && !wrap.contains(ev.target)) closeProfileMenu();
-});
 
 // ── accounts tab: strategize stages ───────────────────────────
 const STAGE_ORDER = ['contacts', 'scoring', 'quarters', 'cadences', 'schedule', 'done'];
@@ -726,7 +1138,7 @@ function setStageEl(id, cls, msg){
 
 function renderStages(a){
   const box = document.getElementById('stages');
-  if (!a || a.phase === 'idle'){ box.style.display = 'none'; return; }
+  if (!a || a.phase === 'idle' || (a.done && !a.active)){ box.style.display = 'none'; return; }
   box.style.display = '';
   const idx = stageIdx(a.phase);
   const err = a.phase === 'error';
@@ -760,6 +1172,23 @@ let _acctData = null;
 let _acctSel = 'all';
 const _tagSel = new Set();
 
+const TAG_TIPS = {
+  'Whitespace':             'No IBM product installed — fresh opportunity to land new revenue.',
+  'Whitespace: AI':         'No IBM AI product installed — open opportunity for watsonx.',
+  'Whitespace: Security':   'No IBM security product installed — open opportunity for QRadar/Verify.',
+  'Whitespace: Storage':    'No IBM storage product installed — open opportunity for Storage solutions.',
+  'Whitespace: Hybrid':     'No IBM hybrid cloud product — open opportunity for Cloud Paks.',
+  'Bluemix footprint':      'Existing IBM Cloud / Bluemix usage — expand within the platform.',
+  'At-risk spend':          'IBM spend is declining year-over-year — risk of churn; prioritize retention.',
+  'Competitive displacement':'Competitor product detected in install base — opportunity to displace.',
+  'Growing spend':          'IBM spend is growing year-over-year — healthy momentum, expand further.',
+};
+function tagTip(t){
+  if (TAG_TIPS[t]) return TAG_TIPS[t];
+  if (t.startsWith('Whitespace')) return 'No IBM product in this category installed — open whitespace opportunity.';
+  return '';
+}
+
 function tagClass(t){
   if (t.startsWith('Whitespace') || t === 'Bluemix footprint') return 'white';
   if (t === 'At-risk spend' || t === 'Competitive displacement') return 'risk';
@@ -788,22 +1217,23 @@ function selectList(key){ _acctSel = key; renderSidebar(); renderAccounts(); }
 function toggleTag(t){ _tagSel.has(t) ? _tagSel.delete(t) : _tagSel.add(t); renderTagFilters(); renderAccounts(); }
 
 function renderTagFilters(){
-  const host = document.getElementById('tagFilters');
-  if (!_acctData || !_acctData.strategized){ host.innerHTML = ''; return; }
-  const tags = [...new Set(_acctData.accounts.flatMap(a => a.tags || []))].sort();
-  host.innerHTML = tags.map(t =>
-    `<button class="tagpill ${tagClass(t)} ${_tagSel.has(t) ? 'on' : ''}" onclick="toggleTag('${esc(t)}')">${esc(t)}</button>`).join('');
+  const legend = document.getElementById('tagLegend');
+  if (!legend) return;
+  if (!_acctData || !_acctData.strategized){ legend.style.display = 'none'; return; }
+  const tags = [...new Set(_acctData.accounts.flatMap(a => a.tags || []))];
+  legend.style.display = tags.length ? '' : 'none';
 }
 
 function renderAccounts(){
   const host = document.getElementById('acctList');
   if (!_acctData) return;
   const q = (document.getElementById('acctSearch')?.value || '').toLowerCase();
+  const inCadenceView = _acctSel.startsWith('cadence:');
+  const currentCadence = inCadenceView ? _acctSel.slice(8) : null;
 
   let rows = _acctData.accounts;
-  if (_acctSel.startsWith('cadence:')){
-    const cn = _acctSel.slice(8);
-    rows = rows.filter(a => a.cadence === cn).sort((x, y) => (x.rank || 99) - (y.rank || 99));
+  if (inCadenceView){
+    rows = rows.filter(a => a.cadence === currentCadence).sort((x, y) => (x.rank || 99) - (y.rank || 99));
   } else if (_acctSel !== 'all'){
     const bucket = _acctSel === 'no_contacts' ? 'no_contacts' : _acctSel === 'leftovers' ? 'leftovers' : 'future';
     rows = rows.filter(a => a.bucket === bucket);
@@ -812,14 +1242,29 @@ function renderAccounts(){
   if (_tagSel.size) rows = rows.filter(a => [..._tagSel].every(t => (a.tags || []).includes(t)));
 
   if (!rows.length){ host.innerHTML = '<div class="aitems-empty">No accounts match.</div>'; return; }
-  host.innerHTML = '<div class="acct-list">' + rows.map(a => `
-    <div class="acct-row" style="cursor:pointer" onclick="openAcctModal('${esc(a.account)}')">
+
+  // "View in Cadences →" header when browsing a specific cadence list.
+  const cadHdr = inCadenceView
+    ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:var(--layer2);border-bottom:1px solid var(--border);font-size:12.5px;">
+        <span style="font-weight:600;">${esc(currentCadence)}</span>
+        <button class="link" onclick="goToCadence('${esc(currentCadence)}')">View in Cadences &#8594;</button>
+       </div>`
+    : '';
+
+  host.innerHTML = '<div class="acct-list">' + cadHdr + rows.map(a => {
+    const dots = (a.tags || []).map(t => {
+      const cls = tagClass(t) || 'neutral';
+      const tip = t + (tagTip(t) ? ': ' + tagTip(t) : '');
+      return `<span class="tagdot ${cls}"${tip ? ` data-tip="${esc(tip)}"` : ''}></span>`;
+    }).join('');
+    return `<div class="acct-row" style="cursor:pointer" onclick="openAcctModal('${esc(a.account)}')">
       ${a.rank ? `<span class="arank">#${a.rank}</span>` : ''}
       <span class="an">${esc(a.account || '')}</span>
       <span class="ai">${esc(a.industry || '')}</span>
       ${a.cadence && _acctSel === 'all' ? `<span class="aiv">${esc(a.cadence)}</span>` : ''}
-      <span class="atags">${(a.tags || []).map(t => `<span class="tagpill ${tagClass(t)}">${esc(t)}</span>`).join('')}</span>
-    </div>`).join('') + '</div>';
+      <span class="atags" style="display:flex;gap:4px;align-items:center;">${dots}</span>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function renderAccountList(data){
@@ -831,6 +1276,7 @@ function renderAccountList(data){
   empty.style.display = 'none'; body.style.display = '';
 
   document.getElementById('acctsTools').style.display = data.strategized ? '' : 'none';
+  document.getElementById('strategizeBtn').textContent = data.strategized ? 'Refresh cadences' : 'Sort accounts into cadences';
   renderSidebar(); renderTagFilters();
 
   if (!data.strategized){
@@ -860,7 +1306,22 @@ async function fetchStrategizeStatus(){
 }
 let _strategizeWasDone = false;
 
+function closeRefreshModal(){ document.getElementById('refreshModal').classList.remove('show'); }
+
+async function confirmRefresh(){
+  closeRefreshModal();
+  const res = await fetch('/api/strategize/run', {method:'POST'});
+  const body = await res.json();
+  if (!body.ok){ alert('Error: ' + body.error); return; }
+  fetchStrategizeStatus();
+}
+
 async function runStrategize(){
+  // If already strategized, show the refresh confirmation instead of running immediately.
+  if (_acctData && _acctData.strategized){
+    document.getElementById('refreshModal').classList.add('show');
+    return;
+  }
   const res = await fetch('/api/strategize/run', {method:'POST'});
   const body = await res.json();
   if (!body.ok){ alert('Error: ' + body.error); return; }
@@ -949,12 +1410,21 @@ function selectCalDay(iso){
   _cal.sel = iso;
   renderCal();
   const info = dayInfo(iso) || {emails: 0, calls: 0, accounts: [], items: []};
-  const dd = document.getElementById('dayDetail');
   const d = new Date(iso + 'T00:00:00');
-  dd.style.display = '';
-  dd.innerHTML = `<h3>${d.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'})}</h3>
-    <div class="sums"><b>${info.emails}</b> email${info.emails === 1 ? '' : 's'} &middot; <b>${info.calls}</b> call${info.calls === 1 ? '' : 's'} &middot; <b>${info.accounts.length}</b> account${info.accounts.length === 1 ? '' : 's'} touched</div>
-    ${(info.items || []).map(a => `<div class="act-row"><span class="act-type ${esc(a.type)}">${esc(a.type)}</span><span style="font-weight:500">${esc(a.account)}</span><span style="color:var(--text3)">${esc(a.step)} &middot; ${esc(a.cadence)}</span></div>`).join('') || '<div class="note">Nothing scheduled.</div>'}`;
+  const panel = document.getElementById('dayPanel');
+  document.getElementById('dayPanelTitle').textContent = d.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'});
+  document.getElementById('dayPanelSums').innerHTML =
+    `<b>${info.emails}</b> email${info.emails === 1 ? '' : 's'} &middot; <b>${info.calls}</b> call${info.calls === 1 ? '' : 's'} &middot; <b>${info.accounts.length}</b> account${info.accounts.length === 1 ? '' : 's'} touched`;
+  document.getElementById('dayPanelItems').innerHTML =
+    (info.items || []).map(a => `<div class="act-row"><span class="act-type ${esc(a.type)}">${esc(a.type)}</span><span style="font-weight:500">${esc(a.account)}</span><span style="color:var(--text3)">${esc(a.step)} &middot; ${esc(a.cadence)}</span></div>`).join('')
+    || '<div class="note" style="padding-top:14px;">Nothing scheduled.</div>';
+  panel.classList.add('open');
+}
+
+function closeDayPanel(){
+  document.getElementById('dayPanel').classList.remove('open');
+  _cal.sel = null;
+  renderCal();
 }
 
 function monthGridHTML(year, month, compact){
@@ -1033,10 +1503,15 @@ async function refreshGates(){
   show('planEmpty', !hasAccounts);
   show('planStrat', hasAccounts && !hasPlan);
   show('planBody', hasAccounts && hasPlan);
+  show('cadencesEmpty', !hasAccounts);
+  show('cadencesStratEmpty', hasAccounts && !hasPlan);
+  show('cadencesBody', hasAccounts && hasPlan);
   show('emailEmpty', !hasAccounts);
-  show('emailStub', hasAccounts);
+  show('emailStratEmpty', hasAccounts && !hasPlan);
+  show('emailBody', hasAccounts && hasPlan);
   show('callEmpty', !hasAccounts);
-  show('callStub', hasAccounts);
+  show('callStratEmpty', hasAccounts && !hasPlan);
+  show('callBody', hasAccounts && hasPlan);
   if (hasAccounts && hasPlan) renderDashboard(dash);
   // Accounts landed since the last list fetch (import just finished) — refresh.
   if (hasAccounts && (!_acctData || !_acctData.has_accounts)) fetchAccountsList();
@@ -1073,6 +1548,399 @@ function startApp(){
   }, 2000);
 }
 
+// ── cadences tab ──────────────────────────────────────────────
+let _cadData = null;
+let _cadOpenName = null; // cadence to auto-expand on load
+
+async function fetchCadences(openName){
+  if (openName) _cadOpenName = openName;
+  let d;
+  try { d = await (await fetch('/api/cadences')).json(); } catch(e){ return; }
+  if (!d.has_cadences) return;
+  _cadData = d.cadences;
+  renderCadences();
+}
+
+function renderCadences(){
+  const host = document.getElementById('cadencesList');
+  if (!host || !_cadData) return;
+  const STATUS_LABEL = {not_started: 'Not started', in_progress: 'In progress', completed: 'Completed'};
+  host.innerHTML = _cadData.map(c => {
+    const isOpen = c.name === _cadOpenName;
+    const notStarted = c.accounts.filter(a => a.status === 'not_started').length;
+    const inProg = c.accounts.filter(a => a.status === 'in_progress').length;
+    const done = c.accounts.filter(a => a.status === 'completed').length;
+    const steps = c.steps.map(s => {
+      const dotCls = s.type === 'Email' ? 'email' : s.type === 'Call' ? 'call' : '';
+      return `<div class="step-node">
+        <div class="step-dot ${dotCls}">${s.step_number}</div>
+        <div class="step-label">${esc(s.name)}</div>
+        <div class="step-day">Day ${s.day}</div>
+      </div>`;
+    }).join('');
+    const accts = c.accounts.map(a => {
+      const nt = a.next_touch ? `${esc(a.next_touch.type)} · ${esc(a.next_touch.step)} on ${esc(a.next_touch.date)}` : 'No upcoming touch';
+      return `<div class="cad-acct-row">
+        <span class="cad-acct-rank">${a.rank ? '#' + a.rank : ''}</span>
+        <span class="cad-acct-name" onclick="openAcctModal('${esc(a.account)}')">${esc(a.account)}</span>
+        <span class="cad-acct-ind">${esc(a.industry || '')}</span>
+        <span class="cad-acct-next">${nt}</span>
+        <span class="cad-acct-status"><span class="status-pill ${a.status}">${STATUS_LABEL[a.status] || a.status}</span></span>
+      </div>`;
+    }).join('');
+    return `<div class="cad-card ${isOpen ? 'open' : ''}" id="cadcard-${esc(c.name)}">
+      <div class="cad-header" onclick="toggleCadCard('${esc(c.name)}')">
+        <span class="cad-chevron">&#9658;</span>
+        <div class="cad-meta">
+          <div class="cad-name">${esc(c.name)}</div>
+          <div class="cad-desc">${esc(c.description)}</div>
+        </div>
+        <span class="cad-count">${c.account_count} account${c.account_count === 1 ? '' : 's'}</span>
+        <div class="cad-status">
+          ${inProg ? `<span class="status-pill in_progress">${inProg} active</span>` : ''}
+          ${notStarted ? `<span class="status-pill not_started">${notStarted} pending</span>` : ''}
+          ${done ? `<span class="status-pill completed">${done} done</span>` : ''}
+        </div>
+      </div>
+      <div class="cad-body">
+        <div class="cad-steps">
+          <h4>Sequence — ${c.steps.length} steps</h4>
+          <div class="step-timeline">${steps}</div>
+        </div>
+        <div class="cad-accounts">${accts}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Scroll to and expand the requested cadence after render.
+  if (_cadOpenName){
+    const el = document.getElementById('cadcard-' + _cadOpenName);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    _cadOpenName = null;
+  }
+}
+
+function toggleCadCard(name){
+  const el = document.getElementById('cadcard-' + name);
+  if (el) el.classList.toggle('open');
+}
+
+// Called from the Accounts tab "View in Cadences" button.
+function goToCadence(name){
+  showPage('cadences', {open: name});
+}
+
+// ── email tab ─────────────────────────────────────────────────
+// _emailItems: per-email-today objects enriched with contact info.
+// Shape: {account, step, cadence, contact:{first_name,last_name,title,work_email}, draft, sent}
+let _emailItems = [];
+
+async function fetchTodayEmail(){
+  let sched;
+  try { sched = await (await fetch('/api/schedule')).json(); } catch(e){ return; }
+  if (!sched.has_schedule) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const raw = ((sched.days[today] || {}).items || []).filter(a => a.type === 'email');
+
+  // Enrich each scheduled email with the DM contact for that account.
+  const contactCache = {};
+  await Promise.all([...new Set(raw.map(r => r.account))].map(async acc => {
+    try {
+      const d = await (await fetch('/api/accounts/detail?name=' + encodeURIComponent(acc))).json();
+      contactCache[acc] = d;
+    } catch(e){}
+  }));
+
+  _emailItems = raw.map(a => {
+    const d = contactCache[a.account] || {};
+    const contacts = (d.zoominfo || {}).contacts || [];
+    // Prefer the decision-maker; fall back to first contact.
+    const contact = contacts.find(c => c.decision_maker) || contacts[0] || null;
+    return {...a, contact, acctDetail: d, draft: null, sent: false};
+  });
+
+  const lbl = document.getElementById('emailDateLabel');
+  const cnt = document.getElementById('emailCountLabel');
+  if (lbl) lbl.textContent = `Today's outbound emails — ${new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'})}.`;
+  if (cnt) cnt.textContent = `${_emailItems.length} email${_emailItems.length === 1 ? '' : 's'} scheduled today`;
+  renderEmailGrid();
+}
+
+function _emailDraftText(a){
+  // Build a draft from account detail — shared between draft-all and redraft-one.
+  const d = a.acctDetail || {};
+  const ai = d.ai || {};
+  const c = a.contact;
+  const firstName = c ? c.first_name : 'there';
+  return [
+    `Hi ${firstName},`,
+    ``,
+    `I wanted to reach out regarding ${a.account}'s technology roadmap. ${ai.angle || "I believe there is a strong fit with IBM's portfolio."}`,
+    ``,
+    `${ai.product_fit ? `We see a compelling opportunity around ${ai.product_fit}` : 'Our team has identified a relevant opportunity'} that aligns with your current priorities.`,
+    ``,
+    `Would you have 20 minutes this week to connect?`,
+    ``,
+    `Best,`,
+  ].join('\\n');
+}
+
+function _saveEditIfOpen(i){
+  // Flush any in-progress edit back to the item before re-rendering.
+  const ta = document.getElementById('emailedit-' + i);
+  if (ta) _emailItems[i].draft = ta.value;
+}
+
+function toggleEmailEdit(i){
+  _saveEditIfOpen(i);
+  _emailItems[i].editing = !_emailItems[i].editing;
+  renderEmailGrid();
+  if (_emailItems[i].editing){
+    const ta = document.getElementById('emailedit-' + i);
+    if (ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+  }
+}
+
+function saveEmailEdit(i){
+  const ta = document.getElementById('emailedit-' + i);
+  if (ta) _emailItems[i].draft = ta.value;
+  _emailItems[i].editing = false;
+  renderEmailGrid();
+}
+
+function renderEmailGrid(){
+  const host = document.getElementById('emailGrid');
+  if (!host) return;
+  if (!_emailItems.length){
+    host.innerHTML = '<div class="aitems-empty" style="grid-column:1/-1;">No emails scheduled for today.</div>';
+    return;
+  }
+  // Update toolbar button: "Redraft all" once every card has a draft.
+  const allDrafted = _emailItems.every(a => a.draft != null && !a.draft.startsWith('…'));
+  const draftBtn = document.getElementById('generateEmailsBtn');
+  if (draftBtn) draftBtn.textContent = allDrafted ? 'Redraft all' : 'Draft all emails';
+
+  host.innerHTML = _emailItems.map((a, i) => {
+    const c = a.contact;
+    const toLine = c ? `${esc(c.first_name)} ${esc(c.last_name)}` : 'Decision-maker';
+    const toSub  = c ? `${esc(c.title)} &middot; ${esc(a.account)}` : esc(a.account);
+    const toAddr = c && c.work_email ? esc(c.work_email) : '';
+    const hasDraft = a.draft != null && !a.draft.startsWith('…');
+    const isDrafting = a.draft && a.draft.startsWith('…');
+    const isEditing = !!a.editing;
+
+    const bodySection = isDrafting
+      ? `<div class="email-body-text" style="color:var(--text3);font-style:italic;">Drafting…</div>`
+      : hasDraft
+        ? `<div class="email-body-text ${isEditing ? '' : ''}" id="emailbody-${i}" ${isEditing ? 'style="display:none"' : ''}>${esc(a.draft)}</div>
+           <textarea id="emailedit-${i}" class="email-body-edit ${isEditing ? 'active' : ''}" rows="7">${esc(a.draft)}</textarea>`
+        : `<div class="email-body-text empty">Draft not yet generated.</div>`;
+
+    const pencilBtn = hasDraft && !a.sent
+      ? `<button class="icon-btn" title="${isEditing ? 'Save edits' : 'Edit'}" onclick="${isEditing ? 'saveEmailEdit(' + i + ')' : 'toggleEmailEdit(' + i + ')'}">${isEditing ? '&#10003;' : '&#9998;'}</button>`
+      : '';
+    const redraftBtn = hasDraft && !a.sent
+      ? `<button class="icon-btn" title="Regenerate" onclick="redraftOne(${i})">&#8635;</button>`
+      : '';
+
+    return `<div class="email-card" id="emailcard-${i}">
+      <div class="email-card-head">
+        <div>
+          <div class="email-card-to">${toLine}</div>
+          ${toAddr ? `<div class="email-card-addr">${toAddr}</div>` : ''}
+          <div class="email-card-sub">${toSub}</div>
+          <div class="email-card-cadence">""" + _SPARKLE + """ ${esc(a.cadence)} &middot; ${esc(a.step)}</div>
+        </div>
+        <div class="email-card-head-actions">
+          ${pencilBtn}${redraftBtn}
+        </div>
+      </div>
+      <div class="email-body-wrap">${bodySection}</div>
+      <div class="email-foot">
+        <button class="btn" onclick="openAcctModal('${esc(a.account)}')">View account</button>
+        ${hasDraft && !a.sent && !isEditing ? `<button class="btn primary" onclick="sendOneEmail(${i})">Send</button>` : ''}
+        ${isEditing ? `<button class="btn primary" onclick="saveEmailEdit(${i})">Save</button>` : ''}
+        <span class="email-sent ${a.sent ? 'show' : ''}" id="emailsent-${i}">&#10003; Sent</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function _draftOne(i, force){
+  const a = _emailItems[i];
+  if (!force && a.draft != null) return;
+  a.draft = '…drafting…';
+  a.editing = false;
+  renderEmailGrid();
+  try {
+    a.draft = _emailDraftText(a);
+  } catch(e){
+    a.draft = 'Error generating draft.';
+  }
+  renderEmailGrid();
+}
+
+async function generateAllEmails(){
+  const btn = document.getElementById('generateEmailsBtn');
+  if (btn) btn.disabled = true;
+  const allDrafted = _emailItems.every(a => a.draft != null && !a.draft.startsWith('…'));
+  for (let i = 0; i < _emailItems.length; i++){
+    // "Redraft all" forces regeneration of everything (including already-drafted).
+    await _draftOne(i, allDrafted);
+  }
+  if (btn) btn.disabled = false;
+}
+
+async function redraftOne(i){
+  _saveEditIfOpen(i);
+  await _draftOne(i, true);
+}
+
+function sendOneEmail(i){
+  const a = _emailItems[i];
+  if (!a) return;
+  _saveEditIfOpen(i);
+  a.sent = true;
+  a.editing = false;
+  renderEmailGrid();
+  const sentCount = _emailItems.filter(x => x.sent).length;
+  const cnt = document.getElementById('emailCountLabel');
+  if (cnt) cnt.textContent = `${_emailItems.length} scheduled today &middot; ${sentCount} sent`;
+}
+
+function sendAllEmails(){
+  const ready = _emailItems.filter(a => a.draft != null && !a.draft.startsWith('…') && !a.sent);
+  if (!ready.length){ alert('Draft all emails first before sending.'); return; }
+  for (let i = 0; i < _emailItems.length; i++){
+    const a = _emailItems[i];
+    if (a.draft == null || a.draft.startsWith('…') || a.sent) continue;
+    _saveEditIfOpen(i);
+    a.sent = true;
+    a.editing = false;
+  }
+  renderEmailGrid();
+  const sentCount = _emailItems.filter(x => x.sent).length;
+  const cnt = document.getElementById('emailCountLabel');
+  if (cnt) cnt.textContent = `${_emailItems.length} scheduled today &middot; ${sentCount} sent`;
+}
+
+// ── call tab ──────────────────────────────────────────────────
+// _callItems enriched with contacts + brief after fetch.
+let _callItems = [];
+let _callBriefs = {};  // account → brief text
+
+async function fetchTodayCall(){
+  let sched;
+  try { sched = await (await fetch('/api/schedule')).json(); } catch(e){ return; }
+  if (!sched.has_schedule) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const raw = ((sched.days[today] || {}).items || []).filter(a => a.type === 'call');
+
+  // Enrich with contacts.
+  const contactCache = {};
+  await Promise.all([...new Set(raw.map(r => r.account))].map(async acc => {
+    try {
+      const d = await (await fetch('/api/accounts/detail?name=' + encodeURIComponent(acc))).json();
+      contactCache[acc] = d;
+    } catch(e){}
+  }));
+
+  _callItems = raw.map(a => ({...a, acctDetail: contactCache[a.account] || {}}));
+
+  const lbl = document.getElementById('callDateLabel');
+  const cnt = document.getElementById('callCountLabel');
+  if (lbl) lbl.textContent = `Today's call list — ${new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'})}.`;
+  if (cnt) cnt.textContent = `${_callItems.length} call${_callItems.length === 1 ? '' : 's'} scheduled today`;
+  renderCallList();
+}
+
+function renderCallList(){
+  const host = document.getElementById('callList');
+  if (!host) return;
+  if (!_callItems.length){
+    host.innerHTML = '<div class="aitems-empty">No calls scheduled for today.</div>';
+    return;
+  }
+  host.innerHTML = _callItems.map((a, i) => {
+    const d = a.acctDetail || {};
+    const zi = d.zoominfo || {};
+    const ai = d.ai || {};
+    const brief = _callBriefs[a.account];
+    const contacts = (zi.contacts || []);
+    const dm = contacts.find(c => c.decision_maker);
+    // Show DM first, then others.
+    const ordered = dm ? [dm, ...contacts.filter(c => c !== dm)] : contacts;
+    const contactsHtml = ordered.map(c => {
+      const phoneHref = c.direct_phone ? c.direct_phone.replace(/[^+\\d]/g,'') : '';
+      return `<div class="call-person">
+        <div class="call-person-name">
+          ${esc(c.first_name)} ${esc(c.last_name)}
+          ${c.decision_maker ? '<span class="dm-badge">DM</span>' : ''}
+          ${phoneHref ? `<a class="btn call" href="tel:${phoneHref}">&#9742; Call</a>` : ''}
+        </div>
+        <div class="call-person-title">${esc(c.title)}</div>
+        <div class="call-person-info">
+          ${c.direct_phone ? `<span class="call-person-phone">${esc(c.direct_phone)}</span>` : ''}
+          ${c.work_email ? `<span class="call-person-email">${esc(c.work_email)}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('') || '<div class="note">No contacts on record.</div>';
+    const briefHtml = brief
+      ? `<p>${esc(brief)}</p>`
+      : `<p style="color:var(--text3);font-style:italic;">Not yet generated.</p>`;
+    return `<div class="call-card" id="callcard-${i}">
+      <div class="call-card-head">
+        <span class="call-card-rank">${i + 1}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <span class="call-card-name" onclick="openAcctModal('${esc(a.account)}')">${esc(a.account)}</span>
+            <span class="call-card-step">${esc(a.step)} &middot; ${esc(a.cadence)}</span>
+          </div>
+          ${dm ? `<div class="call-card-acct">Primary contact: ${esc(dm.first_name)} ${esc(dm.last_name)}, ${esc(dm.title)}</div>` : ''}
+        </div>
+      </div>
+      <div class="call-card-body">
+        <div class="call-contacts">
+          <h4>Contacts (${ordered.length})</h4>
+          ${contactsHtml}
+        </div>
+        <div class="call-brief ${brief ? '' : 'loading'}">
+          <h4>""" + _SPARKLE + """ Pre-call brief</h4>
+          ${briefHtml}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function generateAllBriefs(){
+  const btn = document.getElementById('generateBriefsBtn');
+  if (btn) btn.disabled = true;
+  for (const a of _callItems){
+    if (_callBriefs[a.account]) continue;
+    _callBriefs[a.account] = '…generating…';
+    renderCallList();
+    try {
+      const d = a.acctDetail || {};
+      const ai = d.ai || {};
+      const sc = d.sales_cloud || {};
+      const zi = d.zoominfo || {};
+      const dm = (zi.contacts || []).find(c => c.decision_maker);
+      _callBriefs[a.account] = [
+        dm ? `Key contact: ${dm.first_name} ${dm.last_name}, ${dm.title}.` : 'No confirmed decision-maker on record.',
+        `Urgency: ${ai.urgency || 'N/A'}.`,
+        `Best product fit: ${ai.product_fit || 'N/A'}.`,
+        `Recommended play: ${ai.play || 'N/A'}.`,
+        ai.angle ? `Angle: ${ai.angle}` : '',
+        sc.ibm_spend_current ? `Current IBM spend: ${sc.ibm_spend_current}.` : '',
+      ].filter(Boolean).join(' ');
+    } catch(e){
+      _callBriefs[a.account] = 'Error generating brief.';
+    }
+    renderCallList();
+  }
+  if (btn) btn.disabled = false;
+}
+
 // ── seller identity ───────────────────────────────────────────
 async function fetchSeller(){
   let d = {};
@@ -1092,9 +1960,13 @@ async function fetchSeller(){
       ? `Signed in as <b>${esc(d.email||'')}</b>${d.seller_name ? ' &middot; ' + esc(d.seller_name) : ''}`
       : 'Not signed in.';
   }
-  if (profileBtn && d.seller_name){
-    const initials = d.seller_name.trim().split(/\\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
-    profileBtn.textContent = initials || '?';
+  if (profileBtn){
+    try {
+      const saved = JSON.parse(localStorage.getItem('bobbee_profile') || '{}');
+      const name = saved.name || d.seller_name || 'Tim Zhou';
+      const initials = name.trim().split(/\\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+      profileBtn.textContent = initials || 'TZ';
+    } catch(e){ profileBtn.textContent = 'TZ'; }
   }
 }
 
@@ -1335,6 +2207,84 @@ async function saveCredential(key){
   if (!body.ok){ alert('Error: ' + body.error); return; }
   document.getElementById('cred-pw-' + key).value = '';
   fetchCredStatus(); fetchSeller();
+}
+
+// ── profile page & preferences ────────────────────────────────
+const _PREF_DEFAULTS = {
+  email:   { tone: 'professional', context: '', example: '', behavior: '' },
+  call:    { know: '', provide: '' },
+  cadence: { steps: 7, days: 14, first: 'email', starts: 3, cap: 8 },
+};
+let _prefs = JSON.parse(JSON.stringify(_PREF_DEFAULTS));
+
+function switchProfileTab(tab){
+  document.querySelectorAll('.profile-tab').forEach(b => b.classList.toggle('active', b.dataset.ptab === tab));
+  document.querySelectorAll('.profile-section').forEach(s => s.classList.toggle('active', s.id === 'ptab-' + tab));
+}
+
+function loadProfilePage(){
+  // Restore prefs from localStorage.
+  try { const s = localStorage.getItem('bobbee_prefs'); if (s) _prefs = {...JSON.parse(JSON.stringify(_PREF_DEFAULTS)), ...JSON.parse(s)}; } catch(e){}
+  const v = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  v('pref-email-tone',     _prefs.email.tone);
+  v('pref-email-context',  _prefs.email.context);
+  v('pref-email-example',  _prefs.email.example);
+  v('pref-email-behavior', _prefs.email.behavior);
+  v('pref-call-know',      _prefs.call.know);
+  v('pref-call-provide',   _prefs.call.provide);
+  v('pref-cad-steps',      _prefs.cadence.steps);
+  v('pref-cad-days',       _prefs.cadence.days);
+  v('pref-cad-first',      _prefs.cadence.first);
+  v('pref-cad-starts',     _prefs.cadence.starts);
+  v('pref-cad-cap',        _prefs.cadence.cap);
+  // Restore saved profile fields.
+  try {
+    const p = JSON.parse(localStorage.getItem('bobbee_profile') || '{}');
+    ['name','slack','role','territory','market','segment','portfolio'].forEach(k => {
+      const el = document.getElementById('prof-' + k); if (el && p[k]) el.value = p[k];
+    });
+  } catch(e){}
+}
+
+function saveProfile(){
+  const keys = ['name','slack','role','territory','market','segment','portfolio'];
+  const p = {};
+  keys.forEach(k => { const el = document.getElementById('prof-' + k); if (el) p[k] = el.value; });
+  localStorage.setItem('bobbee_profile', JSON.stringify(p));
+  // Refresh initials on the profile avatar.
+  const initials = (p.name || '').trim().split(/\\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+  const btn = document.getElementById('profileBtn');
+  if (btn && initials) btn.textContent = initials;
+  _flashSaved('Profile saved.');
+}
+
+function savePrefs(){
+  const g = id => (document.getElementById(id) || {}).value || '';
+  const gi = id => parseInt(g(id)) || 0;
+  _prefs = {
+    email:   { tone: g('pref-email-tone'), context: g('pref-email-context'), example: g('pref-email-example'), behavior: g('pref-email-behavior') },
+    call:    { know: g('pref-call-know'), provide: g('pref-call-provide') },
+    cadence: { steps: gi('pref-cad-steps') || 7, days: gi('pref-cad-days') || 14,
+               first: g('pref-cad-first') || 'email', starts: gi('pref-cad-starts') || 3, cap: gi('pref-cad-cap') || 8 },
+  };
+  localStorage.setItem('bobbee_prefs', JSON.stringify(_prefs));
+  _flashSaved('Preferences saved.');
+}
+
+function resetPref(section){
+  if (!confirm('Reset ' + section + ' preferences to defaults?')) return;
+  _prefs[section] = JSON.parse(JSON.stringify(_PREF_DEFAULTS[section]));
+  localStorage.setItem('bobbee_prefs', JSON.stringify(_prefs));
+  loadProfilePage();
+  _flashSaved(section.charAt(0).toUpperCase() + section.slice(1) + ' preferences reset to defaults.');
+}
+
+function _flashSaved(msg){
+  const el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:28px;right:28px;background:var(--layer3);border:1px solid var(--border-strong);color:#fff;padding:10px 18px;font-size:13px;z-index:400;pointer-events:none;';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
 }
 
 window.__today = "{{ today }}";

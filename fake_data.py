@@ -566,10 +566,17 @@ _LAST = ["Anderson", "Patel", "Nguyen", "Okafor", "Rivera", "Kim", "Johnson", "S
          "Cohen", "Murphy", "Zhang", "Ali", "Brooks", "Ferrari", "Novak", "Reed"]
 
 
+def _fake_phone(r):
+    """Generate a plausible US direct-dial number deterministically."""
+    area = r.choice([212, 312, 415, 512, 617, 713, 206, 404, 303, 214])
+    return f"+1 ({area}) {r.randint(200,999)}-{r.randint(1000,9999)}"
+
+
 def contacts_for_accounts(account_names, per_account=(2, 5)):
     """Buyer-group contacts a ZoomInfo 'Infra Outbound' filter would surface. Returns
     dicts with a 'raw' text blob (name / title / company), mirroring the real step
-    which captures row innerText, not parsed emails (those cost ZoomInfo credits)."""
+    which captures row innerText, not parsed emails (those cost ZoomInfo credits).
+    Also includes direct_phone and work_email for the call/email UI."""
     out = []
     for name in account_names:
         r = _rng("contacts", name)
@@ -578,6 +585,8 @@ def contacts_for_accounts(account_names, per_account=(2, 5)):
             out.append({
                 "first_name": fn, "last_name": ln, "title": title, "company": name,
                 "raw": f"{fn} {ln}  {title}  {name}",
+                "direct_phone": _fake_phone(r),
+                "work_email": f"{fn.lower()}.{ln.lower()}@{_domain(name)}",
             })
     return out
 

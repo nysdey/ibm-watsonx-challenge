@@ -2277,6 +2277,80 @@ def api_accounts_no_contacts():
     return jsonify({"accounts": json.loads(path.read_text())})
 
 
+# Cadence descriptions — AI-generated names mapped to human descriptions so the
+# Cadences tab can show what each cadence is about without an extra LLM call.
+_CADENCE_DESCRIPTIONS = {
+    "Enterprise Expansion Cadence":  "Protect and grow IBM revenue at existing enterprise accounts. Targets Expand & Protect and Hardware Refresh plays — accounts with strong install bases where the primary motion is upselling, renewing, or defending against competitive pressure.",
+    "Targeted Outreach Cadence 3":   "Displace a competitor currently entrenched at this account. High-urgency, direct outreach sequence that opens with a competitive differentiator and closes with a case-study proof point.",
+    "Targeted Outreach Cadence 4":   "Land a new IBM footprint where there is currently no IBM product. Designed for net-new logo acquisition — longer nurture arc with a strong value-discovery opener.",
+    "Whitespace Nurture Cadence":    "Re-engage churned accounts (Win-Back) or warm up early-stage prospects (Nurture) where IBM spend has dropped or never existed. Lower urgency; focuses on education and relationship-building before a direct pitch.",
+}
+
+_STEP_TYPE_LABEL = {"email": "Email", "phone": "Call", "other": "Other"}
+
+
+@app.route("/api/cadences")
+def api_cadences():
+    """Full cadence definitions — steps, account roster, and per-account progress
+    (which step they are on relative to today's schedule).  Used by the Cadences tab."""
+    strategized = _ai_file("latest.json", None)
+    if not strategized:
+        return jsonify({"has_cadences": False})
+
+    schedule = _ai_file("schedule.json", None)
+    cadences_data = strategized.get("cadences", {})
+    today = date.today().isoformat()
+
+    # Build a lookup: account → {step_name, step_day, date} for the NEXT scheduled touch.
+    next_touch = {}
+    last_touch = {}
+    if schedule:
+        for iso, acts in sorted(schedule.get("days", {}).items()):
+            for a in acts:
+                acc = a["account"]
+                if iso >= today and acc not in next_touch:
+                    next_touch[acc] = {"step": a["step"], "date": iso, "type": a["type"]}
+                if iso <= today:
+                    last_touch[acc] = {"step": a["step"], "date": iso, "type": a["type"]}
+
+    result = []
+    for cname, members in cadences_data.items():
+        steps = fake_data.salesloft_cadence_steps(cname)
+        step_list = [{"day": s["day"], "type": _STEP_TYPE_LABEL.get(s["type"], s["type"]),
+                      "name": s["name"], "step_number": s["step_number"]} for s in steps]
+        acct_list = []
+        for m in members:
+            acc = m["account"]
+            nt = next_touch.get(acc)
+            lt = last_touch.get(acc)
+            # Determine status: not_started / in_progress / completed
+            if lt is None:
+                status = "not_started"
+            elif nt is None:
+                status = "completed"
+            else:
+                status = "in_progress"
+            acct_list.append({
+                "account": acc,
+                "rank": m.get("rank"),
+                "industry": m.get("industry"),
+                "tier": m.get("tier"),
+                "tags": m.get("tags", []),
+                "status": status,
+                "next_touch": nt,
+                "last_touch": lt,
+            })
+        result.append({
+            "name": cname,
+            "description": _CADENCE_DESCRIPTIONS.get(cname, "Outreach cadence."),
+            "account_count": len(members),
+            "steps": step_list,
+            "accounts": acct_list,
+        })
+
+    return jsonify({"has_cadences": True, "cadences": result})
+
+
 @app.route("/api/accounts/other_quarters")
 def api_accounts_other_quarters():
     path = _AI_OUTPUT_DIR / "other_quarters.json"
@@ -2352,15 +2426,16 @@ def main():
     # BobBee: no Meetings backend to launch, no separate ISC launcher to watch,
     # and no real auth watchdog (all sessions are mocked and always 'ready').
 
-    port = 5488
+    port = 3000
     with socket.socket() as s:
         if s.connect_ex(("127.0.0.1", port)) == 0:
             s2 = socket.socket()
             s2.bind(("", 0))
             port = s2.getsockname()[1]
             s2.close()
+    print(f"\n  BobBee → http://127.0.0.1:{port}\n")
     _threading.Timer(0.9, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
-    app.run(port=port, debug=False, use_reloader=False, threaded=True)
+    app.run(host="127.0.0.1", port=port, debug=False, use_reloader=False, threaded=True)
 
 
 if __name__ == "__main__":

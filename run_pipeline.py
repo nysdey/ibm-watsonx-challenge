@@ -3,7 +3,8 @@ ISC_Scraper_App/launcher.py (Flask, auto-opens a browser tab).
 
     npm start          # or: .venv/bin/python3 run_pipeline.py
 
-Opens http://127.0.0.1:3000 (fixed port; override with BOBBEE_PORT). The Flask
+Opens http://127.0.0.1:5488 (or the next free port if it's busy; override the
+preferred port with BOBBEE_PORT). The Flask
 auto-reloader is on, so editing a file and refreshing the page shows the change
 without a manual restart. Shows the status of the pipeline steps, and lets you
 trigger them from the page.
@@ -16,6 +17,7 @@ selection, cadence name) are collected by this page's own form and passed as
 CLI args, never via an interactive terminal prompt (a subprocess launched from
 Flask has no one to answer input() calls).
 """
+import hashlib
 import json
 import os
 import secrets
@@ -39,6 +41,30 @@ from flask import Flask, jsonify, render_template_string, request
 # runs as a subprocess of this process (see _launch()) and inherits its
 # environment, so loading it once here is enough for the whole app.
 load_dotenv(Path(__file__).resolve().parent / ".env")
+
+
+def _today():
+    """Today's date — or a pinned demo date.
+
+    The schedule only places activities on weekdays, so on a weekend every
+    "today" view is legitimately empty and there's nothing to look at. Set
+    BOBBEE_DEMO_DATE=YYYY-MM-DD (or =monday for the upcoming Monday) to pin the
+    app to a day that actually has work on it. Unset → the real date.
+
+    Everything date-aware routes through here so the whole app stays internally
+    consistent: dashboard, plan calendar, email/call lists and the schedule
+    builder all agree on what "today" is.
+    """
+    raw = (os.environ.get("BOBBEE_DEMO_DATE") or "").strip().lower()
+    if not raw:
+        return date.today()
+    if raw in ("monday", "mon"):
+        d = date.today()
+        return d + timedelta(days=(7 - d.weekday()) % 7 or 7)
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").date()
+    except ValueError:
+        return date.today()
 
 import credential_store
 import fake_data
@@ -591,7 +617,7 @@ def _dashboard_auth_guard():
 
 @app.route("/")
 def index():
-    return render_template_string(PAGE_TEMPLATE, today=date.today().isoformat(),
+    return render_template_string(PAGE_TEMPLATE, today=_today().isoformat(),
                                   cadences=FILL_CADENCES, bobby_cadences=BOBBY_CADENCES)
 
 
@@ -907,7 +933,7 @@ def api_action_items():
         return jsonify({"range": range_, "items": [], "has_plan": False})
 
     accounts_by_date = _accounts_by_date(path)
-    today = date.today()
+    today = _today()
     span = {"day": 0, "week": 6, "month": 29}[range_]
     end = today + timedelta(days=span)
 
@@ -1082,7 +1108,7 @@ def _step1_view_data(seg_path, sheet):
 def api_step4_run():
     body = request.json or {}
     mode = body.get("mode", "auto")
-    target_date = body.get("date") or date.today().isoformat()
+    target_date = body.get("date") or _today().isoformat()
     args = ["--date", target_date, "--mode", mode]
     if mode == "manual":
         accounts = body.get("accounts", "")
@@ -1552,8 +1578,9 @@ _PLAY_TO_CADENCE = {
 _AI_OUTPUT_DIR = REPO_ROOT / "Account_Intelligence" / "output"
 
 # Top-N accounts kept per cadence; the rest are dropped to the leftovers list
-# (they rejoin the untouched pool for future-quarter re-runs).
-_CADENCE_CAP = 8
+# (they rejoin the untouched pool for future-quarter re-runs). Sized against a
+# ~1900-account book: a quarter's worth of real outbound, not a handful.
+_CADENCE_CAP = 60
 
 # How many accounts begin their cadence per weekday when the schedule spreads
 # starts across the quarter.
@@ -1577,8 +1604,8 @@ def _build_quarter_schedule(cadences, cur_q):
     (interleaved by rank so every cadence's best accounts start first), then lay
     each account's email/call touches on the cadence's own step days. Returns
     {"quarter", "q_start", "q_end", "days": {iso: [activity, ...]}}."""
-    today = date.today()
-    _, q_end = _quarter_bounds(cur_q, today.year)
+    today = _today()
+    q_start, q_end = _quarter_bounds(cur_q, today.year)
 
     queue = []  # interleave: every cadence's #1 first, then every #2, ...
     longest = max((len(m) for m in cadences.values()), default=0)
@@ -1588,7 +1615,10 @@ def _build_quarter_schedule(cadences, cur_q):
                 queue.append((cname, members[i]))
 
     days = {}
-    start_day, started_today = _next_weekday(today), 0
+    # Start at the top of the quarter, not today: a seller is mid-quarter, so the
+    # weeks already behind them should show the work that happened, not a blank
+    # calendar. Weekends stay empty — that part is real.
+    start_day, started_today = _next_weekday(q_start), 0
     for cname, m in queue:
         if start_day > q_end:
             break
@@ -1610,7 +1640,7 @@ def _build_quarter_schedule(cadences, cur_q):
             start_day, started_today = _next_weekday(start_day + timedelta(days=1)), 0
 
     return {"generated_at": datetime.now().isoformat(), "quarter": cur_q,
-            "q_start": today.isoformat(), "q_end": q_end.isoformat(),
+            "q_start": q_start.isoformat(), "q_end": q_end.isoformat(),
             "days": dict(sorted(days.items()))}
 
 
@@ -1622,7 +1652,7 @@ def _has_decision_maker(account_name):
 
 
 def _current_quarter(today=None):
-    today = today or date.today()
+    today = today or _today()
     return (today.month - 1) // 3 + 1
 
 
@@ -1788,7 +1818,7 @@ def _run_fill_contacts(cadence):
         if not ok:
             raise RuntimeError(msg)
 
-        today = date.today().isoformat()
+        today = _today().isoformat()
         # Pass the chosen cadence to ZoomInfo too, so the export lands in the SAME
         # cadence Salesloft then advances (they used to diverge — ZoomInfo always
         # exported to the config default while Salesloft advanced the dropdown pick).
@@ -2048,12 +2078,28 @@ def _ai_file(name, default):
         return default
 
 
+_TIER_BY_NAME_CACHE = {}  # str(path) -> (mtime, {name: row})
+
+
 def _tiering_rows_by_name():
+    """{account name: tiering row}, cached by mtime.
+
+    Every /api/accounts/detail call needs this, and it used to reopen the
+    workbook each time — so one day's email list (20-40 accounts) reloaded the
+    same file 20-40 times. The file only changes when Account Tiering re-runs.
+    """
     tier_path = REPO_ROOT / "Account_Tiering" / "output" / "latest.xlsx"
     if not tier_path.exists():
         return {}
+    key = str(tier_path)
+    mtime = tier_path.stat().st_mtime
+    cached = _TIER_BY_NAME_CACHE.get(key)
+    if cached and cached[0] == mtime:
+        return cached[1]
     _, rows = _load_sheet_dicts(tier_path, "Tiered Accounts")
-    return {r.get("Account Name"): r for r in rows if r.get("Account Name")}
+    by_name = {r.get("Account Name"): r for r in rows if r.get("Account Name")}
+    _TIER_BY_NAME_CACHE[key] = (mtime, by_name)
+    return by_name
 
 
 @app.route("/api/accounts/list")
@@ -2071,6 +2117,10 @@ def api_accounts_list():
         "account": r[ci["Account Name"]] if "Account Name" in ci else None,
         "industry": r[ci["Industry"]] if "Industry" in ci else None,
         "install": r[ci["Install_Types"]] if "Install_Types" in ci else None,
+        # Not in the ISC export schema — derived from the account name, same
+        # rule the generator uses (see fake_data.location_for_account).
+        "location": (fake_data.location_for_account(r[ci["Account Name"]])
+                     if "Account Name" in ci and r[ci["Account Name"]] else None),
     } for r in rows]
 
     strategized = _ai_file("latest.json", None)
@@ -2401,7 +2451,7 @@ def api_dashboard():
     if not schedule:
         return jsonify({"has_schedule": False})
 
-    today = date.today()
+    today = _today()
     week_start = today - timedelta(days=today.weekday())
     week_end = week_start + timedelta(days=6)
 
@@ -2456,6 +2506,386 @@ def api_dashboard():
     })
 
 
+@app.route("/api/dashboard/progress")
+def api_dashboard_progress():
+    """Bucketed activity counts for the dashboard chart, for one of four periods.
+
+    Each period buckets along whatever axis actually carries information at that
+    zoom level: a single day has no useful time axis, so it breaks down by cadence
+    instead. Activities carry no completion flag, so "done" here strictly means
+    *elapsed* (scheduled on or before today) — never claim more than that in the UI.
+    """
+    period = (request.args.get("period") or "week").lower()
+    if period not in ("day", "week", "month", "quarter"):
+        return jsonify({"error": "bad period"}), 400
+    # offset steps the window backwards/forwards: -1 is yesterday / last week /
+    # last month / last quarter, depending on the period.
+    try:
+        offset = max(-24, min(24, int(request.args.get("offset") or 0)))
+    except ValueError:
+        offset = 0
+
+    schedule = _ai_file("schedule.json", None)
+    if not schedule:
+        return jsonify({"has_schedule": False})
+
+    today = _today()
+    anchor = today
+    if offset:
+        if period == "day":
+            anchor = today + timedelta(days=offset)
+        elif period == "week":
+            anchor = today + timedelta(weeks=offset)
+        elif period == "month":
+            m = today.month - 1 + offset
+            anchor = date(today.year + m // 12, m % 12 + 1, 1)
+        else:
+            m = today.month - 1 + offset * 3
+            anchor = date(today.year + m // 12, m % 12 + 1, 1)
+
+    days = {}
+    for iso, acts in schedule["days"].items():
+        try:
+            days[datetime.strptime(iso, "%Y-%m-%d").date()] = acts
+        except ValueError:
+            continue
+
+    def _blank():
+        return {"emails": 0, "calls": 0, "accounts": set()}
+
+    def _add(bucket, act):
+        bucket["emails"] += act["type"] == "email"
+        bucket["calls"] += act["type"] == "call"
+        bucket["accounts"].add(act["account"])
+
+    buckets, order, lo, hi = {}, [], today, today
+
+    if period == "day":
+        lo = hi = anchor
+        for act in days.get(anchor, []):
+            key = act.get("cadence") or "Other"
+            if key not in buckets:
+                buckets[key] = _blank()
+                order.append(key)
+            _add(buckets[key], act)
+    elif period == "week":
+        lo = anchor - timedelta(days=anchor.weekday())
+        hi = lo + timedelta(days=6)
+        for i in range(7):
+            d = lo + timedelta(days=i)
+            key = d.strftime("%a")
+            buckets[key] = _blank()
+            order.append(key)
+            for act in days.get(d, []):
+                _add(buckets[key], act)
+    elif period == "month":
+        lo = anchor.replace(day=1)
+        hi = (lo + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        d = lo
+        while d <= hi:
+            # Calendar weeks, breaking on Monday (so week 1 is a short week
+            # whenever the month doesn't start on one).
+            key = f"Wk {((d.day + lo.weekday() - 1) // 7) + 1}"
+            if key not in buckets:
+                buckets[key], _ = _blank(), order.append(key)
+            for act in days.get(d, []):
+                _add(buckets[key], act)
+            d += timedelta(days=1)
+    else:  # quarter
+        q = (anchor.month - 1) // 3
+        lo = date(anchor.year, q * 3 + 1, 1)
+        hi = (date(anchor.year + (q == 3), (q * 3 + 4) if q < 3 else 1, 1)
+              - timedelta(days=1))
+        d = lo
+        while d <= hi:
+            key = d.strftime("%b")
+            if key not in buckets:
+                buckets[key], _ = _blank(), order.append(key)
+            for act in days.get(d, []):
+                _add(buckets[key], act)
+            d += timedelta(days=1)
+
+    series = [{"label": k,
+               "emails": buckets[k]["emails"],
+               "calls": buckets[k]["calls"],
+               "accounts": len(buckets[k]["accounts"])}
+              for k in order]
+
+    elapsed = upcoming = 0
+    total_accounts = set()
+    for d, acts in days.items():
+        if lo <= d <= hi:
+            for a in acts:
+                total_accounts.add(a["account"])
+                if d <= today:
+                    elapsed += 1
+                else:
+                    upcoming += 1
+
+    labels = {"day": anchor.strftime("%A, %B %-d"),
+              "week": f"Week of {lo.strftime('%B %-d')}",
+              "month": lo.strftime("%B %Y"),
+              "quarter": f"Q{(lo.month - 1) // 3 + 1} {lo.year}"}
+
+    return jsonify({
+        "has_schedule": True,
+        "period": period,
+        "offset": offset,
+        "label": labels[period],
+        "series": series,
+        "totals": {"emails": sum(s["emails"] for s in series),
+                   "calls": sum(s["calls"] for s in series),
+                   "accounts": len(total_accounts)},
+        "elapsed": elapsed,
+        "upcoming": upcoming,
+        # The client must not use its own clock to mark "now" — with a pinned
+        # demo date the browser's today and the server's today disagree.
+        "today_short": today.strftime("%a"),
+        "today_month": today.strftime("%b"),
+    })
+
+
+def _meeting_stats(scope="quarter", offset=0):
+    """Meeting + opportunity tallies for the dashboard.
+
+    NOTE: there is no meetings source anywhere in this app — not in the ISC
+    export, not in the mock Salesloft. These are *derived* from the outbound
+    schedule so the numbers move with the actual plan instead of being invented:
+    an account that has been worked can book a meeting, a meeting lands about a
+    week after its first touch, and it only counts as completed once that date
+    has passed. Rates are fixed, and every draw is seeded by the account name, so
+    the tallies are stable across restarts rather than drifting each reload.
+
+    "OI" here is opportunity identified — a meeting that produced a qualified
+    opportunity, with the value it was sized at.
+    """
+    schedule = _ai_file("schedule.json", None)
+    if not schedule:
+        return None
+
+    today = _today()
+    # scope="week" narrows to one Mon-Fri window (offset steps it); "quarter"
+    # counts everything on the plan.
+    lo = hi = None
+    if scope == "week":
+        anchor = today + timedelta(weeks=offset)
+        lo = anchor - timedelta(days=anchor.weekday())
+        hi = lo + timedelta(days=6)
+
+    first_touch = {}
+    for iso, acts in schedule.get("days", {}).items():
+        try:
+            d = datetime.strptime(iso, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if lo and not (lo <= d <= hi):
+            continue
+        for a in acts:
+            name = a.get("account")
+            if name and (name not in first_touch or d < first_touch[name]):
+                first_touch[name] = d
+
+    def _draw(name, salt):
+        h = hashlib.md5(f"{salt}:{name}".encode("utf-8")).hexdigest()
+        return int(h[:8], 16) % 1000 / 10.0            # 0.0 – 99.9
+
+    total = booked = completed = upcoming = cancelled = oi_count = 0
+    oi_value = 0
+    for name, touch in first_touch.items():
+        if _draw(name, "book") >= 24.0:               # ~24% of worked accounts book
+            continue
+        # total = every meeting ever put on the calendar; booked = the ones still
+        # standing. Without the cancelled bucket those two are the same number
+        # and one of the tiles says nothing.
+        total += 1
+        if _draw(name, "cancel") < 9.0:               # ~9% cancel or no-show
+            cancelled += 1
+            continue
+        booked += 1
+        meet_day = _next_weekday(touch + timedelta(days=7))
+        if meet_day <= today:
+            completed += 1
+            if _draw(name, "oi") < 46.0:              # ~46% of held meetings → OI
+                oi_count += 1
+                # $40k–$400k, in 10k steps.
+                oi_value += 40000 + int(_draw(name, "amt") / 100 * 36) * 10000
+        else:
+            upcoming += 1
+
+    label = (f"Week of {lo.strftime('%B %-d')}" if lo
+             else f"Q{(today.month - 1) // 3 + 1} {today.year} to date")
+    return {"total": total, "booked": booked, "completed": completed,
+            "upcoming": upcoming, "cancelled": cancelled,
+            "oi_count": oi_count, "oi_value": oi_value,
+            "worked_accounts": len(first_touch),
+            "scope": scope, "offset": offset, "label": label}
+
+
+@app.route("/api/accounts/details")
+def api_accounts_details():
+    """Batch version of /api/accounts/detail.
+
+    Today's email and call lists need the detail record for every account they
+    touch. On a ~1,900-account book that's 20-40 accounts a day, and firing one
+    request each left both tabs blank for seconds while the browser worked
+    through them six at a time. One request instead.
+    """
+    raw = request.args.get("names") or ""
+    names = [n for n in (s.strip() for s in raw.split("\x1f")) if n][:200]
+    if not names:
+        return jsonify({"accounts": {}})
+    out = {}
+    for name in names:
+        with app.test_request_context(f"/api/accounts/detail?name={urllib.parse.quote(name)}"):
+            resp = api_accounts_detail()
+        payload = resp[0] if isinstance(resp, tuple) else resp
+        try:
+            out[name] = payload.get_json()
+        except Exception:
+            continue
+    return jsonify({"accounts": out})
+
+
+@app.route("/api/book")
+def api_book():
+    """Whole-book snapshot for the dashboard: size, cadence coverage, spend, and
+    the industry / territory mixes. Reads the same segmentation output the
+    Accounts tab does, so the numbers always agree with that list."""
+    seg_path = REPO_ROOT / "Account_Segmentation" / "output" / "latest.xlsx"
+    if not seg_path.exists():
+        return jsonify({"has_accounts": False})
+
+    cols, rows = _segment_view_rows(seg_path, "Segmented Accounts")
+    ci = {c: i for i, c in enumerate(cols)}
+
+    def _cell(r, col):
+        i = ci.get(col)
+        return r[i] if i is not None and i < len(r) else None
+
+    strategized = _ai_file("latest.json", None) or {}
+    in_cadence = {m["account"] for members in (strategized.get("cadences") or {}).values()
+                  for m in members if m.get("account")}
+
+    industries, territories = {}, {}
+    total = spend = 0
+    covered = 0
+    for r in rows:
+        name = _cell(r, "Account Name")
+        if not name:
+            continue
+        total += 1
+        if name in in_cadence:
+            covered += 1
+        ind = (_cell(r, "Industry") or "Unknown").strip()
+        industries[ind] = industries.get(ind, 0) + 1
+        st = fake_data.state_for_account(name)
+        territories[st] = territories.get(st, 0) + 1
+        try:
+            spend += float(_cell(r, "IBM Spend Current Year") or 0)
+        except (TypeError, ValueError):
+            pass
+
+    top = lambda d, n: [{"label": k, "value": v} for k, v in
+                        sorted(d.items(), key=lambda kv: -kv[1])[:n]]
+    return jsonify({
+        "has_accounts": True,
+        "total": total,
+        "covered": covered,
+        "spend": round(spend),
+        "industry_count": len(industries),
+        "industries": top(industries, 6),
+        "territories": top(territories, 6),
+        "meetings": _meeting_stats(
+            (request.args.get("mtg_scope") or "quarter").lower(),
+            int(request.args.get("mtg_offset") or 0)),
+    })
+
+
+@app.route("/api/territory")
+def api_territory():
+    """Per-state rollup of the seller's book, for the Profile choropleth.
+
+    view=accounts   → how many accounts sit in each state
+    view=cadences   → how many of those are in a Q3 cadence (coverage)
+    view=spend      → total IBM spend this year, in dollars
+    view=industries → distinct industries present (how mixed the state is)
+
+    Every view returns the same shape so the map component stays dumb: a
+    {state: value} dict plus the max, since the colour scale is relative to the
+    busiest state rather than an absolute 0-100.
+    """
+    view = (request.args.get("view") or "accounts").lower()
+    if view not in ("accounts", "cadences", "spend", "industries"):
+        return jsonify({"error": "bad view"}), 400
+
+    seg_path = REPO_ROOT / "Account_Segmentation" / "output" / "latest.xlsx"
+    if not seg_path.exists():
+        return jsonify({"has_accounts": False})
+
+    cols, rows = _segment_view_rows(seg_path, "Segmented Accounts")
+    ci = {c: i for i, c in enumerate(cols)}
+
+    def _cell(r, col):
+        i = ci.get(col)
+        return r[i] if i is not None and i < len(r) else None
+
+    # Which accounts landed in a cadence (same source the Accounts tab uses).
+    strategized = _ai_file("latest.json", None) or {}
+    # cadences maps name -> [member dicts], same shape the Accounts tab reads.
+    in_cadence = {m["account"] for members in (strategized.get("cadences") or {}).values()
+                  for m in members if m.get("account")}
+
+    values, industries, meta, cities = {}, {}, {}, {}
+    for r in rows:
+        name = _cell(r, "Account Name")
+        if not name:
+            continue
+        # Geography isn't in the ISC export schema; derive it from the account
+        # name using the same deterministic rule the generator uses.
+        st = fake_data.state_for_account(name)
+        city = fake_data.city_for_account(name)
+        cities.setdefault(st, {})
+        cities[st][city] = cities[st].get(city, 0) + 1
+        meta.setdefault(st, {"accounts": 0, "cadences": 0, "spend": 0.0})
+        meta[st]["accounts"] += 1
+        if name in in_cadence:
+            meta[st]["cadences"] += 1
+        try:
+            meta[st]["spend"] += float(_cell(r, "IBM Spend Current Year") or 0)
+        except (TypeError, ValueError):
+            pass
+        ind = (_cell(r, "Industry") or "").strip()
+        if ind:
+            industries.setdefault(st, set()).add(ind)
+
+    for st, m in meta.items():
+        if view == "accounts":
+            values[st] = m["accounts"]
+        elif view == "cadences":
+            values[st] = m["cadences"]
+        elif view == "spend":
+            values[st] = round(m["spend"])
+        else:
+            values[st] = len(industries.get(st, ()))
+
+    labels = {"accounts": "Accounts", "cadences": "In a Q3 cadence",
+              "spend": "IBM spend (current year)", "industries": "Distinct industries"}
+    return jsonify({
+        "has_accounts": True,
+        "view": view,
+        "label": labels[view],
+        "format": "currency" if view == "spend" else "number",
+        "values": values,
+        "max": max(values.values()) if values else 0,
+        "total": round(sum(values.values())),
+        "states_covered": len([v for v in values.values() if v]),
+        "detail": meta,
+        # Per-city counts drive the intra-territory heat map — concentration
+        # inside a territory, not just one flat colour per territory.
+        "cities": cities,
+    })
+
+
 @app.route("/api/accounts/no_contacts")
 def api_accounts_no_contacts():
     path = _AI_OUTPUT_DIR / "no_contacts.json"
@@ -2486,7 +2916,7 @@ def api_cadences():
 
     schedule = _ai_file("schedule.json", None)
     cadences_data = strategized.get("cadences", {})
-    today = date.today().isoformat()
+    today = _today().isoformat()
 
     # Build a lookup: account → {step_name, step_day, date} for the NEXT scheduled touch.
     next_touch = {}
@@ -2598,16 +3028,116 @@ def _reset_for_fresh_demo():
     mock_salesloft.reset()
 
 
+# TEMPORARY UI-development aid (2026-07-18, explicit user request). While the work
+# is purely visual, re-clicking Import → Strategize after every restart is wasted
+# time. Set BOBBEE_SEED_DEMO=0 to restore the real first-run empty-state flow.
+_SEED_ENABLED = os.environ.get("BOBBEE_SEED_DEMO", "1") != "0"
+
+
+def _demo_progress_on_disk():
+    """(accounts imported?, sorted into cadences?) — the same two artifacts the
+    Accounts tab reads, so this agrees with what the UI will actually show."""
+    seg = REPO_ROOT / "Account_Segmentation" / "output" / "latest.xlsx"
+    return seg.exists(), (_AI_OUTPUT_DIR / "latest.json").exists()
+
+
+def _seed_demo_state():
+    """Make sure the app opens on a populated book of business.
+
+    Only runs the steps that aren't done yet: with progress kept on disk between
+    restarts (see the _reset_for_fresh_demo call in main), the common case is that
+    both are already there and this returns immediately — so restarts are instant
+    rather than paying ~25s to rebuild what we just deleted.
+
+    Calls the *same* two workers the buttons call — no part of the real
+    import/strategize flow is removed, stubbed, or bypassed.
+    """
+    imported, strategized = _demo_progress_on_disk()
+    if imported and strategized:
+        print("  Demo data already on disk — keeping it. "
+              "(BOBBEE_SEED_DEMO=0 npm start wipes it for a clean run.)")
+        return
+    if not _signed_in_email():
+        print("  Demo seed skipped — not signed in yet. Sign in once, then restart.")
+        return
+    try:
+        if not imported:
+            print("  Seeding demo data — importing accounts… (BOBBEE_SEED_DEMO=0 to skip)")
+            _run_get_my_accounts()
+            if _GMA_STATE.get("error"):
+                raise RuntimeError(_GMA_STATE["error"])
+        if not strategized:
+            print("  Seeding demo data — sorting into cadences…")
+            _run_strategize()
+            if _STRATEGIZE_STATE.get("error"):
+                raise RuntimeError(_STRATEGIZE_STATE["error"])
+        print("  Demo data ready.")
+    except Exception as e:
+        # Never block startup on the seed — the buttons still work by hand.
+        print(f"  Demo seed failed ({e}) — start from the Accounts tab instead.")
+
+
+def _reclaim_port(port):
+    """SIGTERM a *previous BobBee* holding `port`, so the URL stays stable.
+
+    Returns True once the port is free again. Deliberately conservative: we read
+    the owning PID's command line and only signal it if it is this same script.
+    Any other process (a real dev server, someone else's app) is left alone and
+    the caller falls back to another port.
+    """
+    import signal
+    import socket
+    import subprocess
+    import time as _time
+
+    try:
+        out = subprocess.run(["lsof", "-nP", f"-iTCP:{port}", "-sTCP:LISTEN", "-t"],
+                             capture_output=True, text=True, timeout=5).stdout
+    except Exception:
+        return False
+
+    pids = [p for p in out.split() if p.isdigit() and int(p) != os.getpid()]
+    if not pids:
+        return False
+
+    signalled = []
+    for pid in pids:
+        try:
+            cmd = subprocess.run(["ps", "-p", pid, "-o", "command="],
+                                 capture_output=True, text=True, timeout=5).stdout
+        except Exception:
+            continue
+        # Only ours. Matching on the script name keeps us from ever killing an
+        # unrelated process that happens to be sitting on this port.
+        if "run_pipeline.py" not in cmd:
+            continue
+        try:
+            os.kill(int(pid), signal.SIGTERM)
+            signalled.append(pid)
+        except Exception:
+            pass
+
+    if not signalled:
+        return False
+
+    # Wait for the listener to actually go away before we try to bind.
+    for _ in range(40):
+        _time.sleep(0.05)
+        with socket.socket() as s:
+            if s.connect_ex(("127.0.0.1", port)) != 0:
+                return True
+    return False
+
+
 def main():
     import socket
     import threading as _threading
     import webbrowser
 
-    # Fixed, predictable port so the URL is always the same and bookmarkable.
-    # Override with BOBBEE_PORT=xxxx (or PORT=xxxx) if 3000 clashes with another
-    # dev server. We deliberately do NOT fall back to a random port when it's
-    # busy — a moving URL is worse than a clear error.
-    port = int(os.environ.get("BOBBEE_PORT") or os.environ.get("PORT") or 3000)
+    # Prefer 5488, but fall back to whatever port the OS hands us if it's taken —
+    # there's no guarantee of a fixed host/port here, so a moving URL beats
+    # refusing to start. Override the preferred port with BOBBEE_PORT/PORT.
+    port = int(os.environ.get("BOBBEE_PORT") or os.environ.get("PORT") or 5488)
 
     # The Werkzeug auto-reloader runs this file twice: once in the supervisor
     # process, and once in the reloaded child (WERKZEUG_RUN_MAIN=true) — the child
@@ -2617,7 +3147,11 @@ def main():
     # doesn't pop a new tab on every save.
     is_reload_child = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
     if not is_reload_child:
-        _reset_for_fresh_demo()
+        # With the demo seed on, deliberately DON'T wipe: the whole point is that
+        # your imported/strategized progress survives a restart. Turning the seed
+        # off restores the original clean-slate-on-every-launch behaviour.
+        if not _SEED_ENABLED:
+            _reset_for_fresh_demo()
         # Re-secure any session/secret file to owner-only on launch (I19).
         try:
             guard.harden_perms()
@@ -2625,14 +3159,30 @@ def main():
             pass
         with socket.socket() as s:
             if s.connect_ex(("127.0.0.1", port)) == 0:
-                print(f"\n  Port {port} is already in use — another BobBee (or app) is "
-                      f"running there.\n"
-                      f"  Free it:   lsof -ti:{port} | xargs kill\n"
-                      f"  Or pick another port:   BOBBEE_PORT=3001 npm start\n")
-                sys.exit(1)
-        print(f"\n  BobBee → http://127.0.0.1:{port}   "
+                # Port is busy. Almost always that's a BobBee we forgot to stop —
+                # so reclaim it rather than drifting to a random port, which is
+                # what made the URL keep moving. Only ever kill our *own* process:
+                # anything else on this port is someone else's and gets a fallback.
+                if _reclaim_port(port):
+                    print(f"  Reclaimed port {port} from a previous BobBee.")
+                else:
+                    with socket.socket() as s2:
+                        s2.bind(("127.0.0.1", 0))
+                        port = s2.getsockname()[1]
+                    print(f"  Port {os.environ.get('BOBBEE_PORT') or 5488} is held by "
+                          f"another app — using {port} this time.")
+        # The reloader re-runs this file in a child process, which recomputes the
+        # port. Publish the resolved one so the child reads it back off the env
+        # instead of retrying 5488 and landing somewhere else.
+        os.environ["BOBBEE_PORT"] = str(port)
+        # Seed before scheduling the browser tab: a first build takes ~25s, and
+        # opening the tab first would just race an empty state. Once the data is
+        # on disk this is a no-op and startup is immediate.
+        if _SEED_ENABLED:
+            _seed_demo_state()
+        print(f"\n  BobBee → http://localhost:{port}   "
               f"(edit a file and refresh the page — it live-reloads)\n")
-        _threading.Timer(0.9, lambda: webbrowser.open(f"http://127.0.0.1:{port}")).start()
+        _threading.Timer(0.9, lambda: webbrowser.open(f"http://localhost:{port}")).start()
 
     # use_reloader=True: watches the .py files (templates live in ui_templates.py)
     # and restarts on save, so a browser refresh shows your edits without a manual

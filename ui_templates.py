@@ -25,13 +25,25 @@ _SPARKLE = '<svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="
 
 _DESIGN_CSS = """
   :root{
-    --bg:#0a0a0c; --layer1:#18181b; --layer2:#212124; --layer3:#29292d;
-    --border:#3a3a40; --border-strong:#55555c;
-    /* Full-white type ramp — all text is white on dark layers per IBM Carbon dark theme. */
-    --text1:#ffffff; --text2:#ffffff; --text3:#ffffff;
+    /* Carbon Gray 100 dark theme — the *neutral* ramp used across IBM product
+       UI. (Cool gray reads green-tinted on screen; that was the wrong ramp.) */
+    --bg:#161616; --layer1:#262626; --layer2:#393939; --layer3:#525252;
+    --border:#393939; --border-strong:#6f6f6f;
+    --header-bg:#161616;
+    /* Bright type ramp — gray body text was hard to read on the dark layers, so
+       hierarchy stays in the top three Carbon steps and never dims below #c6c6c6. */
+    --text1:#ffffff; --text2:#f4f4f4; --text3:#c6c6c6;
     --blue:#0f62fe; --blue-text:#78a9ff; --blue-soft:rgba(15,98,254,.14); --blue-border:rgba(120,169,255,.4);
     --purple:#8a3ffc; --purple-text:#be95ff; --purple-soft:rgba(138,63,252,.14); --purple-border:rgba(190,149,255,.4);
     --green:#42be65; --amber:#f1c21b; --red:#fa4d56;
+    /* Gradients. IBM's brand gradient runs blue 60 → purple 60; keep every
+       gradient on that axis so "futuristic" never drifts off-palette. Surface
+       gradients stay near-black so they read as depth, not as color. */
+    --grad-brand:linear-gradient(135deg,#0f62fe 0%,#8a3ffc 100%);
+    --grad-brand-soft:linear-gradient(135deg,rgba(15,98,254,.18) 0%,rgba(138,63,252,.18) 100%);
+    --grad-surface:linear-gradient(160deg,#262626 0%,#1c1c1c 100%);
+    --grad-glow:radial-gradient(900px 420px at 15% -10%,rgba(15,98,254,.16),transparent 60%),
+                radial-gradient(760px 400px at 95% 0%,rgba(138,63,252,.13),transparent 62%);
     /* IBM Carbon: sharp, rectangular corners everywhere. */
     --r-sm:0; --r-md:0; --r-lg:0;
     --font:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
@@ -39,7 +51,7 @@ _DESIGN_CSS = """
   }
   *{ box-sizing:border-box; }
   html,body{ background:var(--bg); }
-  body{ font-family:var(--font); color:var(--text1); margin:0; font-size:14px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  body{ font-family:var(--font); color:var(--text1); margin:0; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
   ::selection{ background:rgba(91,150,255,.3); }
   ::-webkit-scrollbar{ width:10px; height:10px; }
   ::-webkit-scrollbar-track{ background:transparent; }
@@ -48,7 +60,7 @@ _DESIGN_CSS = """
   h1,h2,h3{ font-weight:600; letter-spacing:-.01em; margin:0; color:var(--text1); }
   .mono{ font-family:var(--mono); }
 
-  .btn{ font:inherit; font-size:13.5px; font-weight:500; color:var(--text1); background:var(--layer2);
+  .btn{ font:inherit; font-size:14.5px; font-weight:500; color:var(--text1); background:var(--layer2);
         border:1px solid var(--border); border-radius:var(--r-sm); padding:9px 16px; cursor:pointer;
         transition:background .15s,border-color .15s,transform .08s; white-space:nowrap; }
   .btn:hover{ background:var(--layer3); border-color:var(--border-strong); }
@@ -58,13 +70,13 @@ _DESIGN_CSS = """
   .btn.primary:disabled,.btn:disabled{ background:var(--layer1); border-color:var(--border); color:var(--text3); cursor:not-allowed; }
   .btn.ai{ background:var(--purple); border-color:var(--purple); color:#fff; }
   .btn.ai:hover{ background:#7a2ff0; }
-  .btn.big{ padding:11px 20px; font-size:14px; width:100%; }
-  .link{ color:var(--blue-text); font-size:13.5px; font-weight:500; cursor:pointer; background:none; border:none; padding:0; font-family:inherit; }
+  .btn.big{ padding:11px 20px; font-size:15px; width:100%; }
+  .link{ color:var(--blue-text); font-size:14.5px; font-weight:500; cursor:pointer; background:none; border:none; padding:0; font-family:inherit; }
   .link:hover{ text-decoration:underline; }
 
   .card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); }
 
-  .badge{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:500; padding:4px 10px;
+  .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; padding:4px 10px;
           border-radius:var(--r-sm); border:1px solid transparent; line-height:1.3; white-space:nowrap; }
   .badge.blue{ background:var(--blue-soft); color:var(--blue-text); border-color:var(--blue-border); }
   .badge.ai{ background:var(--purple-soft); color:var(--purple-text); border-color:var(--purple-border); }
@@ -82,7 +94,7 @@ _DESIGN_CSS = """
   .spinner{ width:13px; height:13px; border-radius:50%; border:2px solid var(--purple-border);
             border-top-color:var(--purple-text); animation:spin .7s linear infinite; flex:none; }
 
-  table{ border-collapse:separate; border-spacing:0; width:100%; font-size:12.5px; background:var(--layer1);
+  table{ border-collapse:separate; border-spacing:0; width:100%; font-size:13.5px; background:var(--layer1);
          border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; }
   th,td{ padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
   th{ background:var(--layer2); font-weight:600; color:var(--text2); cursor:pointer; white-space:nowrap; }
@@ -90,11 +102,11 @@ _DESIGN_CSS = """
   tr:hover td{ background:var(--layer2); }
   tr:last-child td{ border-bottom:none; }
 
-  input[type=text],input[type=email],input[type=password]{ font:inherit; font-size:14px; border:1px solid var(--border);
+  input[type=text],input[type=email],input[type=password]{ font:inherit; font-size:15px; border:1px solid var(--border);
          border-radius:var(--r-sm); padding:10px 13px; background:var(--layer2); color:var(--text1);
          transition:border-color .15s,background .15s; }
   input:focus{ outline:none; border-color:var(--blue-text); background:var(--layer1); box-shadow:0 0 0 3px var(--blue-soft); }
-  select{ font:inherit; font-size:13.5px; border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 13px;
+  select{ font:inherit; font-size:14.5px; border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 13px;
           background:var(--layer2); color:var(--text1); cursor:pointer; width:100%; }
 """
 
@@ -103,7 +115,7 @@ PAGE_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>BobBee</title>
+<title>IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """
@@ -121,12 +133,68 @@ PAGE_TEMPLATE = """
   .gate-note{ color:var(--text3); font-size:12px; line-height:1.55; margin-top:20px; }
 
   /* ── profile page ───────────────────────────────────────────── */
-  .profile-page{ max-width:760px; }
+  .profile-page{ max-width:1360px; }
+
+  /* ── w3-style identity header ───────────────────────────────── */
+  /* w3 renders the person's name very large and very light. */
+  .w3-name{ font-size:68px; font-weight:300; letter-spacing:-.01em; line-height:1.15; }
+  .w3-head{ display:flex; gap:28px; align-items:flex-start; padding-bottom:26px; }
+  .w3-avatar{ width:132px; height:132px; flex:none; display:flex; align-items:center;
+              justify-content:center; font-size:34px; font-weight:500; color:#fff;
+              background:var(--grad-brand); letter-spacing:.02em; }
+  .w3-ident{ min-width:0; padding-top:4px; }
+  /* w3 sets the role line large and light, above a small function label. */
+  .w3-role{ font-size:23px; font-weight:300; color:var(--text1); line-height:1.3; }
+  .w3-fn{ font-size:15px; font-weight:300; color:var(--text2); margin-top:4px; }
+  .w3-loc{ margin-top:22px; font-size:14px; color:var(--text2); display:flex;
+           align-items:center; gap:10px; flex-wrap:wrap; }
+  .w3-sep{ color:var(--border-strong); }
+  .w3-org{ font-size:14px; color:var(--text2); margin-top:8px; }
+  .w3-meta{ font-size:14px; color:var(--text2); margin-top:3px; }
+  .w3-link{ color:var(--blue-text); text-decoration:none; }
+  .w3-link:hover{ text-decoration:underline; }
+  .w3-contact{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+               gap:14px; padding:24px 0 28px; border-top:1px solid var(--border); }
+  .w3-ctile{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px 20px; }
+  .w3-ctile.off{ opacity:.5; }
+  .w3-cicon{ width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+             border-radius:50%; background:var(--layer2); color:var(--text2); font-size:17px;
+             margin-bottom:26px; }
+  .w3-cicon.blue{ background:var(--grad-brand); color:#fff; }
+  .w3-cicon.purple{ background:linear-gradient(135deg,#8a3ffc,#be95ff); color:#fff; }
+  .w3-clabel{ font-size:12.5px; color:var(--text3); margin-bottom:3px; }
+  .w3-cval{ font-size:13.5px; color:var(--text2); }
+
+  /* Details column + sticky map column. */
+  .prof-split{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px;
+               align-items:start; }
+  /* Not sticky — both columns scroll together so the two sides stay level. */
+  .prof-aside{ min-width:0; }
+  .map-card{ margin-bottom:0; }
+  .map-card .usmap{ max-width:none; }
+  .seg-wrap{ flex-wrap:wrap; }
+  @media(max-width:1080px){ .prof-split{ grid-template-columns:1fr; } }
+
+  .w3-rows{ display:flex; flex-direction:column; }
+  .w3-row{ display:grid; grid-template-columns:minmax(120px,34%) 1fr; gap:16px;
+           padding:11px 0; border-bottom:1px solid var(--border); font-size:13.5px; }
+  .w3-row:last-child{ border-bottom:none; }
+  .w3-row .k{ color:var(--text3); }
+  .w3-row .v{ color:var(--text2); }
+  .w3-row .dim{ color:var(--text3); font-size:12.5px; }
+  .w3-exp{ display:flex; flex-direction:column; gap:18px; }
+  .w3-expitem{ padding-left:12px; border-left:2px solid transparent; border-image:var(--grad-brand) 1; }
+  .w3-expname{ font-size:13.5px; font-weight:600; color:var(--text1); }
+  .w3-expdesc{ font-size:12.5px; color:var(--text3); margin:4px 0 8px; line-height:1.5; }
+  .w3-creds{ display:flex; flex-direction:column; gap:10px; }
+  .w3-cred{ font-size:13px; color:var(--text2); padding:11px 14px; background:var(--layer2);
+            border-left:2px solid transparent; border-image:var(--grad-brand) 1; }
   .profile-tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:28px; }
   .profile-tab{ font:inherit; font-size:13.5px; font-weight:500; color:var(--text3); background:none; border:none;
                 border-bottom:2px solid transparent; cursor:pointer; padding:10px 20px; margin-bottom:-1px; }
   .profile-tab:hover{ color:#fff; }
-  .profile-tab.active{ color:#fff; border-bottom-color:#fff; }
+  /* Same blue indicator as the vertical section nav, laid horizontally. */
+  .profile-tab.active{ color:#fff; border-bottom-color:var(--blue); }
   .profile-section{ display:none; }
   .profile-section.active{ display:block; }
   .prof-card{ background:var(--layer1); border:1px solid var(--border); padding:24px 26px; margin-bottom:16px; }
@@ -155,25 +223,86 @@ PAGE_TEMPLATE = """
     background:var(--layer2); color:#fff; padding:7px 10px; outline:none; }
   .reset-link{ font:inherit; font-size:12px; color:var(--text3); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
   .reset-link:hover{ color:#fff; }
+  /* Purple = watsonx output. Personalization is entirely about model behaviour,
+     so it carries the accent as a whole rather than only on individual controls. */
+  .ai-note{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; margin-bottom:18px;
+            background:var(--grad-brand-soft); border-left:2px solid var(--purple);
+            font-size:13px; color:var(--text2); line-height:1.55; }
+  .ai-note-mark{ color:var(--purple-text); flex:none; display:flex; padding-top:1px; }
+  .ai-note b{ color:var(--purple-text); font-weight:600; }
+  #ptab-personalization .prof-card{ border-left:2px solid var(--purple-border); }
+  #ptab-personalization .prof-card-head h3{ color:var(--purple-text); }
+
+  /* ── Settings tab: sidebar + section body ───────────────────── */
+  .set-split{ display:grid; grid-template-columns:236px minmax(0,1fr); gap:24px; align-items:start; }
+  .set-nav{ display:flex; flex-direction:column; border:1px solid var(--border); background:var(--layer1); }
+  .set-navlink{ font:inherit; font-size:13.5px; text-align:left; color:var(--text2); background:none;
+                border:none; border-left:2px solid transparent; cursor:pointer; padding:12px 16px;
+                border-bottom:1px solid var(--border); transition:background .12s,color .12s; }
+  .set-navlink:last-child{ border-bottom:none; }
+  .set-navlink:hover{ background:var(--layer2); color:#fff; }
+  .set-navlink.active{ color:#fff; background:var(--layer2); border-left-color:var(--blue); font-weight:600; }
+  /* Every section is rendered; the sidebar scrolls to one rather than swapping
+     which is mounted, so you can also just read straight down the page. */
+  .set-sec{ display:block; scroll-margin-top:72px; margin-bottom:28px; }
+  .set-sec:last-child{ margin-bottom:0; }
+  .set-nav{ position:sticky; top:70px; }
+  .set-p{ font-size:13.5px; color:var(--text2); line-height:1.62; margin:0 0 10px; }
+  .set-steps{ margin:6px 0 0; padding-left:20px; display:flex; flex-direction:column; gap:11px; }
+  .set-steps li{ font-size:13px; color:var(--text2); line-height:1.6; }
+  .set-list{ margin:4px 0 12px; padding-left:20px; display:flex; flex-direction:column; gap:7px; }
+  .set-list li{ font-size:13px; color:var(--text2); line-height:1.6; }
+  @media(max-width:900px){ .set-split{ grid-template-columns:1fr; } }
+
   .access-link{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--blue-text); background:none;
                 border:none; cursor:pointer; font:inherit; padding:0; margin-top:4px; }
   .access-link:hover{ text-decoration:underline; }
   @media(max-width:640px){ .field-grid{ grid-template-columns:1fr; } }
 
   /* ── top bar ────────────────────────────────────────────────── */
-  .topbar{ position:sticky; top:0; z-index:50; background:rgba(10,10,12,.9); backdrop-filter:saturate(160%) blur(16px);
-           border-bottom:1px solid #ffffff; display:flex; align-items:center; justify-content:space-between;
-           padding:12px 28px; gap:24px; }
-  .brand{ display:flex; align-items:center; gap:10px; cursor:pointer; background:none; border:none; padding:0; }
-  .brand-logo{ width:30px; height:30px; flex:none; }
-  .brand-name{ font-size:16px; font-weight:600; letter-spacing:-.01em; color:var(--text1); }
-  .topnav{ display:flex; align-items:center; gap:2px; flex:1; }
-  .navlink{ font:inherit; font-size:13.5px; font-weight:500; color:#ffffff; background:none; border:none;
-            cursor:pointer; padding:8px 14px; border-radius:var(--r-sm); transition:color .15s,background .15s; }
+  /* Carbon UI Shell: a 48px black bar, hairline bottom border, full-height nav
+     items that carry a 3px brand-gradient underline when active. */
+  /* w3-scale shell: a taller bar, a brand block that reads as its own tile on
+     the left, and roomy nav items with a gradient underline when active. */
+  .topbar{ position:sticky; top:0; z-index:50; height:56px; background:var(--header-bg);
+           border-bottom:1px solid var(--border); display:flex; align-items:stretch;
+           justify-content:space-between; padding:0; gap:0; }
+  .brand{ display:flex; align-items:center; gap:11px; cursor:pointer; background:none; border:none;
+          padding:0 20px; flex:none; border-right:1px solid var(--border); }
+  .brand:hover{ background:var(--layer2); }
+  .brand-logo{ width:29px; height:29px; flex:none; }
+  /* Echoes the IBM wordmark's light+bold split ("IBM Platform" → "IBM BobBee"). */
+  .brand-name{ font-size:17px; font-weight:400; letter-spacing:.01em; color:var(--text1);
+               white-space:nowrap; }
+  .brand-name b{ font-weight:600; }
+  .topnav{ display:flex; align-items:stretch; gap:0; flex:none; }
+  /* Every item the same width, so the bar reads as an even row of tabs rather
+     than spacing that tracks word length. */
+  .navlink{ font:inherit; font-size:14.5px; font-weight:400; color:var(--text2); background:none;
+            border:none; cursor:pointer; padding:0 8px; width:118px; flex:none;
+            position:relative; transition:background .11s,color .11s; }
   .navlink:hover{ color:#ffffff; background:var(--layer2); }
-  .navlink.active{ color:#ffffff; background:var(--layer2); }
-  .profile-wrap{ position:relative; flex:none; }
-  .profile-btn{ width:32px; height:32px; border-radius:50%; background:var(--layer2); border:1px solid var(--border);
+  .navlink.active{ color:#ffffff; background:var(--layer1); }
+  .navlink.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:3px;
+                          background:var(--grad-brand); }
+  /* w3-style global search: fills the bar between the nav and the avatar. */
+  .topsearch{ flex:0 1 420px; display:flex; align-items:center; gap:12px; min-width:0;
+              margin-left:auto; padding:0 18px; background:var(--layer1);
+              border-left:1px solid var(--border); border-right:1px solid var(--border); }
+  .topsearch svg{ width:18px; height:18px; flex:none; color:var(--text3); }
+  .topsearch input{ flex:1; min-width:0; font:inherit; font-size:14.5px; background:none;
+                    border:none; color:var(--text1); padding:0; height:36px; }
+  .topsearch input::placeholder{ color:var(--text3); }
+  .topsearch input:focus{ outline:none; }
+  .topsearch:focus-within{ background:var(--layer2); box-shadow:inset 0 -2px 0 var(--blue); }
+  .topbar-actions{ display:flex; align-items:stretch; flex:none; }
+  .icon-btn{ width:48px; background:none; border:none; color:var(--text2); cursor:pointer;
+             display:flex; align-items:center; justify-content:center; transition:background .11s,color .11s; }
+  .icon-btn:hover{ background:var(--layer2); color:#ffffff; }
+  .icon-btn svg{ width:20px; height:20px; }
+  .profile-wrap{ position:relative; flex:none; display:flex; align-items:center; gap:10px;
+                 padding:0 22px; border-left:1px solid var(--border); }
+  .profile-btn{ width:44px; height:44px; border-radius:50%; background:var(--layer2); border:1px solid var(--border);
                 color:var(--text1); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer;
                 display:flex; align-items:center; justify-content:center; }
   .profile-btn:hover{ border-color:var(--border-strong); }
@@ -200,11 +329,15 @@ PAGE_TEMPLATE = """
   .empty-state h3{ font-size:18px; margin-bottom:8px; }
   .empty-state p{ color:#ffffff; font-size:14px; margin:0 0 20px; }
   .empty-state .btn{ width:auto; }
-  .range-toggle{ display:inline-flex; background:var(--layer2); border:1px solid var(--border); border-radius:var(--r-sm);
-                 padding:3px; gap:2px; margin-bottom:18px; }
-  .range-btn{ font:inherit; font-size:12.5px; font-weight:500; color:#ffffff; background:none; border:none;
-              cursor:pointer; padding:6px 15px; border-radius:0; }
-  .range-btn.active{ background:var(--layer1); color:#ffffff; }
+  /* Same segmented control as the dashboard/profile toggles (.seg / .seg-btn) —
+     one control style for "pick a view" everywhere in the app. */
+  .range-toggle{ display:inline-flex; border:1px solid var(--border); margin-bottom:18px; }
+  .range-btn{ font:inherit; font-size:12.5px; font-weight:500; color:var(--text3); background:none;
+              border:none; border-right:1px solid var(--border); cursor:pointer; padding:7px 15px;
+              transition:background .13s,color .13s; }
+  .range-btn:last-child{ border-right:none; }
+  .range-btn:hover{ color:#fff; background:var(--layer2); }
+  .range-btn.active{ color:#fff; background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
   .aitem{ display:flex; align-items:center; gap:14px; padding:13px 16px; background:var(--layer1); border:1px solid var(--border);
           border-radius:var(--r-md); margin-bottom:8px; }
   .aitem .adate{ width:78px; flex:none; font-size:11px; color:var(--text3); font-family:var(--mono); }
@@ -218,14 +351,32 @@ PAGE_TEMPLATE = """
   /* ── accounts tab ───────────────────────────────────────────── */
   .accts-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
   .accts-count{ color:#ffffff; font-size:13px; }
-  .acct-list{ max-height:600px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--r-lg);
-              background:var(--layer1); }
-  .acct-row{ display:flex; align-items:center; gap:0; padding:11px 18px; border-bottom:1px solid var(--border); }
+  .acct-list{ max-height:600px; overflow-y:auto; overflow-x:auto; border:1px solid var(--border);
+              border-radius:var(--r-lg); background:var(--layer1); }
+  /* Rows are grid, so they'd otherwise shrink-to-fit the scroll container. */
+  .acct-list > .acct-row{ min-width:max-content; }
+  /* Real grid, not flex: header and body rows share one column template set on
+     the list (--acct-cols), so every cell lines up regardless of how many
+     optional columns the current view shows or how long a value wraps. */
+  .acct-row{ display:grid; grid-template-columns:var(--acct-cols); align-items:center;
+             gap:0 14px; padding:11px 18px; border-bottom:1px solid var(--border); }
   .acct-row:last-child{ border-bottom:none; }
-  .acct-row .an{ flex:1; min-width:0; font-weight:500; font-size:13.5px; padding-right:12px; }
-  .acct-row .ai{ width:160px; flex:none; color:var(--text3); font-size:12.5px; padding-right:12px; }
-  .acct-row .aiv{ width:180px; flex:none; color:var(--text3); font-size:12px; padding-right:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .acct-row .atags{ flex:none; display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; max-width:300px; }
+  .acct-row > span{ min-width:0; }
+  .acct-row .arank{ font-family:var(--mono); font-size:12px; color:var(--text3); }
+  .acct-row .an{ font-weight:500; font-size:13.5px; overflow:hidden; text-overflow:ellipsis;
+                 white-space:nowrap; }
+  .acct-row .ai,
+  .acct-row .aloc{ color:var(--text3); font-size:12.5px; overflow:hidden;
+                   text-overflow:ellipsis; white-space:nowrap; }
+  .acct-row .aiv{ color:var(--text3); font-size:12px; overflow:hidden;
+                  text-overflow:ellipsis; white-space:nowrap; }
+  .acct-row .atags{ display:flex; gap:5px; flex-wrap:nowrap; justify-content:flex-end; }
+  /* Carbon data-table header: sits on layer2, sticks while the list scrolls. */
+  .acct-head{ position:sticky; top:0; z-index:2; background:var(--layer2); cursor:default;
+              border-bottom:1px solid var(--border-strong); }
+  .acct-head span{ font-size:11px !important; font-weight:600 !important; letter-spacing:.16px;
+                   color:var(--text2) !important; }
+  .acct-head .atags{ justify-content:flex-end; }
 
   .stages{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
   .stage{ display:flex; align-items:flex-start; gap:12px; padding:15px 18px; background:var(--layer1);
@@ -242,6 +393,13 @@ PAGE_TEMPLATE = """
                border-radius:var(--r-sm); padding:8px 14px; cursor:pointer; }
   .side-badge:hover{ border-color:var(--border-strong); color:#ffffff; }
   .side-badge b{ color:#ffffff; font-family:var(--mono); }
+
+  .cad-finished{ margin-top:34px; padding-top:20px; border-top:1px solid var(--border); }
+  .cad-finished-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:14px; }
+  .cad-finished-head h3{ font-size:14.5px; }
+  .cad-finished-note{ font-size:12px; color:var(--text3); }
+  .cad-finished .cad-card{ opacity:.66; }
+  .cad-finished .cad-card:hover{ opacity:1; }
 
   .cadence-group{ margin-bottom:22px; }
   .cadence-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
@@ -313,6 +471,159 @@ PAGE_TEMPLATE = """
   .news-item .na{ font-weight:600; }
   @media(max-width:900px){ .dash-grid{ flex-direction:column; } }
 
+  /* ── dashboard activity visualization ───────────────────────── */
+  .viz-panel{ position:relative; overflow:hidden; margin-bottom:14px;
+              background:var(--grad-surface); }
+  /* Brand-gradient hairline along the top edge + a soft glow behind the chart. */
+  .viz-panel::before{ content:''; position:absolute; inset:0 0 auto 0; height:2px;
+                      background:var(--grad-brand); }
+  .viz-panel::after{ content:''; position:absolute; inset:0; background:var(--grad-glow);
+                     pointer-events:none; }
+  .viz-panel > *{ position:relative; z-index:1; }
+  .viz-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+             flex-wrap:wrap; margin-bottom:18px; }
+  .viz-label{ font-size:12.5px; color:var(--text3); margin:3px 0 0; }
+  .seg{ display:flex; border:1px solid var(--border); flex:none; }
+  .seg-btn{ font:inherit; font-size:12.5px; font-weight:500; color:var(--text3); background:none;
+            border:none; border-right:1px solid var(--border); padding:7px 14px; cursor:pointer;
+            transition:background .13s,color .13s; }
+  .seg-btn:last-child{ border-right:none; }
+  .seg-btn:hover{ color:#fff; background:var(--layer2); }
+  .seg-btn.active{ color:#fff; background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
+  .viz-body{ display:flex; flex-direction:column; gap:16px; }
+  .viz-stats{ display:flex; align-items:center; gap:34px; flex-wrap:wrap; }
+  .vstat .v{ display:block; font-family:var(--mono); font-size:30px; font-weight:600;
+             color:var(--text1); }
+  .vstat .l{ font-size:11.5px; color:var(--text3); }
+  .viz-ring-wrap{ position:relative; width:78px; height:78px; margin-left:auto; flex:none; }
+  .viz-ring{ width:78px; height:78px; transform:rotate(-90deg); }
+  .ring-track{ fill:none; stroke:var(--layer2); stroke-width:10; }
+  .ring-fill{ fill:none; stroke:url(#ringGrad); stroke-width:10; stroke-linecap:butt;
+              transition:stroke-dashoffset .55s cubic-bezier(.4,.14,.3,1); }
+  .viz-ring-txt{ position:absolute; inset:0; display:flex; flex-direction:column;
+                 align-items:center; justify-content:center; gap:1px; }
+  .viz-ring-txt span{ font-family:var(--mono); font-size:15px; font-weight:600; color:#fff; }
+  .viz-ring-txt small{ font-size:9px; color:var(--text3); }
+  /* carbon-charts layout: a labelled y-axis on the left, horizontal gridlines
+     behind the plot, and a zero-rule the bars sit on. */
+  .viz-plot{ display:flex; gap:12px; }
+  .viz-yaxis{ display:flex; flex-direction:column; justify-content:space-between;
+              align-items:flex-end; height:140px; flex:none; padding-bottom:22px; }
+  .viz-ytick{ font-family:var(--mono); font-size:10px; color:var(--text3); line-height:1; }
+  .viz-grid{ position:relative; flex:1; min-width:0; }
+  .viz-gridline{ position:absolute; left:0; right:0; height:1px; background:var(--border); opacity:.55; }
+  .viz-gridline.zero{ opacity:1; background:var(--border-strong); }
+  /* Bars are grid columns so labels stay aligned no matter the bucket count. */
+  .viz-chart{ position:relative; display:grid; grid-auto-flow:column; grid-auto-columns:1fr;
+              gap:10px; align-items:end; min-height:150px; padding-top:6px; }
+  .vbar{ display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0; }
+  .vbar-stack{ display:flex; flex-direction:column; justify-content:flex-end; gap:2px;
+               width:100%; max-width:46px; height:120px; }
+  .vbar-seg{ width:100%; transition:height .5s cubic-bezier(.4,.14,.3,1); }
+  /* Carbon's dark-theme data-viz gradients: Blue 30→50 and Purple 30→50. (The
+     60-level stops are the *light*-theme pairing and go muddy on #161616.) */
+  .vbar-seg.email{ background:linear-gradient(180deg,#a6c8ff 0%,#4589ff 100%); }
+  .vbar-seg.call{ background:linear-gradient(180deg,#d4bbff 0%,#a56eff 100%); }
+  .vbar-seg.zero{ background:var(--layer2); height:2px; }
+  /* "Today" marker goes under the label, not around .vbar-stack — the stack is
+     always full height, so outlining it drew an empty box above short bars. */
+  .vbar.now .vbar-lbl{ color:#fff; font-weight:600; position:relative; }
+  .vbar.now .vbar-lbl::after{ content:''; position:absolute; left:0; right:0; bottom:-4px;
+                              height:2px; background:var(--grad-brand); }
+  .vbar-lbl{ font-size:10.5px; color:var(--text3); text-align:center; white-space:nowrap;
+             overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .vbar-val{ font-family:var(--mono); font-size:11px; color:var(--text2); }
+  .viz-legend{ display:flex; gap:18px; font-size:11.5px; color:var(--text3); }
+  .viz-legend i{ display:inline-block; width:10px; height:10px; margin-right:6px; }
+  .sw-email{ background:linear-gradient(180deg,#a6c8ff,#4589ff); }
+  .sw-call{ background:linear-gradient(180deg,#d4bbff,#a56eff); }
+  .viz-empty{ color:var(--text3); font-size:13px; padding:34px 0; text-align:center; }
+  /* Period stepping on the Activity / Meetings panels. */
+  .viz-nav{ display:flex; align-items:center; gap:8px; margin-top:3px; }
+  .viz-nav .viz-label{ margin:0; min-width:150px; }
+  .step-btn{ font:inherit; font-size:14px; line-height:1; color:var(--text3); background:none;
+             border:1px solid var(--border); cursor:pointer; padding:4px 9px;
+             transition:color .12s,border-color .12s; }
+  .step-btn:hover{ color:#fff; border-color:var(--border-strong); }
+  .step-now{ font:inherit; font-size:12px; color:var(--blue-text); background:none;
+             border:none; cursor:pointer; padding:2px 4px; }
+  .step-now:hover{ text-decoration:underline; }
+  /* Arrow on a navigation action — the button leaves this page. */
+  .go-arrow{ margin-left:2px; }
+  .cal-month-link{ cursor:pointer; }
+  .cal-month-link:hover{ color:var(--blue-text); text-decoration:underline; }
+
+  .list-loading{ display:flex; align-items:center; justify-content:center; gap:10px;
+                 color:var(--text3); font-size:13px; padding:44px 0; }
+  .list-loading .spin{ width:14px; height:14px; border:2px solid var(--border-strong);
+                       border-top-color:var(--blue-text); border-radius:50%;
+                       animation:spin .7s linear infinite; display:inline-block; }
+
+  /* ── book-of-business snapshot ──────────────────────────────── */
+  .bob-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:26px; }
+  .bob-title{ font-size:11px; font-weight:600; letter-spacing:.16px;
+              color:var(--text2); margin-bottom:14px; }
+  .bar-list{ display:flex; flex-direction:column; gap:11px; }
+  .bar-item{ display:grid; grid-template-columns:1fr auto; gap:4px 10px; font-size:12.5px; }
+  .bar-item .bl{ color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bar-item .bv{ font-family:var(--mono); font-size:11.5px; color:var(--text3); }
+  .bar-track{ grid-column:1/-1; height:7px; background:var(--layer2); }
+  .bar-fill{ height:100%; background:var(--grad-brand); transition:width .5s cubic-bezier(.4,.14,.3,1); }
+  /* Coverage meter: filled portion = accounts already in a cadence. */
+  .bar-meter{ display:flex; flex-direction:column; gap:9px; }
+  .meter-track{ height:26px; background:var(--layer2); position:relative; overflow:hidden; }
+  .meter-fill{ height:100%; background:var(--grad-brand); transition:width .55s cubic-bezier(.4,.14,.3,1); }
+  .meter-legend{ display:flex; justify-content:space-between; font-size:12px; color:var(--text3); }
+  .meter-legend b{ color:var(--text1); font-family:var(--mono); font-weight:600; }
+
+  /* ── territory choropleth (per-territory outlines) ──────────── */
+  .usmap{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; flex:1; }
+  .usmap.single{ grid-template-columns:1fr; }
+  .terr{ font:inherit; text-align:center; background:var(--layer1); border:1px solid var(--border);
+         cursor:pointer; padding:14px 12px 12px; display:flex; flex-direction:column;
+         align-items:center; gap:2px; transition:border-color .13s,background .13s; }
+  .terr:hover{ border-color:var(--border-strong); background:var(--layer2); }
+  .terr.empty{ opacity:.45; }
+  /* Isometric presentation: tilt the plate the shape sits on, so the maps read
+     as objects in space rather than flat clip-art. */
+  .terr-iso{ width:100%; perspective:640px; margin-bottom:10px; }
+  .usmap.single .terr-iso{ max-width:420px; margin-inline:auto; }
+  /* Enough tilt to read as isometric, not so much that the outline stops being
+     recognisable — the shape has to stay identifiable as the territory. */
+  .terr-svg{ width:100%; height:110px; display:block;
+             transform:rotateX(26deg) rotateZ(-15deg) scale(1.04);
+             transform-style:preserve-3d;
+             filter:drop-shadow(4px 9px 8px rgba(0,0,0,.6)); }
+  .usmap.single .terr-svg{ height:230px; }
+  /* Dark plate so the heat blobs carry the colour rather than fighting a grey. */
+  .terr-base{ fill:#2a2130; }
+  .terr-edge{ fill:none; stroke:rgba(255,255,255,.34); stroke-width:1.4;
+              vector-effect:non-scaling-stroke; }
+  .terr-code{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text1); }
+  .terr-name{ font-size:11px; color:var(--text3); line-height:1.35; }
+  .terr-val{ font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text1); margin-top:4px; }
+  .terr-cities{ width:100%; margin-top:12px; border-top:1px solid var(--border); padding-top:10px; }
+  .terr-city{ display:flex; justify-content:space-between; font-size:12px; color:var(--text3);
+              padding:4px 2px; }
+  .terr-city b{ font-family:var(--mono); color:var(--text1); font-weight:600; }
+  /* Map card fills the aside so both profile columns end level. */
+  .map-card{ display:flex; flex-direction:column; height:100%; }
+  .prof-split{ align-items:stretch; }
+  @media(max-width:520px){ .usmap{ grid-template-columns:1fr; } }
+  .map-foot{ display:flex; align-items:center; justify-content:space-between; gap:16px;
+             flex-wrap:wrap; margin-top:16px; }
+  .map-scale{ display:flex; align-items:center; gap:9px; font-family:var(--mono);
+              font-size:11px; color:var(--text3); }
+  /* Low→high runs Purple 70 up to Purple 10, matching the reference legend. */
+  .scale-bar{ display:block; width:180px; height:10px;
+              background:linear-gradient(90deg,#6929c4 0%,#8a3ffc 28%,#a56eff 50%,#be95ff 68%,#d4bbff 82%,#f6f2ff 100%); }
+  .map-note{ font-size:11.5px; color:var(--text3); }
+  .map-tip{ margin-top:14px; padding:12px 14px; background:var(--layer2);
+            border-left:2px solid transparent; border-image:var(--grad-brand) 1;
+            font-size:12.5px; }
+  .map-tip b{ font-weight:600; }
+  .map-tip .mt-row{ color:var(--text3); margin-top:3px; }
+
   /* ── plan calendar ──────────────────────────────────────────── */
   .cal-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
   .cal-nav{ display:flex; align-items:center; gap:10px; }
@@ -320,18 +631,29 @@ PAGE_TEMPLATE = """
   .cal-label{ font-weight:600; font-size:14px; min-width:150px; text-align:center; }
   .cal-month{ background:var(--layer1); border:1px solid var(--border); padding:14px; }
   .cal-month h4{ font-size:13px; margin-bottom:10px; }
-  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:2px; }
   .cal-grid .dow{ font-size:10.5px; color:var(--text3); text-align:center; padding:4px 0; }
-  .cal-cell{ min-height:56px; background:var(--layer2); padding:5px 7px; cursor:default; border:1px solid transparent; }
+  /* Empty days recede into the card; only days with work take the lighter
+     layer2 fill, so the month reads as activity rather than a slab of gray. */
+  .cal-cell{ min-height:56px; background:transparent; padding:5px 7px; cursor:default;
+             border:1px solid var(--border); }
   .cal-cell.out{ opacity:.3; }
   .cal-cell.today{ border-color:#fff; }
-  .cal-cell.has{ cursor:pointer; border-color:var(--blue-border); }
+  .cal-cell.has{ cursor:pointer; background:var(--layer2); border-color:var(--blue-border); }
   .cal-cell.has:hover{ background:var(--layer3); }
   .cal-cell.sel{ background:var(--blue-soft); border-color:var(--blue); }
   .cal-cell .d{ font-family:var(--mono); font-size:11px; color:#ffffff; }
   .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:#ffffff; }
   .cal-cell.compact{ min-height:34px; }
   .cal-quarter{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  /* Year view: four quarter blocks, each a labelled row of three months. */
+  .cal-year{ display:flex; flex-direction:column; gap:22px; }
+  .cal-qhead{ display:flex; align-items:baseline; gap:12px; margin-bottom:9px;
+              padding-bottom:7px; border-bottom:1px solid var(--border); }
+  .cal-qhead h4{ font-size:13px; font-weight:600; letter-spacing:.16px;
+                 color:var(--text2); margin:0; }
+  .cal-qsum{ font-size:11.5px; color:var(--text3); font-family:var(--mono); }
+  @media(max-width:1100px){ .cal-quarter{ grid-template-columns:1fr; } }
   .cal-week{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
   .cal-weekday{ background:var(--layer1); border:1px solid var(--border); padding:12px; min-height:150px; cursor:pointer; }
   .cal-weekday:hover{ background:var(--layer2); }
@@ -343,6 +665,51 @@ PAGE_TEMPLATE = """
               border-left:1px solid var(--border); z-index:120; transform:translateX(100%);
               transition:transform .22s ease; display:flex; flex-direction:column; overflow:hidden; }
   .day-panel.open{ transform:translateX(0); }
+  /* Make room for the panel rather than letting it cover the content. */
+  main{ transition:padding-right .22s ease; }
+  body.day-panel-open main,
+  body.side-panel-open main{ padding-right:396px; }
+  @media(max-width:900px){ body.day-panel-open main,
+                           body.side-panel-open main{ padding-right:0; } }
+
+  /* Contextual panel on the Email/Call tabs — same mechanics as the day panel. */
+  .side-panel{ position:fixed; top:0; right:0; width:380px; max-width:100vw; height:100vh;
+               background:var(--layer1); border-left:1px solid var(--border); z-index:120;
+               transform:translateX(100%); transition:transform .22s ease; display:flex;
+               flex-direction:column; overflow:hidden; }
+  .side-panel.open{ transform:translateX(0); }
+  .side-panel-body{ flex:1; overflow-y:auto; padding:18px 20px 28px; }
+  .sp-title{ font-size:17px; font-weight:600; }
+  .sp-sub{ font-size:13px; color:var(--text3); margin-top:3px; }
+  .sp-block{ margin-top:16px; }
+  .sp-row{ display:grid; grid-template-columns:44% 1fr; gap:10px; padding:9px 0;
+           border-bottom:1px solid var(--border); font-size:13.5px; }
+  .sp-row:last-child{ border-bottom:none; }
+  .sp-row .k{ color:var(--text3); }
+  .sp-row .v{ color:var(--text2); word-break:break-word; }
+  .sp-ai{ margin-top:18px; padding:14px 15px; background:var(--grad-brand-soft);
+          border-left:2px solid var(--purple); }
+  .sp-ai-head{ display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600;
+               color:var(--purple-text); margin-bottom:6px; }
+  /* The card the panel is about. */
+  .email-card.focused, .call-card.focused{ border-color:var(--blue); box-shadow:0 0 0 1px var(--blue); }
+
+  /* Kebab menu on cards. */
+  .kebab-wrap{ position:relative; }
+  .kebab{ font:inherit; font-size:17px; line-height:1; background:none; border:none;
+          color:var(--text3); cursor:pointer; padding:2px 6px; }
+  .kebab:hover{ color:#fff; }
+  .kebab-menu{ display:none; position:absolute; top:calc(100% + 4px); right:0; z-index:60;
+               min-width:206px; background:var(--layer2); border:1px solid var(--border-strong);
+               box-shadow:0 14px 30px rgba(0,0,0,.5); }
+  .kebab-menu.show{ display:block; }
+  .kebab-menu button{ display:block; width:100%; text-align:left; font:inherit; font-size:13.5px;
+                      background:none; border:none; color:var(--text2); cursor:pointer;
+                      padding:10px 14px; }
+  .kebab-menu button:hover{ background:var(--layer3); color:#fff; }
+  .kebab-menu button.danger{ color:var(--red); border-top:1px solid var(--border); }
+  .link{ cursor:pointer; }
+  .email-card-to.link:hover, .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
   .day-panel-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px;
                    border-bottom:1px solid var(--border); flex:none; }
   .day-panel-head h3{ font-size:14px; margin:0; }
@@ -368,6 +735,55 @@ PAGE_TEMPLATE = """
   .act-type{ width:52px; flex:none; font-size:10.5px; font-weight:600; text-align:center; border:1px solid var(--border-strong); padding:2px 0; }
   .act-type.email{ border-color:var(--purple-border); }
   .act-type.call{ border-color:var(--blue-border); }
+
+  /* ── today's tasks (top of the dashboard) ───────────────────── */
+  .today-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:12px; }
+  .today-head h3{ font-size:17px; }
+  .today-sub{ font-size:13px; color:var(--text3); }
+  /* Two equal columns that stay equal — 1fr each, and the cards stretch so the
+     Emails and Calls rectangles match height whatever their list length. */
+  .today-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;
+               align-items:stretch; }
+  .task-card{ display:flex; flex-direction:column; background:var(--layer1);
+              border:1px solid var(--border); padding:18px 20px 18px; min-height:560px; }
+  .task-top{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+  .task-top h4{ font-size:14px; font-weight:600; margin:0; flex:1; }
+  .task-dot{ width:10px; height:10px; flex:none; }
+  .task-dot.email{ background:linear-gradient(180deg,#a6c8ff,#4589ff); }
+  .task-dot.call{ background:linear-gradient(180deg,#d4bbff,#a56eff); }
+  .task-count{ font-size:12px; color:var(--text3); }
+  .task-count b{ font-family:var(--mono); color:var(--text1); font-weight:600; }
+  .task-meter{ height:6px; background:var(--layer2); margin-bottom:12px; }
+  .task-fill{ height:100%; width:0; transition:width .5s cubic-bezier(.4,.14,.3,1); }
+  .task-fill.email{ background:linear-gradient(90deg,#4589ff,#a6c8ff); }
+  .task-fill.call{ background:linear-gradient(90deg,#a56eff,#d4bbff); }
+  .task-list{ flex:1; overflow-y:auto; max-height:470px; margin-bottom:14px; }
+  .task-row{ display:flex; align-items:baseline; gap:10px; padding:8px 0;
+             border-bottom:1px solid var(--border); font-size:13px; }
+  .task-row:last-child{ border-bottom:none; }
+  .task-tick{ width:14px; flex:none; color:var(--green); font-size:12px; }
+  .task-acct{ font-weight:500; color:var(--text1); }
+  .task-step{ color:var(--text3); font-size:12.5px; margin-left:auto; }
+  .task-row.done .task-acct,
+  .task-row.done .task-step{ color:var(--text3); text-decoration:line-through; }
+  .task-action{ width:100%; justify-content:center; display:flex; align-items:center; gap:7px; }
+  @media(max-width:900px){ .today-grid{ grid-template-columns:1fr; } }
+
+  /* Today's to-do, grouped by activity type instead of per-row tags. */
+  .todo-sec{ margin-top:18px; }
+  .todo-sec:first-child{ margin-top:6px; }
+  .todo-head{ display:flex; align-items:center; gap:8px; font-size:11.5px; font-weight:600;
+              letter-spacing:.16px; color:var(--text2);
+              padding-bottom:8px; border-bottom:1px solid var(--border); }
+  .todo-dot{ width:9px; height:9px; flex:none; }
+  .todo-dot.email{ background:linear-gradient(180deg,#a6c8ff,#4589ff); }
+  .todo-dot.call{ background:linear-gradient(180deg,#d4bbff,#a56eff); }
+  .todo-count{ margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--text3); }
+  .todo-row{ display:flex; align-items:baseline; gap:12px; padding:9px 0;
+             border-bottom:1px solid var(--border); font-size:13px; }
+  .todo-row:last-child{ border-bottom:none; }
+  .todo-acct{ font-weight:500; color:var(--text1); }
+  .todo-step{ color:var(--text3); font-size:12.5px; margin-left:auto; }
   @media(max-width:980px){ .cal-quarter{ grid-template-columns:1fr; } .cal-week{ grid-template-columns:1fr; } .accts-layout{ flex-direction:column; } .accts-sidebar{ width:100%; } }
 
   /* ── cadences tab ───────────────────────────────────────────── */
@@ -447,6 +863,12 @@ PAGE_TEMPLATE = """
   .call-card-name{ font-weight:600; font-size:14px; flex:1; cursor:pointer; }
   .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
   .call-card-step{ font-size:11.5px; color:var(--blue-text); }
+  .call-card.done{ opacity:.62; }
+  .call-done-btn{ font:inherit; font-size:11.5px; margin-left:auto; background:none;
+                  border:1px solid var(--border-strong); color:var(--text3); cursor:pointer;
+                  padding:4px 11px; white-space:nowrap; transition:color .12s,border-color .12s; }
+  .call-done-btn:hover{ color:#fff; border-color:#fff; }
+  .call-done-btn.on{ color:var(--green); border-color:rgba(66,190,101,.5); }
   .call-card-body{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .call-contacts{ background:var(--layer2); border:1px solid var(--border); padding:12px 14px; }
   .call-contacts h4{ font-size:11.5px; font-weight:600; color:var(--text3); margin-bottom:10px; }
@@ -591,17 +1013,25 @@ PAGE_TEMPLATE = """
   <header class="topbar">
     <button class="brand" onclick="showPage('dashboard')">
       <img class="brand-logo" src="/static/logo.png" alt="">
-      <div class="brand-name">BobBee</div>
+      <div class="brand-name">IBM <b>BobBee</b></div>
     </button>
     <nav class="topnav">
-      <button class="navlink" data-page="plan" onclick="showPage('plan')">Plan</button>
+      <button class="navlink" data-page="plan" onclick="showPage('plan')">Schedule</button>
       <button class="navlink" data-page="accounts" onclick="showPage('accounts')">Accounts</button>
       <button class="navlink" data-page="cadences" onclick="showPage('cadences')">Cadences</button>
       <button class="navlink" data-page="email" onclick="showPage('email')">Email</button>
       <button class="navlink" data-page="call" onclick="showPage('call')">Call</button>
     </nav>
-    <div class="profile-wrap">
-      <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">?</button>
+    <div class="topsearch">
+      <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29 27.586l-7.552-7.552a11.018 11.018 0 10-1.414 1.414L27.586 29zM4 13a9 9 0 119 9 9.01 9.01 0 01-9-9z"/></svg>
+      <input type="text" id="globalSearch" placeholder="Search accounts, cadences and more"
+             autocomplete="off" oninput="globalSearch(this.value)"
+             onkeydown="if(event.key==='Enter') globalSearchGo()">
+    </div>
+    <div class="topbar-actions">
+      <div class="profile-wrap">
+        <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">?</button>
+      </div>
     </div>
   </header>
 
@@ -625,52 +1055,151 @@ PAGE_TEMPLATE = """
       </div>
 
       <div id="dashboardBody" style="display:none">
-        <div class="dash-grid">
-          <div class="dash-panel">
-            <h3 id="dashTodayLabel">Today</h3>
-            <div class="dash-nums">
-              <div class="dnum"><span class="v" id="dashTodayEmails">0</span><span class="l">Emails</span></div>
-              <div class="dnum"><span class="v" id="dashTodayCalls">0</span><span class="l">Calls</span></div>
-              <div class="dnum"><span class="v" id="dashTodayAccounts">0</span><span class="l">Accounts touched</span></div>
+        <div class="today-head">
+          <h3 id="dashTodayLabel">Today</h3>
+          <span class="today-sub" id="dashTodaySub">—</span>
+        </div>
+        <div class="today-grid">
+          <section class="task-card">
+            <div class="task-top">
+              <span class="task-dot email"></span>
+              <h4>Emails</h4>
+              <span class="task-count"><b id="taskEmailDone">0</b> of <b id="taskEmailTotal">0</b> sent</span>
             </div>
-            <div id="dashTodayItems"></div>
+            <div class="task-meter"><div class="task-fill email" id="taskEmailFill"></div></div>
+            <div class="task-list" id="taskEmailList"></div>
+            <button class="btn task-action" onclick="showPage('email')">Draft and send emails <span class="go-arrow">&#8594;</span></button>
+          </section>
+          <section class="task-card">
+            <div class="task-top">
+              <span class="task-dot call"></span>
+              <h4>Calls</h4>
+              <span class="task-count"><b id="taskCallDone">0</b> of <b id="taskCallTotal">0</b> done</span>
+            </div>
+            <div class="task-meter"><div class="task-fill call" id="taskCallFill"></div></div>
+            <div class="task-list" id="taskCallList"></div>
+            <button class="btn task-action" onclick="showPage('call')">Start calling <span class="go-arrow">&#8594;</span></button>
+          </section>
+        </div>
+
+        <div class="dash-panel viz-panel" style="margin-top:14px;">
+          <div class="viz-head">
+            <div>
+              <h3>Activity</h3>
+              <div class="viz-nav">
+                <button class="step-btn" onclick="stepViz(-1)" title="Previous">&#8592;</button>
+                <p class="viz-label" id="vizLabel">—</p>
+                <button class="step-btn" onclick="stepViz(1)" title="Next">&#8594;</button>
+                <button class="step-now" id="vizNowBtn" onclick="stepVizNow()" style="display:none">Today</button>
+              </div>
+            </div>
+            <div class="seg" id="vizPeriods">
+              <button class="seg-btn" data-period="day" onclick="setVizPeriod('day')">Daily</button>
+              <button class="seg-btn active" data-period="week" onclick="setVizPeriod('week')">Weekly</button>
+              <button class="seg-btn" data-period="month" onclick="setVizPeriod('month')">Monthly</button>
+              <button class="seg-btn" data-period="quarter" onclick="setVizPeriod('quarter')">Quarterly</button>
+            </div>
           </div>
-          <div class="dash-side">
-            <div class="dash-panel">
-              <h3>This week</h3>
-              <div class="dash-nums">
-                <div class="dnum"><span class="v" id="dashWeekEmails">0</span><span class="l">Emails</span></div>
-                <div class="dnum"><span class="v" id="dashWeekCalls">0</span><span class="l">Calls</span></div>
-                <div class="dnum"><span class="v" id="dashWeekAccounts">0</span><span class="l">Accounts</span></div>
+          <div class="viz-body">
+            <div class="viz-stats">
+              <div class="vstat"><span class="v" id="vizEmails">0</span><span class="l">Emails</span></div>
+              <div class="vstat"><span class="v" id="vizCalls">0</span><span class="l">Calls</span></div>
+              <div class="vstat"><span class="v" id="vizAccounts">0</span><span class="l">Accounts</span></div>
+              <div class="viz-ring-wrap">
+                <svg class="viz-ring" viewBox="0 0 120 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#0f62fe"/><stop offset="100%" stop-color="#8a3ffc"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="60" cy="60" r="52" class="ring-track"/>
+                  <circle cx="60" cy="60" r="52" class="ring-fill" id="vizRing"/>
+                </svg>
+                <div class="viz-ring-txt"><span id="vizPct">0%</span><small>worked</small></div>
               </div>
             </div>
-            <div class="dash-panel">
-              <h3>Cadences</h3>
-              <div class="dash-nums">
-                <div class="dnum"><span class="v" id="cadActive">0</span><span class="l">Active</span></div>
-                <div class="dnum"><span class="v" id="cadPending">0</span><span class="l">Pending</span></div>
-                <div class="dnum"><span class="v" id="cadCompleted">0</span><span class="l">Completed</span></div>
+            <div class="viz-plot">
+              <div class="viz-yaxis" id="vizYAxis"></div>
+              <div class="viz-grid">
+                <div id="vizGrid"></div>
+                <div class="viz-chart" id="vizChart"></div>
               </div>
+            </div>
+            <div class="viz-legend">
+              <span><i class="sw sw-email"></i>Emails</span>
+              <span><i class="sw sw-call"></i>Calls</span>
             </div>
           </div>
         </div>
-        <div class="dash-panel" style="margin-top:14px;">
-          <h3>Notable news</h3>
-          <div id="dashNews"></div>
+
+        <div class="dash-panel viz-panel" style="margin-top:14px;">
+          <div class="viz-head">
+            <div>
+              <h3>Meetings &amp; opportunities</h3>
+              <div class="viz-nav">
+                <button class="step-btn" id="mtgPrev" onclick="stepMtg(-1)" title="Previous week">&#8592;</button>
+                <p class="viz-label" id="mtgLabel">—</p>
+                <button class="step-btn" id="mtgNext" onclick="stepMtg(1)" title="Next week">&#8594;</button>
+              </div>
+            </div>
+            <div class="seg" id="mtgScope">
+              <button class="seg-btn active" data-scope="quarter" onclick="setMtgScope('quarter')">Quarter</button>
+              <button class="seg-btn" data-scope="week" onclick="setMtgScope('week')">Week</button>
+            </div>
+          </div>
+          <div class="viz-stats">
+            <div class="vstat"><span class="v" id="mtgTotal">0</span><span class="l">Total meetings</span></div>
+            <div class="vstat"><span class="v" id="mtgBooked">0</span><span class="l">Booked meetings</span></div>
+            <div class="vstat"><span class="v" id="mtgCompleted">0</span><span class="l">Completed meetings</span></div>
+            <div class="vstat"><span class="v" id="mtgUpcoming">0</span><span class="l">Upcoming</span></div>
+            <div class="vstat"><span class="v" id="mtgCancelled">0</span><span class="l">Cancelled</span></div>
+            <div class="vstat"><span class="v" id="mtgOI">0</span><span class="l">OI (opportunities identified)</span></div>
+            <div class="vstat"><span class="v" id="mtgOIValue">—</span><span class="l">OI value</span></div>
+          </div>
         </div>
+
+        <div class="dash-panel viz-panel" style="margin-top:14px;">
+          <div class="viz-head">
+            <div>
+              <h3>Book of business</h3>
+              <p class="viz-label" id="bobLabel">—</p>
+            </div>
+          </div>
+          <div class="viz-stats" style="margin-bottom:20px;">
+            <div class="vstat"><span class="v" id="bobTotal">0</span><span class="l">Accounts</span></div>
+            <div class="vstat"><span class="v" id="bobCovered">0</span><span class="l">In a cadence</span></div>
+            <div class="vstat"><span class="v" id="bobSpend">—</span><span class="l">IBM spend</span></div>
+            <div class="vstat"><span class="v" id="bobIndustries">0</span><span class="l">Industries</span></div>
+          </div>
+          <div class="bob-grid">
+            <div class="bob-block">
+              <div class="bob-title">Coverage</div>
+              <div class="bar-meter" id="bobCoverage"></div>
+            </div>
+            <div class="bob-block">
+              <div class="bob-title">Top industries</div>
+              <div class="bar-list" id="bobIndList"></div>
+            </div>
+            <div class="bob-block">
+              <div class="bob-title">By territory</div>
+              <div class="bar-list" id="bobTerrList"></div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
     <!-- Plan -->
     <section id="page-plan" class="page">
       <div class="page-head">
-        <h2>Plan</h2>
+        <h2>Schedule</h2>
         <p>Your quarter, distributed — who to email and call, every day.</p>
       </div>
 
       <div id="planEmpty" class="empty-state" style="display:none">
         <h3>Import accounts to get started</h3>
-        <p>The plan calendar is built from your strategized accounts.</p>
+        <p>The schedule is built from your strategized accounts.</p>
         <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
       </div>
       <div id="planStrat" class="empty-state" style="display:none">
@@ -682,6 +1211,7 @@ PAGE_TEMPLATE = """
       <div id="planBody" style="display:none">
         <div class="cal-toolbar">
           <div class="range-toggle">
+            <button class="range-btn" data-view="year" onclick="setCalView('year')">Year</button>
             <button class="range-btn" data-view="quarter" onclick="setCalView('quarter')">Quarter</button>
             <button class="range-btn active" data-view="month" onclick="setCalView('month')">Month</button>
             <button class="range-btn" data-view="week" onclick="setCalView('week')">Week</button>
@@ -864,69 +1394,157 @@ PAGE_TEMPLATE = """
     <section id="page-profile" class="page">
       <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <h2>Profile</h2>
-          <p>Your identity, territory, and AI personalization preferences.</p>
+          <h2 class="w3-name">Tim Zhou</h2>
         </div>
-        <button class="access-link" onclick="openDetails()">&#128274; Manage access &amp; sessions</button>
       </div>
       <div class="profile-page">
         <div class="profile-tabs">
           <button class="profile-tab active" data-ptab="profile" onclick="switchProfileTab('profile')">Profile</button>
           <button class="profile-tab" data-ptab="personalization" onclick="switchProfileTab('personalization')">Personalization</button>
+          <button class="profile-tab" data-ptab="settings" onclick="switchProfileTab('settings')">Settings</button>
         </div>
 
         <!-- ── Profile tab ── -->
         <div class="profile-section active" id="ptab-profile">
 
-          <div class="prof-card">
-            <div class="prof-card-head"><h3>Identity</h3></div>
-            <div class="field-grid">
-              <div class="field">
-                <label>Full name</label>
-                <input type="text" id="prof-name" value="Tim" readonly>
+          <!-- w3-style identity header -->
+          <div class="w3-head">
+            <div class="w3-avatar" id="w3Avatar">TZ</div>
+            <div class="w3-ident">
+              <div class="w3-role">TSS - Infrastructure - FSS/PUB - CA/HI/GU/MP</div>
+              <div class="w3-fn">Sales</div>
+              <div class="w3-loc">
+                <a class="w3-link" href="#" onclick="return false">Brookhaven, GA, United States</a>
+                <span class="w3-sep">|</span><span id="w3Clock">—</span>
               </div>
-              <div class="field">
-                <label>IBM email</label>
-                <input type="email" id="prof-email" value="tim.zhou@ibm.com" readonly>
-              </div>
-              <div class="field">
-                <label>Slack handle</label>
-                <input type="text" id="prof-slack" value="@timzhou" readonly>
-              </div>
-              <div class="field">
-                <label>Role</label>
-                <input type="text" id="prof-role" value="Client Executive" readonly>
-              </div>
+              <div class="w3-org">International Business Machines Corporation</div>
+              <div class="w3-meta">IBM employee, Regular <span class="w3-sep">|</span> Talent ID: 0K3692897</div>
             </div>
           </div>
 
-          <div class="prof-card">
-            <div class="prof-card-head"><h3>Territory &amp; market</h3></div>
-            <div class="field-grid">
-              <div class="field">
-                <label>Territory</label>
-                <input type="text" id="prof-territory" value="California" readonly>
-              </div>
-              <div class="field">
-                <label>Market</label>
-                <input type="text" id="prof-market" value="FSS/PUB" readonly>
-              </div>
-              <div class="field">
-                <label>Client segment</label>
-                <input type="text" id="prof-segment" value="Select Territory" readonly>
-              </div>
-              <div class="field">
-                <label>Portfolio</label>
-                <input type="text" id="prof-portfolio" value="Infrastructure" readonly>
-              </div>
+          <div class="w3-contact">
+            <div class="w3-ctile">
+              <div class="w3-cicon blue">✉</div>
+              <div class="w3-clabel">Email (Preferred)</div>
+              <a class="w3-link" href="mailto:tim.zhou@ibm.com">tim.zhou@ibm.com</a>
+            </div>
+            <div class="w3-ctile">
+              <div class="w3-cicon purple">#</div>
+              <div class="w3-clabel">Slack</div>
+              <a class="w3-link" href="#" onclick="return false">@Tim Zhou</a>
             </div>
           </div>
 
-          <div style="margin-top:4px;font-size:12px;color:var(--text3);">Profile data sourced from IBM W3. Contact your manager to update territory or role.</div>
+          <!-- Details left, territory map right (sticky, fills the column) -->
+          <div class="prof-split">
+            <div class="prof-main">
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Contact</h3></div>
+                <div class="w3-rows">
+                  <div class="w3-row"><span class="k">Preferred contact</span><span class="v">The best way to contact me is via email</span></div>
+                  <div class="w3-row"><span class="k">Email</span><span class="v"><a class="w3-link" href="mailto:tim.zhou@ibm.com">tim.zhou@ibm.com</a></span></div>
+                  <div class="w3-row"><span class="k">Slack</span><span class="v"><a class="w3-link" href="#" onclick="return false">@Tim Zhou</a></span></div>
+                  <div class="w3-row"><span class="k">Primary language</span><span class="v">English</span></div>
+                  <div class="w3-row"><span class="k">Business address</span><span class="v">1001 Summit Blvd<br>Brookhaven, GA 30319-6408, US<br><span class="dim">Building: HU5 · Office: MOBILE</span></span></div>
+                  <div class="w3-row"><span class="k">Work location code</span><span class="v">HU5</span></div>
+                  <div class="w3-row"><span class="k">Campus ID</span><span class="v">US152024</span></div>
+                </div>
+              </div>
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Business information</h3></div>
+                <div class="w3-rows">
+                  <div class="w3-row"><span class="k">Organization</span><span class="v">Sales &gt; Global Sales &gt; IBM Technology, Americas</span></div>
+                  <div class="w3-row"><span class="k">Department name</span><span class="v">SELA Infra Territory Sales</span></div>
+                  <div class="w3-row"><span class="k">Business unit</span><span class="v">Sales</span></div>
+                  <div class="w3-row"><span class="k">Department code</span><span class="v">FCY</span></div>
+                  <div class="w3-row"><span class="k">Org code</span><span class="v">GF</span></div>
+                  <div class="w3-row"><span class="k">Division code</span><span class="v">12</span></div>
+                  <div class="w3-row"><span class="k">Cost center</span><span class="v">FCY</span></div>
+                </div>
+              </div>
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Expertise</h3></div>
+                <div class="w3-exp">
+                  <div class="w3-expitem">
+                    <div class="w3-expname">Territory Sales Specialist (Select Territory)</div>
+                    <div class="w3-expdesc">Territory Sales Specialists focus on Select Territory accounts. They are digital sellers who cover an entire suite of products on both an outbound and inbound basis.</div>
+                    <span class="badge neutral">Generalist</span>
+                  </div>
+                  <div class="w3-expitem">
+                    <div class="w3-expname">Brand Sales Specialist - Digital</div>
+                    <div class="w3-expdesc">Responsible for their Brand's Digital Focus Product offerings and accountable for creating opportunities in a specific segment.</div>
+                    <span class="badge neutral">Storage Portfolio</span>
+                  </div>
+                  <div class="w3-expitem">
+                    <div class="w3-expname">Holding Code Digital Sales</div>
+                    <div class="w3-expdesc">Exclusively for employees that have been or will be in a commissionable code.</div>
+                    <span class="badge neutral">Generalist</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Credentials</h3></div>
+                <div class="w3-creds">
+                  <span class="w3-cred">Aerospace and Defense Industry Jumpstart</span>
+                  <span class="w3-cred">Storage for FlashSystem - Foundational</span>
+                  <span class="w3-cred">Global Sales School</span>
+                </div>
+              </div>
+
+              <div style="margin-top:4px;font-size:12px;color:var(--text3);">Profile data sourced from IBM w3. Contact your manager to update territory or role.</div>
+            </div>
+
+            <aside class="prof-aside">
+              <div class="prof-card viz-panel map-card">
+                <div class="viz-head">
+                  <div>
+                    <h3>Territory coverage</h3>
+                    <p class="viz-label" id="mapLabel">—</p>
+                  </div>
+                </div>
+                <div class="seg seg-wrap" id="mapViews">
+                  <button class="seg-btn active" data-view="accounts" onclick="setMapView('accounts')">Accounts</button>
+                  <button class="seg-btn" data-view="cadences" onclick="setMapView('cadences')">In cadence</button>
+                  <button class="seg-btn" data-view="spend" onclick="setMapView('spend')">IBM spend</button>
+                  <button class="seg-btn" data-view="industries" onclick="setMapView('industries')">Industry mix</button>
+                </div>
+                <div class="seg seg-wrap" id="mapFocus" style="margin-top:8px;">
+                  <button class="seg-btn active" data-focus="all" onclick="setMapFocus('all')">All</button>
+                  <button class="seg-btn" data-focus="CA" onclick="setMapFocus('CA')">CA</button>
+                  <button class="seg-btn" data-focus="HI" onclick="setMapFocus('HI')">HI</button>
+                  <button class="seg-btn" data-focus="GU" onclick="setMapFocus('GU')">GU</button>
+                  <button class="seg-btn" data-focus="MP" onclick="setMapFocus('MP')">MP</button>
+                </div>
+                <div class="viz-stats" style="margin:16px 0;">
+                  <div class="vstat"><span class="v" id="mapTotal">0</span><span class="l" id="mapTotalLbl">Total</span></div>
+                  <div class="vstat"><span class="v" id="mapStates">0</span><span class="l">Territories</span></div>
+                  <div class="vstat"><span class="v" id="mapTop">—</span><span class="l">Top territory</span></div>
+                </div>
+                <div class="usmap" id="usMap"></div>
+                <div class="map-foot">
+                  <div class="map-scale">
+                    <span>0</span><i class="scale-bar"></i><span id="mapScaleMax">0</span>
+                  </div>
+                </div>
+                <div class="map-note">Territories with no accounts are unlit. Click one for detail.</div>
+                <div class="map-tip" id="mapTip" style="display:none"></div>
+              </div>
+            </aside>
+          </div>
         </div>
 
         <!-- ── Personalization tab ── -->
         <div class="profile-section" id="ptab-personalization">
+          <div class="ai-note">
+            <span class="ai-note-mark">""" + _SPARKLE + """</span>
+            <div>These settings shape what <b>watsonx.ai</b> writes for you. Anything carrying
+              this mark &mdash; and the purple accent &mdash; is model-generated, not
+              deterministic pipeline data.</div>
+          </div>
 
           <!-- Email style -->
           <div class="prof-card">
@@ -1019,9 +1637,126 @@ PAGE_TEMPLATE = """
             <button class="btn primary" onclick="savePrefs()">Save preferences</button>
           </div>
         </div>
+
+        <!-- ── Settings tab ── -->
+        <div class="profile-section" id="ptab-settings">
+          <div class="set-split">
+            <nav class="set-nav">
+              <button class="set-navlink active" data-sec="about" onclick="showSetting('about')">About</button>
+              <button class="set-navlink" data-sec="access" onclick="showSetting('access')">Access &amp; sessions</button>
+              <button class="set-navlink" data-sec="intel" onclick="showSetting('intel')">How account intelligence works</button>
+              <button class="set-navlink" data-sec="ai" onclick="showSetting('ai')">Where AI is used</button>
+              <button class="set-navlink" data-sec="data" onclick="showSetting('data')">Data sources</button>
+            </nav>
+
+            <div class="set-body">
+              <section class="set-sec active" id="set-about">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>About IBM BobBee</h3></div>
+                  <p class="set-p">BobBee turns a raw territory list into a ranked, cadenced, day-by-day
+                     outreach plan — who to email and call each day of the quarter, and why.</p>
+                  <div class="w3-rows" style="margin-top:8px;">
+                    <div class="w3-row"><span class="k">Created by</span><span class="v">Sydney Chin &middot; Patrick McBridge &middot; Tim Zhou</span></div>
+                    <div class="w3-row"><span class="k">Built for</span><span class="v">The 2026 IBMer watsonx Challenge</span></div>
+                    <div class="w3-row"><span class="k">Audience</span><span class="v">Select Territory sellers working a multi-thousand account book</span></div>
+                    <div class="w3-row"><span class="k">Model</span><span class="v">watsonx.ai Granite (ibm/granite-4-h-small)</span></div>
+                    <div class="w3-row"><span class="k">Design</span><span class="v">IBM Carbon, Gray 100 dark theme, IBM Plex</span></div>
+                  </div>
+                </div>
+              </section>
+              <section class="set-sec" id="set-access">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Access &amp; sessions</h3></div>
+                  <p class="set-p">Connected systems and the sessions BobBee is using on your behalf.
+                     Nothing here is sent anywhere — every service is mocked locally.</p>
+                  <div class="signed-as" id="signedAs" style="margin-top:14px;"></div>
+                </div>
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Sessions</h3></div>
+                  <div class="alert" id="loginAlert"></div>
+                  <div id="loginRows"></div>
+                </div>
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Saved password</h3></div>
+                  <p class="set-p">One IBM W3ID sign-in covers ISC, ZoomInfo, and Salesloft (all SSO
+                     through IBM). In this clone the login is mocked — only the email is kept locally,
+                     the password is discarded.</p>
+                  <div id="credRows"></div>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-intel">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>How account intelligence works</h3></div>
+                  <p class="set-p">Sorting accounts into cadences runs a five-stage pipeline. Each stage
+                     writes its own output, so you can always see why an account landed where it did.</p>
+                  <ol class="set-steps">
+                    <li><b>Contacts.</b> Every account is checked for a real IT decision-maker. Accounts
+                        without one are set aside into <i>No contacts</i> rather than being worked blind.</li>
+                    <li><b>Scoring.</b> Account Tiering scores what's left on IBM spend and trend, install
+                        base, company size, and recent buying signals.</li>
+                    <li><b>Quarter segmentation.</b> Accounts are split across the four quarters by their
+                        buying signals. Only the current quarter's accounts continue; the rest are saved
+                        to <i>Future quarters</i>.</li>
+                    <li><b>Cadence and rank.</b> Each account is matched to a play, ranked within its
+                        cadence, and tagged. Accounts past the per-cadence cap drop to <i>Leftovers</i>
+                        and rejoin the pool for a future quarter.</li>
+                    <li><b>Distribution.</b> Cadence starts are spread across the quarter's weekdays, and
+                        each account's touches are laid on its cadence's step days — producing the
+                        day-by-day schedule.</li>
+                  </ol>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-ai">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Where AI is used</h3></div>
+                  <p class="set-p">The colour convention runs through the whole app:
+                     <b style="color:var(--blue-text)">blue</b> is deterministic pipeline data,
+                     <b style="color:var(--purple-text)">purple with a sparkle</b> is generated by
+                     watsonx.ai. Only two things are model-generated:</p>
+                  <ul class="set-list">
+                    <li><b>Play and sales angle</b> on the account detail popup.</li>
+                    <li><b>Pre-call briefs</b> on the Call tab.</li>
+                  </ul>
+                  <p class="set-p">Everything else — scoring, ranking, cadence assignment, the schedule,
+                     email drafts — is deterministic Python. If watsonx is unreachable or has no key, both
+                     features fall back to deterministic output built from the same account data, so the
+                     app keeps working.</p>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-data">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Data sources</h3></div>
+                  <div class="w3-rows">
+                    <div class="w3-row"><span class="k">IBM Sales Cloud / ISC</span><span class="v">Territory accounts, coverage IDs, IBM spend, relationship status</span></div>
+                    <div class="w3-row"><span class="k">IBM install base</span><span class="v">Installed products per account, used for whitespace</span></div>
+                    <div class="w3-row"><span class="k">ZoomInfo</span><span class="v">Company revenue and size, contacts and their titles</span></div>
+                    <div class="w3-row"><span class="k">Salesloft</span><span class="v">Cadence definitions, steps, and per-account progress</span></div>
+                    <div class="w3-row"><span class="k">News and signals</span><span class="v">Funding, M&amp;A, leadership and expansion events per account</span></div>
+                    <div class="w3-row"><span class="k">watsonx.ai</span><span class="v">Granite, for plays/angles and pre-call briefs only</span></div>
+                  </div>
+                  <p class="set-p" style="margin-top:16px;">Every source except watsonx.ai is mocked with
+                     deterministic local data, so the app runs with no logins, no VPN, and no internet.</p>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
+</div>
+
+<!-- ── Contextual side panel (Email + Call tabs) ── -->
+<div class="side-panel" id="sidePanel">
+  <div class="day-panel-head">
+    <h3 id="sidePanelTitle">Details</h3>
+    <button class="day-panel-close" onclick="closeSidePanel()">&#10005;</button>
+  </div>
+  <div class="side-panel-body" id="sidePanelBody"></div>
 </div>
 
 <!-- ── Day-detail side panel (Plan tab) — outside #app so position:fixed is always viewport-relative ── -->
@@ -1046,29 +1781,10 @@ PAGE_TEMPLATE = """
 </div>
 
 <!-- ── Details (Access) modal ─────────────────────────────────── -->
-<div class="modal" id="detailsModal" onclick="if(event.target===this) closeDetails()">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h2>Access</h2>
-      <button class="link" onclick="closeDetails()">Close</button>
-    </div>
-    <div class="signed-as" id="signedAs"></div>
-
-    <div class="panel">
-      <h3>Sessions</h3>
-      <div class="alert" id="loginAlert"></div>
-      <div id="loginRows"></div>
-    </div>
-
-    <div class="panel">
-      <h3>Saved password</h3>
-      <div class="note">One IBM W3ID sign-in covers ISC, ZoomInfo, and Salesloft (all SSO through IBM). In this clone the login is mocked — only the email is kept locally, the password is discarded.</div>
-      <div id="credRows"></div>
-    </div>
-  </div>
-</div>
-
 <script>
+// The one marker for "watsonx generated this" — kept in JS too so buttons that
+// rebuild their own label can restore it instead of dropping it.
+const AI_SPARK = '""" + _SPARKLE.replace("'", "\\'") + """';
 
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
@@ -1119,15 +1835,20 @@ async function submitLogin(ev){
 
 // ── details modal ─────────────────────────────────────────────
 function openDetails(){
-  document.getElementById('detailsModal').classList.add('show');
-  fetchLoginStatus(); fetchCredStatus(); fetchSeller();
+  // Access lives inline in Profile → Settings now; keep the entry point so any
+  // remaining caller lands in the right place instead of opening a dead modal.
+  showPage('profile');
+  switchProfileTab('settings');
+  showSetting('access');
 }
-function closeDetails(){
-  document.getElementById('detailsModal').classList.remove('show');
-}
+function closeDetails(){}
 
 // ── page nav ──────────────────────────────────────────────────
 function showPage(name, opts){
+  // Any right-hand panel belongs to the page that opened it — leaving that page
+  // should take it with you, not leave it hanging over the next one.
+  closeDayPanel();
+  closeSidePanel();
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   document.querySelectorAll('.navlink').forEach(b => b.classList.toggle('active', b.dataset.page === name));
   if (name === 'accounts'){ fetchAccountsList(); fetchStrategizeStatus(); }
@@ -1238,6 +1959,24 @@ function renderTagFilters(){
   legend.style.display = tags.length ? '' : 'none';
 }
 
+// Global search routes into the Accounts list, which already does the filtering.
+// Live once there's enough to be meaningful, so a stray keystroke doesn't yank
+// you off the page you're on; Enter always jumps.
+function globalSearch(q){
+  if ((q || '').trim().length < 2) return;
+  globalSearchGo();
+}
+
+function globalSearchGo(){
+  const q = (document.getElementById('globalSearch')?.value || '').trim();
+  if (!q) return;
+  showPage('accounts');
+  _acctSel = 'all';
+  const box = document.getElementById('acctSearch');
+  if (box) box.value = q;
+  if (_acctData) renderAccounts();
+}
+
 function renderAccounts(){
   const host = document.getElementById('acctList');
   if (!_acctData) return;
@@ -1265,17 +2004,44 @@ function renderAccounts(){
        </div>`
     : '';
 
-  host.innerHTML = '<div class="acct-list">' + cadHdr + rows.map(a => {
+  // Carbon data tables are always headed. Which optional columns exist is a
+  // property of the *view*, not the row, so decide once — otherwise a row with
+  // no cadence drops its cell and knocks the remaining columns out of line.
+  const showRank = inCadenceView;
+  // One template drives both the header and every row (see .acct-row CSS).
+  const cols = [
+    showRank ? '38px' : null,
+    // Floor, not 0: with the day panel open the container narrows, and a
+    // minmax(0,1fr) account column collapses to "Ke…" while the fixed columns
+    // keep their width. The list scrolls sideways before the name gives up.
+    'minmax(200px,340px)', // account — capped so industry stays near the left
+    '190px',               // industry
+    '150px',               // location
+    'minmax(0,1fr)',       // spacer: absorbs slack instead of the name column
+    '110px',               // signals
+  ].filter(Boolean).join(' ');
+
+  const head = `<div class="acct-row acct-head">
+      ${showRank ? '<span class="arank">#</span>' : ''}
+      <span class="an">Account</span>
+      <span class="ai">Industry</span>
+      <span class="aloc">Location</span>
+      <span></span>
+      <span class="atags">Signals</span>
+    </div>`;
+
+  host.innerHTML = `<div class="acct-list" style="--acct-cols:${cols}">` + cadHdr + head + rows.map(a => {
     const dots = (a.tags || []).map(t => {
       const cls = tagClass(t) || 'neutral';
       const tip = t + (tagTip(t) ? ': ' + tagTip(t) : '');
       return `<span class="tagdot ${cls}"${tip ? ` data-tip="${esc(tip)}"` : ''}></span>`;
     }).join('');
     return `<div class="acct-row" style="cursor:pointer" onclick="openAcctModal('${esc(a.account)}')">
-      ${a.rank ? `<span class="arank">#${a.rank}</span>` : ''}
-      <span class="an">${esc(a.account || '')}</span>
-      <span class="ai">${esc(a.industry || '')}</span>
-      ${a.cadence && _acctSel === 'all' ? `<span class="aiv">${esc(a.cadence)}</span>` : ''}
+      ${showRank ? `<span class="arank">${a.rank ? '#' + a.rank : ''}</span>` : ''}
+      <span class="an" title="${esc(a.account || '')}">${esc(a.account || '')}</span>
+      <span class="ai" title="${esc(a.industry || '')}">${esc(a.industry || '')}</span>
+      <span class="aloc">${esc(a.location || '')}</span>
+      <span></span>
       <span class="atags" style="display:flex;gap:4px;align-items:center;">${dots}</span>
     </div>`;
   }).join('') + '</div>';
@@ -1393,17 +2159,50 @@ async function openAcctModal(name){
 }
 function closeAcctModal(){ document.getElementById('acctModal').classList.remove('show'); }
 
+// The app's "today" always comes from the server (window.__today), never the
+// browser clock — BOBBEE_DEMO_DATE can pin the app to a different day, and a
+// half-pinned UI (Monday's schedule under Saturday's header) is worse than none.
+function appTodayIso(){ return window.__today || new Date().toISOString().slice(0,10); }
+function appTodayDate(){ const [y,m,d] = appTodayIso().split('-').map(Number); return new Date(y, m-1, d); }
+function appTodayLabel(){
+  return appTodayDate().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'});
+}
+
 // ── plan calendar (quarter / month / week / day) ──────────────
-let _cal = {view: 'month', anchor: new Date(), data: null, sel: null};
+let _cal = {view: 'month', anchor: appTodayDate(), data: null, sel: null};
 
 function isoOf(d){ return d.toISOString().slice(0, 10); }
 function dayInfo(iso){ return (_cal.data && _cal.data.days[iso]) || null; }
+
+// Totals for one quarter, for the year view's per-quarter summary line.
+// Accounts are de-duplicated across the quarter, so it's "distinct accounts
+// touched", not a sum of daily counts.
+function quarterTotals(year, q){
+  const out = {emails: 0, calls: 0, accounts: 0};
+  if (!_cal.data) return out;
+  const seen = new Set();
+  for (const [iso, info] of Object.entries(_cal.data.days)){
+    const d = new Date(iso + 'T00:00:00');
+    if (d.getFullYear() !== year || Math.floor(d.getMonth() / 3) !== q) continue;
+    out.emails += info.emails || 0;
+    out.calls += info.calls || 0;
+    (info.accounts || []).forEach(n => seen.add(n));
+  }
+  out.accounts = seen.size;
+  return out;
+}
 
 async function fetchSchedule(){
   let d;
   try { d = await (await fetch('/api/schedule')).json(); } catch(e){ return; }
   _cal.data = d.has_schedule ? d : null;
   renderCal();
+}
+
+// Drill from the year (or quarter) view into one month.
+function openMonth(year, month){
+  _cal.anchor = new Date(year, month, 1);
+  setCalView('month');
 }
 
 function setCalView(v){
@@ -1414,7 +2213,8 @@ function setCalView(v){
 
 function calStep(dir){
   const a = new Date(_cal.anchor);
-  if (_cal.view === 'month' || _cal.view === 'quarter') a.setMonth(a.getMonth() + dir * (_cal.view === 'quarter' ? 3 : 1));
+  if (_cal.view === 'year') a.setFullYear(a.getFullYear() + dir);
+  else if (_cal.view === 'month' || _cal.view === 'quarter') a.setMonth(a.getMonth() + dir * (_cal.view === 'quarter' ? 3 : 1));
   else a.setDate(a.getDate() + dir * (_cal.view === 'week' ? 7 : 1));
   _cal.anchor = a;
   renderCal();
@@ -1441,6 +2241,9 @@ function fillDayPanel(iso){
     items.length ? section('Emails', emails) + section('Calls', calls)
                  : '<div class="note" style="padding-top:14px;">Nothing scheduled.</div>';
   document.getElementById('dayPanel').classList.add('open');
+  // Shift the page instead of covering it — the panel is a fixed overlay, so
+  // without this it sits on top of the calendar you're reading it against.
+  document.body.classList.add('day-panel-open');
 }
 
 function selectCalDay(iso){
@@ -1451,6 +2254,7 @@ function selectCalDay(iso){
 
 function closeDayPanel(){
   document.getElementById('dayPanel').classList.remove('open');
+  document.body.classList.remove('day-panel-open');
   _cal.sel = null;
   renderCal();
 }
@@ -1458,11 +2262,18 @@ function closeDayPanel(){
 function monthGridHTML(year, month, compact){
   const first = new Date(year, month, 1);
   const label = first.toLocaleDateString(undefined, {month: 'long', year: 'numeric'});
-  const todayIso = isoOf(new Date());
-  let cells = '<div class="cal-grid">' + ['S','M','T','W','T','F','S'].map(d => `<div class="dow">${d}</div>`).join('');
-  for (let i = 0; i < first.getDay(); i++) cells += '<div class="cal-cell out compact"></div>';
+  // Server's today, not the browser's — they differ under BOBBEE_DEMO_DATE.
+  const todayIso = appTodayIso();
+  // Weekdays only — cadences never schedule on a weekend, so Sat/Sun columns
+  // were two permanently empty stripes down every calendar.
+  let cells = '<div class="cal-grid">' + ['Mon','Tue','Wed','Thu','Fri'].map(d => `<div class="dow">${d}</div>`).join('');
+  // Monday-based lead-in: getDay() is 0=Sun, so shift to 0=Mon and skip weekends.
+  const lead = (first.getDay() + 6) % 7;
+  for (let i = 0; i < Math.min(lead, 5); i++) cells += '<div class="cal-cell out compact"></div>';
   const dim = new Date(year, month + 1, 0).getDate();
   for (let day = 1; day <= dim; day++){
+    const dow = new Date(year, month, day).getDay();
+    if (dow === 0 || dow === 6) continue;
     const iso = isoOf(new Date(Date.UTC(year, month, day)));
     const info = dayInfo(iso);
     const n = info ? info.emails + info.calls : 0;
@@ -1481,12 +2292,37 @@ function renderCal(){
   if (!_cal.data){ grid.innerHTML = ''; return; }
   const a = _cal.anchor;
 
-  if (_cal.view === 'quarter'){
+  if (_cal.view === 'year'){
+    // Whole year, grouped into its four quarters (each a row of three months).
+    label.textContent = String(a.getFullYear());
+    grid.innerHTML = '<div class="cal-year">' + [0, 1, 2, 3].map(q => {
+      const months = [0, 1, 2].map(i => {
+        const mi = q * 3 + i;
+        const m = monthGridHTML(a.getFullYear(), mi, true);
+        // The month heading drills into the full month view; day cells inside
+        // still open the day panel (monthGridHTML wires those itself).
+        return `<div class="cal-month">
+          <h4 class="cal-month-link" onclick="openMonth(${a.getFullYear()}, ${mi})">${m.label}</h4>
+          ${m.html}</div>`;
+      }).join('');
+      const tot = quarterTotals(a.getFullYear(), q);
+      return `<section class="cal-qblock">
+        <div class="cal-qhead">
+          <h4>Q${q + 1}</h4>
+          <span class="cal-qsum">${tot.emails} emails &middot; ${tot.calls} calls &middot; ${tot.accounts} accounts</span>
+        </div>
+        <div class="cal-quarter">${months}</div>
+      </section>`;
+    }).join('') + '</div>';
+  } else if (_cal.view === 'quarter'){
     const q = Math.floor(a.getMonth() / 3);
     label.textContent = `Q${q + 1} ${a.getFullYear()}`;
     grid.innerHTML = '<div class="cal-quarter">' + [0, 1, 2].map(i => {
-      const m = monthGridHTML(a.getFullYear(), q * 3 + i, true);
-      return `<div class="cal-month"><h4>${m.label}</h4>${m.html}</div>`;
+      const mi = q * 3 + i;
+      const m = monthGridHTML(a.getFullYear(), mi, true);
+      return `<div class="cal-month">
+        <h4 class="cal-month-link" onclick="openMonth(${a.getFullYear()}, ${mi})">${m.label}</h4>
+        ${m.html}</div>`;
     }).join('') + '</div>';
   } else if (_cal.view === 'month'){
     const m = monthGridHTML(a.getFullYear(), a.getMonth(), false);
@@ -1545,26 +2381,520 @@ async function refreshGates(){
   if (hasAccounts && (!_acctData || !_acctData.has_accounts)) fetchAccountsList();
 }
 
-function renderDashboard(d){
-  document.getElementById('dashTodayLabel').textContent = d.today.date_label;
-  document.getElementById('dashTodayEmails').textContent = d.today.emails;
-  document.getElementById('dashTodayCalls').textContent = d.today.calls;
-  document.getElementById('dashTodayAccounts').textContent = d.today.accounts;
-  document.getElementById('dashWeekEmails').textContent = d.week.emails;
-  document.getElementById('dashWeekCalls').textContent = d.week.calls;
-  document.getElementById('dashWeekAccounts').textContent = d.week.accounts;
-  document.getElementById('cadActive').textContent = d.cadences.active;
-  document.getElementById('cadPending').textContent = d.cadences.pending;
-  document.getElementById('cadCompleted').textContent = d.cadences.completed;
-  document.getElementById('dashTodayItems').innerHTML = (d.today.items || []).map(a =>
-    `<div class="act-row"><span class="act-type ${esc(a.type)}">${esc(a.type)}</span><span style="font-weight:500">${esc(a.account)}</span><span style="color:var(--text3)">${esc(a.step)}</span></div>`).join('')
-    || '<div class="note">Nothing scheduled today.</div>';
-  document.getElementById('dashNews').innerHTML = (d.news || []).map(s =>
-    `<div class="news-item"><span class="nd">${esc(s.date)}</span><div class="nb"><span class="na">${esc(s.account)}</span> &middot; ${esc(s.type)} — ${esc(s.summary)}</div></div>`).join('')
-    || '<div class="note">No notable news for this week\\'s accounts.</div>';
+// ── dashboard activity chart ───────────────────────────────────
+// Bars are stacked emails-over-calls and scaled to the tallest bucket, so the
+// shape stays readable whether a period holds 3 activities or 300.
+let _vizPeriod = 'week';
+let _vizOffset = 0;   // 0 = current window; -1/+1 step back/forward
+// refreshGates() re-renders the dashboard every 2s; without this the chart would
+// refetch and replay its transitions on every tick. Reset by refreshDashboard()
+// so a fresh strategize does rebuild it.
+let _vizLoaded = false;
+
+function stepViz(dir){
+  _vizOffset += dir;
+  loadViz();
 }
 
-async function refreshDashboard(){ refreshGates(); }
+function stepVizNow(){
+  _vizOffset = 0;
+  loadViz();
+}
+
+function setVizPeriod(p){
+  _vizPeriod = p;
+  _vizOffset = 0;   // switching grain returns to the current window
+  document.querySelectorAll('#vizPeriods .seg-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.period === p));
+  loadViz();
+}
+
+async function loadViz(){
+  let v;
+  try { v = await (await fetch(`/api/dashboard/progress?period=${_vizPeriod}&offset=${_vizOffset}`)).json(); }
+  catch(e){ return; }
+  if (!v || !v.has_schedule) return;
+  renderViz(v);
+}
+
+function renderViz(v){
+  document.getElementById('vizLabel').textContent = v.label;
+  const nowBtn = document.getElementById('vizNowBtn');
+  if (nowBtn) nowBtn.style.display = _vizOffset ? '' : 'none';
+  document.getElementById('vizEmails').textContent = v.totals.emails;
+  document.getElementById('vizCalls').textContent = v.totals.calls;
+  document.getElementById('vizAccounts').textContent = v.totals.accounts;
+
+  // Ring = share of this window's activities whose day has already passed.
+  // There's no per-activity completion flag, so "worked" means scheduled on or
+  // before today — not confirmed done.
+  const done = v.elapsed, total = v.elapsed + v.upcoming;
+  const pct = total ? done / total : 0;
+  const C = 2 * Math.PI * 52;
+  const ring = document.getElementById('vizRing');
+  ring.style.strokeDasharray = C;
+  ring.style.strokeDashoffset = C * (1 - pct);
+  document.getElementById('vizPct').textContent = Math.round(pct * 100) + '%';
+
+  const host = document.getElementById('vizChart');
+  const series = v.series || [];
+  if (!series.length){
+    host.innerHTML = '<div class="viz-empty">Nothing scheduled in this period.</div>';
+    // Clear the axis too, or the previous period's ticks/gridlines linger.
+    const ya = document.getElementById('vizYAxis'), gr = document.getElementById('vizGrid');
+    if (ya) ya.innerHTML = '';
+    if (gr) gr.innerHTML = '';
+    return;
+  }
+  // carbon-charts rounds the y-axis up to a "nice" number (1/2/5 x 10^n) so the
+  // ticks land on readable values instead of the raw data maximum.
+  const peak = Math.max(1, ...series.map(s => s.emails + s.calls));
+  const niceMax = (n) => {
+    const mag = Math.pow(10, Math.floor(Math.log10(n)));
+    const f = n / mag;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag;
+  };
+  const max = niceMax(peak);
+  const TICKS = 4;
+  host.innerHTML = series.map(s => {
+    const tot = s.emails + s.calls;
+    const h = t => Math.round((t / max) * 120);
+    // "Now" comes from the server, not the browser clock — they differ whenever
+    // BOBBEE_DEMO_DATE pins the app to a different day.
+    const isNow = (v.period === 'week' && s.label === v.today_short)
+               || (v.period === 'quarter' && s.label === v.today_month);
+    const stack = tot === 0
+      ? '<div class="vbar-seg zero"></div>'
+      : `<div class="vbar-seg call" style="height:${h(s.calls)}px"></div>
+         <div class="vbar-seg email" style="height:${h(s.emails)}px"></div>`;
+    return `<div class="vbar ${isNow ? 'now' : ''}">
+      <span class="vbar-val">${tot || ''}</span>
+      <div class="vbar-stack" title="${esc(s.label)}: ${s.emails} emails, ${s.calls} calls">${stack}</div>
+      <span class="vbar-lbl">${esc(s.label)}</span>
+    </div>`;
+  }).join('');
+
+  // Gridlines have to line up with the *plot band* — the 120px stack area — not
+  // the container, which also holds the value label above and the tick label
+  // below. Measure a real bar rather than assuming those label heights.
+  const yAxis = document.getElementById('vizYAxis');
+  const grid = document.getElementById('vizGrid');
+  const stackEl = host.querySelector('.vbar-stack');
+  if (yAxis && grid && stackEl){
+    const gRect = grid.parentElement.getBoundingClientRect();
+    const sRect = stackEl.getBoundingClientRect();
+    const top = sRect.top - gRect.top;
+    const band = sRect.height;
+    const ticks = [];
+    for (let i = TICKS; i >= 0; i--) ticks.push(Math.round((max / TICKS) * i));
+    yAxis.style.height = band + 'px';
+    yAxis.style.paddingBottom = '0';
+    yAxis.style.marginTop = top + 'px';
+    yAxis.innerHTML = ticks.map(t => `<span class="viz-ytick">${t}</span>`).join('');
+    grid.innerHTML = ticks.map((t, i) => {
+      const y = top + band * (i / TICKS);
+      return `<div class="viz-gridline ${i === TICKS ? 'zero' : ''}" style="top:${y}px"></div>`;
+    }).join('');
+  }
+}
+
+// ── book-of-business snapshot ──────────────────────────────────
+let _bookLoaded = false;
+
+let _mtgScope = 'quarter';
+let _mtgOffset = 0;
+
+function setMtgScope(scope){
+  _mtgScope = scope;
+  _mtgOffset = 0;
+  document.querySelectorAll('#mtgScope .seg-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.scope === scope));
+  // Stepping only means something for a week window.
+  ['mtgPrev','mtgNext'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.visibility = scope === 'week' ? 'visible' : 'hidden';
+  });
+  loadBook();
+}
+
+function stepMtg(dir){ _mtgOffset += dir; loadBook(); }
+
+async function loadBook(){
+  let b;
+  try { b = await (await fetch(`/api/book?mtg_scope=${_mtgScope}&mtg_offset=${_mtgOffset}`)).json(); }
+  catch(e){ return; }
+  if (!b || !b.has_accounts) return;
+
+  const fmt = n => n.toLocaleString('en-US');
+  document.getElementById('bobLabel').textContent =
+    `${fmt(b.total)} accounts across ${b.territories.length} territories`;
+  document.getElementById('bobTotal').textContent = fmt(b.total);
+  document.getElementById('bobCovered').textContent = fmt(b.covered);
+  document.getElementById('bobSpend').textContent = fmtMapVal(b.spend, 'currency');
+  document.getElementById('bobIndustries').textContent = b.industry_count;
+
+  const pct = b.total ? (b.covered / b.total) * 100 : 0;
+  document.getElementById('bobCoverage').innerHTML = `
+    <div class="meter-track"><div class="meter-fill" style="width:${pct.toFixed(1)}%"></div></div>
+    <div class="meter-legend">
+      <span><b>${fmt(b.covered)}</b> in a cadence</span>
+      <span><b>${pct.toFixed(1)}%</b> of book</span>
+    </div>`;
+
+  // Bars are scaled to the biggest slice, so the mix stays readable whatever
+  // the absolute counts are.
+  const bars = (rows) => {
+    const max = Math.max(1, ...rows.map(r => r.value));
+    return rows.map(r => `<div class="bar-item">
+      <span class="bl" title="${esc(r.label)}">${esc(r.label)}</span>
+      <span class="bv">${fmt(r.value)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${(r.value / max * 100).toFixed(1)}%"></span></span>
+    </div>`).join('');
+  };
+  document.getElementById('bobIndList').innerHTML = bars(b.industries);
+  document.getElementById('bobTerrList').innerHTML = bars(b.territories);
+
+  const m = b.meetings;
+  if (m){
+    document.getElementById('mtgLabel').textContent =
+      `${m.label} · ${fmt(m.worked_accounts)} accounts worked`;
+    document.getElementById('mtgTotal').textContent = fmt(m.total);
+    document.getElementById('mtgBooked').textContent = fmt(m.booked);
+    document.getElementById('mtgCompleted').textContent = fmt(m.completed);
+    document.getElementById('mtgUpcoming').textContent = fmt(m.upcoming);
+    document.getElementById('mtgCancelled').textContent = fmt(m.cancelled);
+    document.getElementById('mtgOI').textContent = fmt(m.oi_count);
+    document.getElementById('mtgOIValue').textContent = fmtMapVal(m.oi_value, 'currency');
+  }
+}
+
+// ── territory choropleth ───────────────────────────────────────
+// Simplified outlines of the four territories Tim covers. These are hand-traced
+// approximations — recognisable silhouettes, not survey-grade boundaries — drawn
+// once here rather than pulled from a geo dataset the app doesn't ship. Each
+// shape uses fill:currentColor so the choropleth colour is set on the <svg>.
+const TERRITORY_SHAPES = {
+  CA: {
+    name: 'California', viewBox: '0 0 110 190',
+    path: 'M12 5 L72 5 L72 50 L98 110 L94 131 L90 149 L88 166 L60 170 L51 164 L43 156 L35 149 L29 144 L23 136 L21 129 L26 121 L24 111 L18 101 L16 85 L14 69 L11 47 L10 25 Z',
+    // Approximate positions inside the viewBox, used to place heat blobs.
+    cities: {'Sacramento':[46,78],'Oakland':[29,92],'Berkeley':[29,88],'San Jose':[36,100],
+             'Santa Clara':[34,98],'Fresno':[52,112],'Riverside':[70,150],'Pasadena':[60,148],
+             'Long Beach':[57,155],'Anaheim':[63,152],'Irvine':[66,155],'San Diego':[72,164]}
+  },
+  HI: {
+    name: 'Hawaii', viewBox: '0 0 200 120',
+    shapes: [[10,40,6,4,0],[30,31,12,9,0],[66,45,14,9,-18],[98,52,13,5,-8],
+             [100,66,7,6,0],[122,63,14,10,-14],[114,78,7,4,0],[163,93,24,20,0]],
+    cities: {'Honolulu':[66,47],'Pearl City':[60,45],'Kapolei':[55,48],'Kailua':[73,42],'Hilo':[172,95]}
+  },
+  GU: {
+    name: 'Guam', viewBox: '0 0 100 160',
+    path: 'M46 16 L58 21 L62 40 L58 58 L52 70 L55 87 L63 101 L67 121 L58 141 L43 143 L35 126 L40 104 L44 86 L40 70 L38 50 L40 29 Z',
+    cities: {'Dededo':[48,40],'Tamuning':[53,72],'Hagåtña':[47,90]}
+  },
+  MP: {
+    name: 'Northern Mariana Islands', viewBox: '0 0 100 160',
+    shapes: [[50,38,12,26,0],[47,85,9,16,0],[53,126,12,9,0]],
+    cities: {'Saipan':[50,44],'Garapan':[49,28]}
+  }
+};
+// Purple 70 → Purple 10. Low values stay saturated, high values go near-white.
+const MAP_STOPS = ['#6929c4','#8a3ffc','#a56eff','#be95ff','#d4bbff','#e8daff','#f6f2ff'];
+let _mapView = 'accounts';
+let _mapFocus = 'all';     // 'all' or a territory code
+let _mapData = null;
+
+function _mix(a, b, t){
+  const p = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+  const [r1,g1,b1] = p(a), [r2,g2,b2] = p(b);
+  const c = (x,y) => Math.round(x + (y-x)*t).toString(16).padStart(2,'0');
+  return `#${c(r1,r2)}${c(g1,g2)}${c(b1,b2)}`;
+}
+
+function mapColor(v, max){
+  if (!v || !max) return null;
+  const t = Math.min(1, Math.sqrt(v / max));
+  const seg = t * (MAP_STOPS.length - 1);
+  const i = Math.min(MAP_STOPS.length - 2, Math.floor(seg));
+  return _mix(MAP_STOPS[i], MAP_STOPS[i+1], seg - i);
+}
+
+function fmtMapVal(v, format){
+  if (format === 'currency'){
+    if (v >= 1e9) return '$' + (v/1e9).toFixed(1) + 'B';
+    if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return '$' + Math.round(v/1e3) + 'K';
+    return '$' + v;
+  }
+  return String(v);
+}
+
+function setMapView(view){
+  _mapView = view;
+  document.querySelectorAll('#mapViews .seg-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  loadTerritory();
+}
+
+function setMapFocus(code){
+  _mapFocus = code;
+  document.querySelectorAll('#mapFocus .seg-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.focus === code));
+  if (_mapData) renderTerritory(_mapData);
+}
+
+// The body of one territory: base silhouette plus a soft blob per city, sized
+// and coloured by that city's share. Blobs are clipped to the outline, so the
+// heat stays inside the territory instead of bleeding into the card.
+function territoryBody(code, t, idx){
+  const shape = TERRITORY_SHAPES[code];
+  const cities = (t.cities || {})[code] || {};
+  const counts = Object.values(cities);
+  const cityMax = counts.length ? Math.max(...counts) : 0;
+  const cityMin = counts.length ? Math.min(...counts) : 0;
+  // City counts inside a territory cluster tightly (e.g. 84-109), so a 0-based
+  // scale puts every one at the top and the whole shape washes out to one
+  // colour. Spread the ramp across the actual observed range instead.
+  const span = Math.max(1, cityMax - cityMin);
+  const rel = n => (n - cityMin) / span;
+  const clipId = `clip-${code}-${idx}`;
+
+  const outline = shape.path
+    ? `<path d="${shape.path}"/>`
+    : shape.shapes.map(([cx,cy,rx,ry,rot]) =>
+        `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${cx} ${cy})"/>`).join('');
+
+  const blobs = Object.entries(shape.cities || {}).map(([city, [x,y]]) => {
+    const n = cities[city] || 0;
+    if (!n || !cityMax) return '';
+    const share = rel(n);
+    const r = 15 + share * 22;
+    // Colour by position in the range; opacity carries intensity so the darker
+    // plate still reads through the cooler spots.
+    const col = MAP_STOPS[Math.round(share * (MAP_STOPS.length - 1))];
+    const peak = 0.5 + share * 0.42;
+    const gid = `g-${code}-${idx}-${city.replace(/[^a-z]/gi,'')}`;
+    return `<defs><radialGradient id="${gid}">
+        <stop offset="0%" stop-color="${col}" stop-opacity="${peak.toFixed(2)}"/>
+        <stop offset="50%" stop-color="${col}" stop-opacity="${(peak*0.42).toFixed(2)}"/>
+        <stop offset="100%" stop-color="${col}" stop-opacity="0"/>
+      </radialGradient></defs>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="url(#${gid})"/>`;
+  }).join('');
+
+  return `<svg class="terr-svg" viewBox="${shape.viewBox}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs><clipPath id="${clipId}">${outline}</clipPath></defs>
+      <g class="terr-base">${outline}</g>
+      <g clip-path="url(#${clipId})">${blobs}</g>
+      <g class="terr-edge">${outline}</g>
+    </svg>`;
+}
+
+async function loadTerritory(){
+  let t;
+  try { t = await (await fetch('/api/territory?view=' + _mapView)).json(); }
+  catch(e){ return; }
+  if (!t || !t.has_accounts) return;
+  _mapData = t;
+  renderTerritory(t);
+}
+
+function renderTerritory(t){
+  document.getElementById('mapLabel').textContent = t.label + ' by territory';
+  document.getElementById('mapTotalLbl').textContent = t.label;
+  document.getElementById('mapTotal').textContent = fmtMapVal(t.total, t.format);
+  document.getElementById('mapStates').textContent = t.states_covered;
+  document.getElementById('mapScaleMax').textContent = fmtMapVal(t.max, t.format);
+
+  const entries = Object.entries(t.values).filter(([,v]) => v);
+  entries.sort((a,b) => b[1]-a[1]);
+  document.getElementById('mapTop').textContent = entries.length ? entries[0][0] : '—';
+
+  const codes = _mapFocus === 'all' ? Object.keys(TERRITORY_SHAPES) : [_mapFocus];
+  const host = document.getElementById('usMap');
+  host.className = 'usmap' + (_mapFocus === 'all' ? '' : ' single');
+  host.innerHTML = codes.map((code, i) => {
+    const shape = TERRITORY_SHAPES[code];
+    const v = t.values[code] || 0;
+    const cityRows = Object.entries((t.cities || {})[code] || {})
+      .sort((a,b) => b[1]-a[1]).slice(0, _mapFocus === 'all' ? 0 : 6);
+    return `<button class="terr ${v ? 'has' : 'empty'}" onclick="showMapTip('${code}')"
+              title="${esc(shape.name)}: ${v ? fmtMapVal(v, t.format) : 'no accounts'}">
+      <div class="terr-iso">${territoryBody(code, t, i)}</div>
+      <span class="terr-code">${code}</span>
+      <span class="terr-name">${esc(shape.name)}</span>
+      <span class="terr-val">${fmtMapVal(v, t.format)}</span>
+      ${cityRows.length ? `<div class="terr-cities">${cityRows.map(([c,n]) =>
+        `<div class="terr-city"><span>${esc(c)}</span><b>${n}</b></div>`).join('')}</div>` : ''}
+    </button>`;
+  }).join('');
+
+  const tip = document.getElementById('mapTip');
+  if (tip) tip.style.display = 'none';
+}
+
+function showMapTip(st){
+  const t = _mapData; if (!t) return;
+  const d = (t.detail || {})[st] || {};
+  const tip = document.getElementById('mapTip');
+  tip.style.display = '';
+  tip.innerHTML = `<b>${esc((TERRITORY_SHAPES[st] || {}).name || st)}</b>
+    <div class="mt-row">${d.accounts||0} accounts · ${d.cadences||0} in a Q3 cadence
+    · ${fmtMapVal(Math.round(d.spend||0),'currency')} IBM spend this year</div>`;
+}
+
+// ── contextual right-hand panel (email + call tabs) ────────────
+// Opening it shifts the card grid rather than covering it, and marks the card
+// it belongs to, so you can keep scrolling the other cards for context.
+let _focusKey = null;
+
+function toggleKebab(ev, id){
+  ev.stopPropagation();
+  const open = document.getElementById(id);
+  document.querySelectorAll('.kebab-menu.show').forEach(m => { if (m !== open) m.classList.remove('show'); });
+  if (open) open.classList.toggle('show');
+}
+document.addEventListener('click', () => {
+  document.querySelectorAll('.kebab-menu.show').forEach(m => m.classList.remove('show'));
+});
+
+function closeSidePanel(){
+  const p = document.getElementById('sidePanel');
+  if (p) p.classList.remove('open');
+  document.body.classList.remove('side-panel-open');
+  _focusKey = null;
+  if (typeof _emailItems !== 'undefined' && _emailItems.length) renderEmailGrid();
+  if (typeof _callItems !== 'undefined' && _callItems.length) renderCallList();
+}
+
+function _kv(k, v){ return v ? `<div class="sp-row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>` : ''; }
+
+function sidePanelHTML(kind, item){
+  const d = item.acctDetail || {};
+  const sc = d.sales_cloud || {}, zi = d.zoominfo || {}, sl = d.salesloft || {}, ai = d.ai || {};
+  if (kind === 'person'){
+    const c = item.contact || (zi.contacts || []).find(x => x.decision_maker) || (zi.contacts || [])[0];
+    if (!c) return '<div class="note">No contact on record for this account.</div>';
+    return `<div class="sp-title">${esc(c.first_name)} ${esc(c.last_name)}</div>
+      <div class="sp-sub">${esc(c.title || '')}${c.decision_maker ? ' · <span class="dm-badge">Decision maker</span>' : ''}</div>
+      <div class="sp-block">
+        ${_kv('Email', c.email)}
+        ${_kv('Direct phone', c.direct_phone)}
+        ${_kv('Account', item.account)}
+        ${_kv('Location', c.city || '')}
+      </div>`;
+  }
+  return `<div class="sp-title">${esc(item.account)}</div>
+    <div class="sp-sub">${esc(sc.industry || '')}</div>
+    <div class="sp-block">
+      ${_kv('Relationship', sc.relationship)}
+      ${_kv('IBM spend (current)', sc.ibm_spend_current)}
+      ${_kv('IBM spend (prior)', sc.ibm_spend_prior)}
+      ${_kv('Spend trend', sc.spend_trend)}
+      ${_kv('Install base', sc.install_summary)}
+      ${_kv('Revenue', zi.revenue)}
+      ${_kv('Employees', zi.employees)}
+      ${_kv('Cadence', sl.cadence)}
+      ${_kv('Rank', sl.rank ? '#' + sl.rank : '')}
+    </div>
+    ${ai.play ? `<div class="sp-ai"><div class="sp-ai-head">${AI_SPARK} AI analysis</div>
+      ${_kv('Urgency', ai.urgency)}${_kv('Best fit', ai.product)}${_kv('Play', ai.play)}${_kv('Angle', ai.angle)}</div>` : ''}`;
+}
+
+function openSidePanel(kind, i, source){
+  const list = (source === 'call') ? _callItems : _emailItems;
+  const item = list[i];
+  if (!item) return;
+  document.getElementById('sidePanelBody').innerHTML = sidePanelHTML(kind, item);
+  document.getElementById('sidePanelTitle').textContent =
+    kind === 'person' ? 'Contact' : 'Account';
+  document.getElementById('sidePanel').classList.add('open');
+  document.body.classList.add('side-panel-open');
+  _focusKey = item.account;
+  if (source === 'call') renderCallList(); else renderEmailGrid();
+  const card = document.getElementById((source === 'call' ? 'callcard-' : 'emailcard-') + i);
+  if (card) card.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
+function openCallPerson(i, email){
+  const a = _callItems[i];
+  if (!a) return;
+  const contacts = ((a.acctDetail || {}).zoominfo || {}).contacts || [];
+  const c = contacts.find(x => x.email === email) || contacts[0];
+  openSidePanel('person', i, 'call');
+  if (c){
+    document.getElementById('sidePanelBody').innerHTML = sidePanelHTML('person', {...a, contact: c});
+  }
+}
+
+function removeFromCadence(i){
+  const a = _emailItems[i];
+  if (!a) return;
+  if (!confirm(`Remove ${a.account} from ${a.cadence}?\n\nThis only affects today's list in this session.`)) return;
+  _emailItems.splice(i, 1);
+  renderEmailGrid();
+  refreshDashboard();
+}
+
+// Calls have no completion flag in the schedule data, so "done" is tracked
+// client-side per day and persisted — otherwise the progress meter could never
+// move. Emails use the real `sent` flag from the Email tab.
+function callDoneKey(){ return 'bobbee_calls_done_' + appTodayIso(); }
+function callDoneSet(){
+  try { return new Set(JSON.parse(localStorage.getItem(callDoneKey()) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function callDoneId(a){ return a.account + '|' + a.step; }
+function toggleCallDone(account, step){
+  const set = callDoneSet();
+  const id = account + '|' + step;
+  set.has(id) ? set.delete(id) : set.add(id);
+  localStorage.setItem(callDoneKey(), JSON.stringify([...set]));
+  renderCallList();
+  refreshDashboard();
+}
+
+function renderDashboard(d){
+  if (!_vizLoaded){ _vizLoaded = true; loadViz(); }
+  if (!_bookLoaded){ _bookLoaded = true; loadBook(); }
+  document.getElementById('dashTodayLabel').textContent = d.today.date_label;
+  document.getElementById('dashTodaySub').textContent =
+    `${d.today.emails} emails · ${d.today.calls} calls · ${d.today.accounts} accounts to touch`;
+
+  const items = d.today.items || [];
+  const emails = items.filter(a => a.type === 'email');
+  const calls  = items.filter(a => a.type === 'call');
+  const sentIds = new Set(_emailItems.filter(e => e.sent).map(e => e.account + '|' + e.step));
+  const doneCalls = callDoneSet();
+
+  const fill = (id, done, total) => {
+    const el = document.getElementById(id);
+    if (el) el.style.width = (total ? (done / total) * 100 : 0).toFixed(1) + '%';
+  };
+  const list = (rows, isDone) => rows.length
+    ? rows.map(a => `<div class="task-row ${isDone(a) ? 'done' : ''}">
+        <span class="task-tick">${isDone(a) ? '&#10003;' : ''}</span>
+        <span class="task-acct">${esc(a.account)}</span>
+        <span class="task-step">${esc(a.step)}</span>
+      </div>`).join('')
+    : '<div class="note" style="padding:16px 0;">Nothing scheduled today.</div>';
+
+  const eDone = emails.filter(a => sentIds.has(a.account + '|' + a.step)).length;
+  const cDone = calls.filter(a => doneCalls.has(a.account + '|' + a.step)).length;
+  document.getElementById('taskEmailDone').textContent = eDone;
+  document.getElementById('taskEmailTotal').textContent = emails.length;
+  document.getElementById('taskCallDone').textContent = cDone;
+  document.getElementById('taskCallTotal').textContent = calls.length;
+  fill('taskEmailFill', eDone, emails.length);
+  fill('taskCallFill', cDone, calls.length);
+  document.getElementById('taskEmailList').innerHTML =
+    list(emails, a => sentIds.has(a.account + '|' + a.step));
+  document.getElementById('taskCallList').innerHTML =
+    list(calls, a => doneCalls.has(a.account + '|' + a.step));
+}
+
+async function refreshDashboard(){ _vizLoaded = false; _bookLoaded = false; refreshGates(); }
 
 // ── app boot ──────────────────────────────────────────────────
 let _pollTimer = null;
@@ -1593,7 +2923,14 @@ function renderCadences(){
   const host = document.getElementById('cadencesList');
   if (!host || !_cadData) return;
   const STATUS_LABEL = {not_started: 'Not started', in_progress: 'In progress', completed: 'Completed'};
-  host.innerHTML = _cadData.map(c => {
+  // A cadence is finished when nothing in it is still pending or in flight —
+  // every account has worked through its last step.
+  const isFinished = c => c.accounts.length > 0 &&
+        c.accounts.every(a => a.status === 'completed');
+  const active = _cadData.filter(c => !isFinished(c));
+  const finished = _cadData.filter(isFinished);
+
+  const card = c => {
     const isOpen = c.name === _cadOpenName;
     const notStarted = c.accounts.filter(a => a.status === 'not_started').length;
     const inProg = c.accounts.filter(a => a.status === 'in_progress').length;
@@ -1638,7 +2975,17 @@ function renderCadences(){
         <div class="cad-accounts">${accts}</div>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  host.innerHTML = active.map(card).join('')
+    + (finished.length ? `<div class="cad-finished">
+         <div class="cad-finished-head">
+           <h3>Finished cadences</h3>
+           <span class="cad-finished-note">${finished.length} cadence${finished.length === 1 ? '' : 's'}
+             with no pending actions left</span>
+         </div>
+         ${finished.map(card).join('')}
+       </div>` : '');
   // Scroll to and expand the requested cadence after render.
   if (_cadOpenName){
     const el = document.getElementById('cadcard-' + _cadOpenName);
@@ -1662,21 +3009,32 @@ function goToCadence(name){
 // Shape: {account, step, cadence, contact:{first_name,last_name,title,work_email}, draft, sent}
 let _emailItems = [];
 
+// One request for many accounts. The per-account endpoint is fine on its own,
+// but today's lists need 20-40 of them and the browser only runs six at a time.
+async function fetchAccountDetails(names){
+  if (!names.length) return {};
+  try {
+    const r = await fetch('/api/accounts/details?names=' + encodeURIComponent(names.join('\x1f')));
+    return (await r.json()).accounts || {};
+  } catch(e){ return {}; }
+}
+
+function showListLoading(hostId, what){
+  const el = document.getElementById(hostId);
+  if (el) el.innerHTML = `<div class="list-loading"><span class="spin"></span>Loading today's ${what}…</div>`;
+}
+
 async function fetchTodayEmail(){
+  showListLoading('emailGrid', 'emails');
   let sched;
   try { sched = await (await fetch('/api/schedule')).json(); } catch(e){ return; }
   if (!sched.has_schedule) return;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = appTodayIso();
   const raw = ((sched.days[today] || {}).items || []).filter(a => a.type === 'email');
 
-  // Enrich each scheduled email with the DM contact for that account.
-  const contactCache = {};
-  await Promise.all([...new Set(raw.map(r => r.account))].map(async acc => {
-    try {
-      const d = await (await fetch('/api/accounts/detail?name=' + encodeURIComponent(acc))).json();
-      contactCache[acc] = d;
-    } catch(e){}
-  }));
+  // Enrich each scheduled email with the DM contact for that account. One batch
+  // request, not one per account — see /api/accounts/details.
+  const contactCache = await fetchAccountDetails([...new Set(raw.map(r => r.account))]);
 
   _emailItems = raw.map(a => {
     const d = contactCache[a.account] || {};
@@ -1688,7 +3046,7 @@ async function fetchTodayEmail(){
 
   const lbl = document.getElementById('emailDateLabel');
   const cnt = document.getElementById('emailCountLabel');
-  if (lbl) lbl.textContent = `Today's outbound emails — ${new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'})}.`;
+  if (lbl) lbl.textContent = `Today's outbound emails — ${appTodayLabel()}.`;
   if (cnt) cnt.textContent = `${_emailItems.length} email${_emailItems.length === 1 ? '' : 's'} scheduled today`;
   renderEmailGrid();
 }
@@ -1735,7 +3093,9 @@ function renderEmailGrid(){
   // Update toolbar button: "Redraft all" once every card has a draft.
   const allDrafted = _emailItems.every(a => a.draft != null && !a.draft.startsWith('…'));
   const draftBtn = document.getElementById('generateEmailsBtn');
-  if (draftBtn) draftBtn.textContent = allDrafted ? 'Redraft all' : 'Draft all emails';
+  // innerHTML, not textContent: the sparkle is an inline SVG and textContent
+  // would strip it, so the button silently stopped being marked as an AI action.
+  if (draftBtn) draftBtn.innerHTML = AI_SPARK + (allDrafted ? ' Redraft all' : ' Draft all emails');
 
   host.innerHTML = _emailItems.map((a, i) => {
     const c = a.contact;
@@ -1760,22 +3120,28 @@ function renderEmailGrid(){
       ? `<button class="icon-btn" title="Regenerate" onclick="redraftOne(${i})">&#8635;</button>`
       : '';
 
-    return `<div class="email-card" id="emailcard-${i}">
+    return `<div class="email-card ${_focusKey === a.account ? 'focused' : ''}" id="emailcard-${i}">
       <div class="email-card-head">
-        <div>
-          <div class="email-card-to">${toLine}</div>
-          ${toAddr ? `<div class="email-card-addr">${toAddr}</div>` : ''}
+        <div style="min-width:0;">
+          <div class="email-card-to link" onclick="openSidePanel('person', ${i})">${toLine}</div>
           <div class="email-card-sub">${toSub}</div>
-          <div class="email-card-cadence">""" + _SPARKLE + """ ${esc(a.cadence)} &middot; ${esc(a.step)}</div>
+          <div class="email-card-cadence">${esc(a.cadence)} &middot; ${esc(a.step)}</div>
         </div>
         <div class="email-card-head-actions">
           ${pencilBtn}${redraftBtn}
+          <div class="kebab-wrap">
+            <button class="kebab" onclick="toggleKebab(event, 'ek-${i}')" title="More">&#8942;</button>
+            <div class="kebab-menu" id="ek-${i}">
+              <button onclick="openSidePanel('account', ${i})">View account details</button>
+              <button onclick="openSidePanel('person', ${i})">View profile details</button>
+              <button class="danger" onclick="removeFromCadence(${i})">Remove from cadence</button>
+            </div>
+          </div>
         </div>
       </div>
       ${hasDraft && a.subject ? `<div class="email-card-subject"><span>Subject:</span> ${esc(a.subject)}</div>` : ''}
       <div class="email-body-wrap">${bodySection}</div>
       <div class="email-foot">
-        <button class="btn" onclick="openAcctModal('${esc(a.account)}')">View account</button>
         ${hasDraft && !a.sent && !isEditing ? `<button class="btn primary" onclick="sendOneEmail(${i})">Send</button>` : ''}
         ${isEditing ? `<button class="btn primary" onclick="saveEmailEdit(${i})">Save</button>` : ''}
         <span class="email-sent ${a.sent ? 'show' : ''}" id="emailsent-${i}">&#10003; Sent</span>
@@ -1858,26 +3224,21 @@ let _callItems = [];
 let _callBriefs = {};  // account → brief text
 
 async function fetchTodayCall(){
+  showListLoading('callList', 'calls');
   let sched;
   try { sched = await (await fetch('/api/schedule')).json(); } catch(e){ return; }
   if (!sched.has_schedule) return;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = appTodayIso();
   const raw = ((sched.days[today] || {}).items || []).filter(a => a.type === 'call');
 
-  // Enrich with contacts.
-  const contactCache = {};
-  await Promise.all([...new Set(raw.map(r => r.account))].map(async acc => {
-    try {
-      const d = await (await fetch('/api/accounts/detail?name=' + encodeURIComponent(acc))).json();
-      contactCache[acc] = d;
-    } catch(e){}
-  }));
+  // Enrich with contacts — one batch request, not one per account.
+  const contactCache = await fetchAccountDetails([...new Set(raw.map(r => r.account))]);
 
   _callItems = raw.map(a => ({...a, acctDetail: contactCache[a.account] || {}}));
 
   const lbl = document.getElementById('callDateLabel');
   const cnt = document.getElementById('callCountLabel');
-  if (lbl) lbl.textContent = `Today's call list — ${new Date().toLocaleDateString(undefined, {weekday:'long', month:'long', day:'numeric'})}.`;
+  if (lbl) lbl.textContent = `Today's call list — ${appTodayLabel()}.`;
   if (cnt) cnt.textContent = `${_callItems.length} call${_callItems.length === 1 ? '' : 's'} scheduled today`;
   renderCallList();
 }
@@ -1902,7 +3263,7 @@ function renderCallList(){
       const phoneHref = c.direct_phone ? c.direct_phone.replace(/[^+\\d]/g,'') : '';
       return `<div class="call-person">
         <div class="call-person-name">
-          ${esc(c.first_name)} ${esc(c.last_name)}
+          <span class="link" onclick="openCallPerson(${i}, '${esc(c.email || '')}')">${esc(c.first_name)} ${esc(c.last_name)}</span>
           ${c.decision_maker ? '<span class="dm-badge">DM</span>' : ''}
           ${phoneHref ? `<a class="btn call" href="tel:${phoneHref}">&#9742; Call</a>` : ''}
         </div>
@@ -1918,13 +3279,18 @@ function renderCallList(){
       : (typeof brief === 'string'
           ? `<p style="color:var(--text3);font-style:italic;">${esc(brief)}</p>`
           : `<p style="color:var(--text3);font-style:italic;">Not yet generated.</p>`);
-    return `<div class="call-card" id="callcard-${i}">
+    const isDone = callDoneSet().has(callDoneId(a));
+    return `<div class="call-card ${isDone ? 'done' : ''} ${_focusKey === a.account ? 'focused' : ''}" id="callcard-${i}">
       <div class="call-card-head">
         <span class="call-card-rank">${i + 1}</span>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:10px;">
-            <span class="call-card-name" onclick="openAcctModal('${esc(a.account)}')">${esc(a.account)}</span>
+            <span class="call-card-name" onclick="openSidePanel('account', ${i}, 'call')">${esc(a.account)}</span>
             <span class="call-card-step">${esc(a.step)} &middot; ${esc(a.cadence)}</span>
+            <button class="call-done-btn ${isDone ? 'on' : ''}"
+                    onclick="toggleCallDone('${esc(a.account)}','${esc(a.step)}')">
+              ${isDone ? '&#10003; Called' : 'Mark as called'}
+            </button>
           </div>
           ${dm ? `<div class="call-card-acct">Primary contact: ${esc(dm.first_name)} ${esc(dm.last_name)}, ${esc(dm.title)}</div>` : ''}
         </div>
@@ -2236,9 +3602,36 @@ const _PREF_DEFAULTS = {
 };
 let _prefs = JSON.parse(JSON.stringify(_PREF_DEFAULTS));
 
+function showSetting(sec){
+  document.querySelectorAll('.set-navlink').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  const el = document.getElementById('set-' + sec);
+  if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+// Keep the sidebar in step with what's actually on screen while scrolling.
+function initSettingsSpy(){
+  if (window._setSpy) return;
+  const secs = [...document.querySelectorAll('.set-sec')];
+  if (!secs.length) return;
+  window._setSpy = new IntersectionObserver(entries => {
+    const vis = entries.filter(e => e.isIntersecting)
+                       .sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+    if (!vis) return;
+    const id = vis.target.id.replace('set-', '');
+    document.querySelectorAll('.set-navlink')
+      .forEach(b => b.classList.toggle('active', b.dataset.sec === id));
+  }, {rootMargin: '-70px 0px -60% 0px'});
+  secs.forEach(sec => window._setSpy.observe(sec));
+}
+
 function switchProfileTab(tab){
   document.querySelectorAll('.profile-tab').forEach(b => b.classList.toggle('active', b.dataset.ptab === tab));
   document.querySelectorAll('.profile-section').forEach(s => s.classList.toggle('active', s.id === 'ptab-' + tab));
+  if (tab === 'settings'){
+    // Access panels are inline now, so they need their data on open.
+    fetchLoginStatus(); fetchCredStatus(); fetchSeller();
+    initSettingsSpy();
+  }
 }
 
 function loadProfilePage(){
@@ -2263,6 +3656,18 @@ function loadProfilePage(){
       const el = document.getElementById('prof-' + k); if (el && p[k]) el.value = p[k];
     });
   } catch(e){}
+  // w3 shows the person's local time next to their location. Brookhaven, GA is
+  // US Eastern, so render in that zone rather than the viewer's.
+  const clock = document.getElementById('w3Clock');
+  if (clock){
+    const tick = () => {
+      clock.textContent = new Date().toLocaleTimeString('en-US',
+        {timeZone:'America/New_York', hour:'numeric', minute:'2-digit'});
+    };
+    tick();
+    if (!window._w3ClockTimer) window._w3ClockTimer = setInterval(tick, 30000);
+  }
+  loadTerritory();
 }
 
 function saveProfile(){
@@ -2373,7 +3778,7 @@ STEP1_VIEW_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>Accounts — BobBee</title>
+<title>Accounts — IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """
@@ -2478,7 +3883,7 @@ TIER_VIEW_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>Account Tiering — BobBee</title>
+<title>Account Tiering — IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """
@@ -2603,7 +4008,7 @@ CALENDAR_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>Call Planning — BobBee</title>
+<title>Call Planning — IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """
@@ -2672,7 +4077,7 @@ STRATEGY_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>Outbound Strategy — BobBee</title>
+<title>Outbound Strategy — IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """
@@ -2724,7 +4129,7 @@ FILL_VIEW_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>Contacts — BobBee</title>
+<title>Contacts — IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """
@@ -2778,7 +4183,7 @@ BOBBY_PAGE_TEMPLATE = """
 <html>
 <head>
 <meta charset="utf-8">
-<title>Bobby AI — BobBee</title>
+<title>Bobby AI — IBM BobBee</title>
 """ + _FONTS + """
 <style>
 """ + _DESIGN_CSS + """

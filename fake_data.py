@@ -100,11 +100,43 @@ _TECH_STATUS = [
     ("New (Dormant)", 10),
 ]
 
-_STATES = ["CA", "TX", "NY", "IL", "FL", "WA", "MA", "GA", "NC", "OH", "PA", "CO",
-           "VA", "NJ", "MN", "AZ", "MI", "OR", "TN", "MD"]
-_CITIES = ["Springfield", "Riverside", "Franklin", "Clinton", "Georgetown", "Salem",
-           "Fairfield", "Madison", "Arlington", "Ashland", "Dover", "Auburn", "Bristol",
-           "Manchester", "Newport", "Oakland", "Kingston", "Milford", "Winchester"]
+# Tim's actual coverage: CA / HI / GU / MP (California, Hawaii, Guam, Northern
+# Mariana Islands). Weighted — California is the overwhelming bulk of a Select
+# Territory book, with the Pacific islands a long tail — so the territory map
+# shows a realistic distribution instead of an even four-way split.
+_STATES = ["CA"] * 12 + ["HI"] * 4 + ["GU"] * 2 + ["MP"]
+# Real-ish population centres inside those four territories.
+_CITIES_BY_STATE = {
+    "CA": ["San Jose", "Sacramento", "Fresno", "Irvine", "Oakland", "San Diego",
+           "Long Beach", "Pasadena", "Riverside", "Santa Clara", "Anaheim", "Berkeley"],
+    "HI": ["Honolulu", "Pearl City", "Hilo", "Kailua", "Kapolei"],
+    "GU": ["Hagåtña", "Dededo", "Tamuning"],
+    "MP": ["Saipan", "Garapan"],
+}
+
+
+def state_for_account(name):
+    """The account's territory (CA/HI/GU/MP), derived from its name alone.
+
+    Kept on a dedicated RNG stream (not the shared per-account one) so callers
+    can recover it from just the account name. The ISC company rollup reproduces
+    a real external export verbatim and has no State column, so consumers that
+    need geography — e.g. the territory map — derive it here rather than by
+    widening that schema.
+    """
+    return _rng("state", name).choice(_STATES)
+
+
+def city_for_account(name):
+    """The account's city, consistent with its territory. Name-derived, same
+    reasoning as state_for_account."""
+    st = state_for_account(name)
+    return _rng("city", name).choice(_CITIES_BY_STATE[st])
+
+
+def location_for_account(name):
+    """'City, ST' for display in the accounts table."""
+    return f"{city_for_account(name)}, {state_for_account(name)}"
 
 
 def _weighted_choice(rng, pairs):
@@ -171,7 +203,7 @@ def _make_account(name, industry, sub_industry):
         prior1 = float(round(prior * r.uniform(0.75, 1.15), -2))
         prior2 = float(round(prior1 * r.uniform(0.75, 1.15), -2))
 
-    st = r.choice(_STATES)
+    st = state_for_account(name)
     return {
         "name": name,
         "account_name": name,
@@ -181,7 +213,7 @@ def _make_account(name, industry, sub_industry):
         "sub_industry": sub_industry,
         "country": "United States",
         "state": st,
-        "city": r.choice(_CITIES),
+        "city": city_for_account(name),
         "headquarters": r.choice(["Yes", "Yes", "No", "Unknown"]),
         "headquarters_country": "United States",
         "employees": employees,
@@ -225,17 +257,36 @@ def demo_covids_for_email(email):
     return sorted(covids)
 
 
-def accounts_for_covids(covids):
+# A Select Territory seller carries a book in the low thousands, not a couple
+# hundred — the earlier per-CovID range produced ~217, which made every list and
+# chart in the app read like a toy. Sized to a realistic book instead.
+TERRITORY_ACCOUNT_TARGET = 1911
+
+
+def accounts_for_covids(covids, target=None):
     """Deterministic list of account dicts for a set of CovIDs. A company that falls
     in more than one CovID's territory appears once, with every CovID accumulated in
-    ``coverage_ids`` (exactly like the real ISC company rollup)."""
-    seen = []
+    ``coverage_ids`` (exactly like the real ISC company rollup).
+
+    Generates exactly ``target`` unique accounts, dealt round-robin across the
+    CovIDs so every territory carries a share. The name space is ~42k
+    combinations, so collisions just retry; the attempt cap is a safety net
+    against a shrunken word list silently looping forever.
+    """
+    target = TERRITORY_ACCOUNT_TARGET if target is None else target
     covids = list(dict.fromkeys(str(c).strip() for c in covids if str(c).strip()))
-    by_name = {}
-    order = []
-    for covid in covids:
-        rng = _rng("covid", covid)
-        for _ in range(rng.randint(9, 26)):
+    if not covids:
+        return []
+
+    rngs = {c: _rng("covid", c) for c in covids}
+    by_name, order = {}, []
+    attempts, max_attempts = 0, target * 60
+    while len(order) < target and attempts < max_attempts:
+        for covid in covids:
+            if len(order) >= target:
+                break
+            attempts += 1
+            rng = rngs[covid]
             name, industry, sub = _gen_name(rng)
             if name in by_name:
                 if covid not in by_name[name]["coverage_ids"]:

@@ -67,6 +67,7 @@ def _today():
         return date.today()
 
 import credential_store
+import assistant
 import fake_data
 import llm_advisor
 import mock_salesloft
@@ -2744,6 +2745,22 @@ def api_accounts_details():
         except Exception:
             continue
     return jsonify({"accounts": out})
+
+
+@app.route("/api/assistant/message", methods=["POST"])
+def api_assistant_message():
+    """One turn with watsonx Assistant. Product Q&A only — no book data is sent
+    (see assistant.py). Always 200: the module fail-softs to a local answer, and
+    the UI shows whether the reply was live or offline."""
+    body = request.get_json(silent=True) or {}
+    text = (body.get("text") or "").strip()[:1000]
+    client_id = (body.get("client_id") or "default")[:64]
+    return jsonify(assistant.ask(text, client_id))
+
+
+@app.route("/api/assistant/status")
+def api_assistant_status():
+    return jsonify({"configured": assistant.is_configured()})
 
 
 @app.route("/api/book")

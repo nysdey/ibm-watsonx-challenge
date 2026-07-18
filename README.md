@@ -131,6 +131,19 @@ territory mix).
 > with fixed rates, seeded per account name so they're stable across restarts. Treat them
 > as illustrative, not as pipeline data.
 
+### Ask BobBee — in-app help (watsonx Assistant)
+A chat panel (sparkle button, bottom-right) answering questions **about the app** —
+how cadences are built, what a tag means, where a number comes from. Backed by
+**watsonx Assistant** over its v2 REST API, in BobBee's own theme rather than the
+hosted web-chat widget.
+
+**Scope is deliberate: the seller's book is never sent.** No account names, contacts,
+spend or schedule data leave the machine — only a short product-description string
+(`_SYSTEM_CONTEXT` in `assistant.py`). Configure with `WXA_API_KEY`,
+`WXA_SERVICE_URL`, `WXA_ASSISTANT_ID` (see `.env.example`). Unset or unreachable, the
+panel falls back to a small local answer set and **labels those replies as offline**
+rather than passing them off as the assistant's.
+
 ### Cadences — the playbooks
 Every cadence's definition: its ordered steps (email/call/other by day), its account
 roster, and each account's progress relative to today's schedule.

@@ -36,6 +36,16 @@ _DESIGN_CSS = """
     --blue:#0f62fe; --blue-text:#78a9ff; --blue-soft:rgba(15,98,254,.14); --blue-border:rgba(120,169,255,.4);
     --purple:#8a3ffc; --purple-text:#be95ff; --purple-soft:rgba(138,63,252,.14); --purple-border:rgba(190,149,255,.4);
     --green:#42be65; --amber:#f1c21b; --red:#fa4d56;
+    /* Account signals — on-palette (blue/purple/cool gray), not stoplight
+       colours. Intensity carries meaning: light = opportunity, deep = risk. */
+    --sig-white:#4589ff; --sig-up:#be95ff; --sig-risk:#6929c4; --sig-neutral:#878d96;
+    /* Data-viz stops. Dark theme uses the light end of each ramp so bars read
+       against #161616; light theme flips to the dark end. */
+    --viz-blue-lo:#a6c8ff; --viz-blue-hi:#4589ff;
+    --viz-purple-lo:#d4bbff; --viz-purple-hi:#a56eff;
+    --map-base:#2a2130; --map-edge:rgba(255,255,255,.34); --map-sep:rgba(255,255,255,.55);
+    --gate-glow:rgba(138,63,252,.08);
+    --shadow-lg:0 16px 36px rgba(0,0,0,.45);
     /* Gradients. IBM's brand gradient runs blue 60 → purple 60; keep every
        gradient on that axis so "futuristic" never drifts off-palette. Surface
        gradients stay near-black so they read as depth, not as color. */
@@ -49,6 +59,50 @@ _DESIGN_CSS = """
     --font:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
     --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
   }
+  /* ── light theme ────────────────────────────────────────────
+     Carbon's White/Gray-10 layering. Backgrounds invert, brand blue/purple
+     hold their 60-level values (they're AA on white), and every data-viz ramp
+     flips to its dark end so marks stay visible on a light surface. */
+  :root[data-theme="light"]{
+    --bg:#ffffff; --layer1:#f4f4f4; --layer2:#e8e8e8; --layer3:#d1d1d1;
+    --border:#e0e0e0; --border-strong:#8d8d8d;
+    --header-bg:#161616;          /* Carbon keeps the UI-shell header dark */
+    --text1:#161616; --text2:#393939; --text3:#6f6f6f;
+    --blue:#0f62fe; --blue-text:#0043ce; --blue-soft:rgba(15,98,254,.10); --blue-border:rgba(15,98,254,.4);
+    --purple:#8a3ffc; --purple-text:#6929c4; --purple-soft:rgba(138,63,252,.10); --purple-border:rgba(138,63,252,.4);
+    --green:#198038; --amber:#8e6a00; --red:#da1e28;
+    --sig-white:#0f62fe; --sig-up:#8a3ffc; --sig-risk:#491d8b; --sig-neutral:#8d8d8d;
+    --viz-blue-lo:#0f62fe; --viz-blue-hi:#002d9c;
+    --viz-purple-lo:#8a3ffc; --viz-purple-hi:#491d8b;
+    --map-base:#e8e0f0; --map-edge:rgba(0,0,0,.28); --map-sep:#ffffff;
+    --gate-glow:rgba(138,63,252,.06);
+    --shadow-lg:0 16px 36px rgba(0,0,0,.16);
+    --grad-surface:linear-gradient(160deg,#ffffff 0%,#f4f4f4 100%);
+    --grad-glow:radial-gradient(900px 420px at 15% -10%,rgba(15,98,254,.07),transparent 60%),
+                radial-gradient(760px 400px at 95% 0%,rgba(138,63,252,.06),transparent 62%);
+  }
+  /* The header stays dark in both themes, so its own text must not follow
+     --text1 (which flips to near-black in light mode). */
+  :root[data-theme="light"] .topbar{ border-bottom-color:#393939; }
+  :root[data-theme="light"] .brand-name,
+  :root[data-theme="light"] .navlink.active,
+  :root[data-theme="light"] .topsearch input{ color:#ffffff; }
+  :root[data-theme="light"] .navlink{ color:#c6c6c6; }
+  :root[data-theme="light"] .navlink:hover{ color:#ffffff; background:#393939; }
+  :root[data-theme="light"] .navlink.active{ background:#262626; }
+  :root[data-theme="light"] .topsearch{ background:#262626; border-color:#393939; }
+  :root[data-theme="light"] .topsearch:focus-within{ background:#393939; }
+  :root[data-theme="light"] .topsearch svg,
+  :root[data-theme="light"] .topsearch input::placeholder{ color:#8d8d8d; }
+  :root[data-theme="light"] .brand{ border-right-color:#393939; }
+  :root[data-theme="light"] .brand:hover{ background:#393939; }
+  :root[data-theme="light"] .profile-wrap{ border-left-color:#393939; }
+  :root[data-theme="light"] .profile-btn{ background:#393939; border-color:#6f6f6f; color:#ffffff; }
+  /* Primary/AI buttons keep white labels on their saturated fills. */
+  :root[data-theme="light"] .btn.primary,
+  :root[data-theme="light"] .btn.ai{ color:#ffffff; }
+  :root[data-theme="light"] .viz-panel::after{ opacity:.6; }
+
   *{ box-sizing:border-box; }
   html,body{ background:var(--bg); }
   body{ font-family:var(--font); color:var(--text1); margin:0; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
@@ -117,11 +171,17 @@ PAGE_TEMPLATE = """
 <meta charset="utf-8">
 <title>IBM BobBee</title>
 """ + _FONTS + """
+<script>
+// Runs before any CSS paints: without this a light-mode user sees a dark flash
+// on every load while the rest of the JS is still parsing.
+(function(){ try { var t = localStorage.getItem('bobbee_theme');
+  if (t) document.documentElement.setAttribute('data-theme', t); } catch(e){} })();
+</script>
 <style>
 """ + _DESIGN_CSS + """
   /* ── login gate ─────────────────────────────────────────────── */
   .gate{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:500;
-         background:radial-gradient(1000px 520px at 50% 10%, rgba(138,63,252,.08), transparent 65%), var(--bg); }
+         background:radial-gradient(1000px 520px at 50% 10%, var(--gate-glow), transparent 65%), var(--bg); }
   .gate-card{ width:380px; max-width:calc(100vw - 40px); text-align:center; background:var(--layer1);
               border:1px solid var(--border); border-radius:var(--r-lg); padding:40px 34px 34px; }
   .gate-logo-img{ width:56px; height:56px; margin:0 auto 18px; display:block; }
@@ -137,10 +197,13 @@ PAGE_TEMPLATE = """
 
   /* ── w3-style identity header ───────────────────────────────── */
   /* w3 renders the person's name very large and very light. */
-  .w3-name{ font-size:68px; font-weight:300; letter-spacing:-.01em; line-height:1.15; }
+  /* .page-head h2 (0,1,1) outranks a bare .w3-name (0,1,0), so this has to be
+     at least as specific or the display size silently falls back to 24px. */
+  .page-head h2.w3-name{ font-size:88px; font-weight:300; letter-spacing:-.015em;
+                         line-height:1.05; margin-bottom:0; }
   .w3-head{ display:flex; gap:28px; align-items:flex-start; padding-bottom:26px; }
   .w3-avatar{ width:132px; height:132px; flex:none; display:flex; align-items:center;
-              justify-content:center; font-size:34px; font-weight:500; color:#fff;
+              justify-content:center; font-size:34px; font-weight:500; color:var(--text1);
               background:var(--grad-brand); letter-spacing:.02em; }
   .w3-ident{ min-width:0; padding-top:4px; }
   /* w3 sets the role line large and light, above a small function label. */
@@ -160,8 +223,8 @@ PAGE_TEMPLATE = """
   .w3-cicon{ width:38px; height:38px; display:flex; align-items:center; justify-content:center;
              border-radius:50%; background:var(--layer2); color:var(--text2); font-size:17px;
              margin-bottom:26px; }
-  .w3-cicon.blue{ background:var(--grad-brand); color:#fff; }
-  .w3-cicon.purple{ background:linear-gradient(135deg,#8a3ffc,#be95ff); color:#fff; }
+  .w3-cicon.blue{ background:var(--grad-brand); color:var(--text1); }
+  .w3-cicon.purple{ background:linear-gradient(135deg,#8a3ffc,#be95ff); color:var(--text1); }
   .w3-clabel{ font-size:12.5px; color:var(--text3); margin-bottom:3px; }
   .w3-cval{ font-size:13.5px; color:var(--text2); }
 
@@ -190,11 +253,13 @@ PAGE_TEMPLATE = """
   .w3-cred{ font-size:13px; color:var(--text2); padding:11px 14px; background:var(--layer2);
             border-left:2px solid transparent; border-image:var(--grad-brand) 1; }
   .profile-tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:28px; }
+  /* The name is display-scale, so the default page-head gap reads as a hole. */
+  #page-profile .page-head{ margin-bottom:6px; }
   .profile-tab{ font:inherit; font-size:13.5px; font-weight:500; color:var(--text3); background:none; border:none;
                 border-bottom:2px solid transparent; cursor:pointer; padding:10px 20px; margin-bottom:-1px; }
-  .profile-tab:hover{ color:#fff; }
+  .profile-tab:hover{ color:var(--text1); }
   /* Same blue indicator as the vertical section nav, laid horizontally. */
-  .profile-tab.active{ color:#fff; border-bottom-color:var(--blue); }
+  .profile-tab.active{ color:var(--text1); border-bottom-color:var(--blue); }
   .profile-section{ display:none; }
   .profile-section.active{ display:block; }
   .prof-card{ background:var(--layer1); border:1px solid var(--border); padding:24px 26px; margin-bottom:16px; }
@@ -206,7 +271,7 @@ PAGE_TEMPLATE = """
   .field label{ font-size:12px; font-weight:600; color:var(--text3); }
   .field input[type=text],.field input[type=email],.field textarea,.field select{
     font:inherit; font-size:13.5px; border:1px solid var(--border); background:var(--layer2);
-    color:#fff; padding:9px 12px; outline:none; width:100%; resize:vertical; }
+    color:var(--text1); padding:9px 12px; outline:none; width:100%; resize:vertical; }
   .field input:focus,.field textarea:focus,.field select:focus{
     border-color:var(--blue-text); box-shadow:0 0 0 2px var(--blue-soft); }
   .field input[readonly]{ color:var(--text3); background:var(--layer1); cursor:default; }
@@ -217,12 +282,12 @@ PAGE_TEMPLATE = """
   .pref-row label{ font-size:13px; flex:1; min-width:0; }
   .pref-row .pref-hint{ font-size:11.5px; color:var(--text3); }
   .pref-row input[type=number]{ width:72px; font:inherit; font-size:13.5px; border:1px solid var(--border);
-    background:var(--layer2); color:#fff; padding:7px 10px; outline:none; text-align:center; }
+    background:var(--layer2); color:var(--text1); padding:7px 10px; outline:none; text-align:center; }
   .pref-row input[type=number]:focus{ border-color:var(--blue-text); }
   .pref-row select{ width:180px; font:inherit; font-size:13px; border:1px solid var(--border);
-    background:var(--layer2); color:#fff; padding:7px 10px; outline:none; }
+    background:var(--layer2); color:var(--text1); padding:7px 10px; outline:none; }
   .reset-link{ font:inherit; font-size:12px; color:var(--text3); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
-  .reset-link:hover{ color:#fff; }
+  .reset-link:hover{ color:var(--text1); }
   /* Purple = watsonx output. Personalization is entirely about model behaviour,
      so it carries the accent as a whole rather than only on individual controls. */
   .ai-note{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; margin-bottom:18px;
@@ -240,8 +305,8 @@ PAGE_TEMPLATE = """
                 border:none; border-left:2px solid transparent; cursor:pointer; padding:12px 16px;
                 border-bottom:1px solid var(--border); transition:background .12s,color .12s; }
   .set-navlink:last-child{ border-bottom:none; }
-  .set-navlink:hover{ background:var(--layer2); color:#fff; }
-  .set-navlink.active{ color:#fff; background:var(--layer2); border-left-color:var(--blue); font-weight:600; }
+  .set-navlink:hover{ background:var(--layer2); color:var(--text1); }
+  .set-navlink.active{ color:var(--text1); background:var(--layer2); border-left-color:var(--blue); font-weight:600; }
   /* Every section is rendered; the sidebar scrolls to one rather than swapping
      which is mounted, so you can also just read straight down the page. */
   .set-sec{ display:block; scroll-margin-top:72px; margin-bottom:28px; }
@@ -281,13 +346,13 @@ PAGE_TEMPLATE = """
   .navlink{ font:inherit; font-size:14.5px; font-weight:400; color:var(--text2); background:none;
             border:none; cursor:pointer; padding:0 8px; width:118px; flex:none;
             position:relative; transition:background .11s,color .11s; }
-  .navlink:hover{ color:#ffffff; background:var(--layer2); }
-  .navlink.active{ color:#ffffff; background:var(--layer1); }
+  .navlink:hover{ color:var(--text1); background:var(--layer2); }
+  .navlink.active{ color:var(--text1); background:var(--layer1); }
   .navlink.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:3px;
                           background:var(--grad-brand); }
   /* w3-style global search: fills the bar between the nav and the avatar. */
-  .topsearch{ flex:0 1 420px; display:flex; align-items:center; gap:12px; min-width:0;
-              margin-left:auto; padding:0 18px; background:var(--layer1);
+  .topsearch{ flex:0 1 400px; display:flex; align-items:center; gap:12px; min-width:0;
+              margin-right:auto; padding:0 18px; background:var(--layer1);
               border-left:1px solid var(--border); border-right:1px solid var(--border); }
   .topsearch svg{ width:18px; height:18px; flex:none; color:var(--text3); }
   .topsearch input{ flex:1; min-width:0; font:inherit; font-size:14.5px; background:none;
@@ -298,7 +363,7 @@ PAGE_TEMPLATE = """
   .topbar-actions{ display:flex; align-items:stretch; flex:none; }
   .icon-btn{ width:48px; background:none; border:none; color:var(--text2); cursor:pointer;
              display:flex; align-items:center; justify-content:center; transition:background .11s,color .11s; }
-  .icon-btn:hover{ background:var(--layer2); color:#ffffff; }
+  .icon-btn:hover{ background:var(--layer2); color:var(--text1); }
   .icon-btn svg{ width:20px; height:20px; }
   .profile-wrap{ position:relative; flex:none; display:flex; align-items:center; gap:10px;
                  padding:0 22px; border-left:1px solid var(--border); }
@@ -307,7 +372,7 @@ PAGE_TEMPLATE = """
                 display:flex; align-items:center; justify-content:center; }
   .profile-btn:hover{ border-color:var(--border-strong); }
   .profile-menu{ position:absolute; top:calc(100% + 10px); right:0; background:var(--layer1); border:1px solid var(--border);
-                 border-radius:var(--r-md); min-width:180px; box-shadow:0 16px 36px rgba(0,0,0,.45); display:none;
+                 border-radius:var(--r-md); min-width:180px; box-shadow:var(--shadow-lg); display:none;
                  overflow:hidden; z-index:60; }
   .profile-menu.show{ display:block; }
   .profile-menu button{ display:block; width:100%; text-align:left; font:inherit; font-size:13.5px; color:var(--text1);
@@ -321,13 +386,13 @@ PAGE_TEMPLATE = """
   .page{ display:none; } .page.active{ display:block; }
   .page-head{ margin-bottom:24px; }
   .page-head h2{ font-size:24px; }
-  .page-head p{ color:#ffffff; font-size:14.5px; margin:5px 0 0; }
+  .page-head p{ color:var(--text1); font-size:14.5px; margin:5px 0 0; }
 
   /* ── dashboard ──────────────────────────────────────────────── */
   .empty-state{ text-align:center; padding:70px 20px; background:var(--layer1); border:1px solid var(--border);
                 border-radius:var(--r-lg); }
   .empty-state h3{ font-size:18px; margin-bottom:8px; }
-  .empty-state p{ color:#ffffff; font-size:14px; margin:0 0 20px; }
+  .empty-state p{ color:var(--text1); font-size:14px; margin:0 0 20px; }
   .empty-state .btn{ width:auto; }
   /* Same segmented control as the dashboard/profile toggles (.seg / .seg-btn) —
      one control style for "pick a view" everywhere in the app. */
@@ -336,8 +401,8 @@ PAGE_TEMPLATE = """
               border:none; border-right:1px solid var(--border); cursor:pointer; padding:7px 15px;
               transition:background .13s,color .13s; }
   .range-btn:last-child{ border-right:none; }
-  .range-btn:hover{ color:#fff; background:var(--layer2); }
-  .range-btn.active{ color:#fff; background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
+  .range-btn:hover{ color:var(--text1); background:var(--layer2); }
+  .range-btn.active{ color:var(--text1); background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
   .aitem{ display:flex; align-items:center; gap:14px; padding:13px 16px; background:var(--layer1); border:1px solid var(--border);
           border-radius:var(--r-md); margin-bottom:8px; }
   .aitem .adate{ width:78px; flex:none; font-size:11px; color:var(--text3); font-family:var(--mono); }
@@ -345,16 +410,14 @@ PAGE_TEMPLATE = """
   .aitem .aplay{ font-size:11px; color:var(--text3); flex:none; }
   .aitems-empty{ color:var(--text3); font-size:13.5px; padding:26px; text-align:center; background:var(--layer1);
                  border:1px dashed var(--border); border-radius:var(--r-md); }
-  .stub{ text-align:center; padding:110px 20px; color:#ffffff; }
-  .stub h3{ color:#ffffff; font-size:18px; margin-bottom:6px; }
+  .stub{ text-align:center; padding:110px 20px; color:var(--text1); }
+  .stub h3{ color:var(--text1); font-size:18px; margin-bottom:6px; }
 
   /* ── accounts tab ───────────────────────────────────────────── */
   .accts-head{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px; }
-  .accts-count{ color:#ffffff; font-size:13px; }
-  .acct-list{ max-height:600px; overflow-y:auto; overflow-x:auto; border:1px solid var(--border);
+  .accts-count{ color:var(--text1); font-size:13px; }
+  .acct-list{ max-height:600px; overflow-y:auto; overflow-x:hidden; border:1px solid var(--border);
               border-radius:var(--r-lg); background:var(--layer1); }
-  /* Rows are grid, so they'd otherwise shrink-to-fit the scroll container. */
-  .acct-list > .acct-row{ min-width:max-content; }
   /* Real grid, not flex: header and body rows share one column template set on
      the list (--acct-cols), so every cell lines up regardless of how many
      optional columns the current view shows or how long a value wraps. */
@@ -389,10 +452,10 @@ PAGE_TEMPLATE = """
   .stage .smsg{ color:var(--text3); font-size:12.5px; margin-top:3px; }
 
   .side-lists{ display:flex; gap:10px; margin-bottom:24px; }
-  .side-badge{ font:inherit; font-size:12.5px; color:#ffffff; background:var(--layer1); border:1px solid var(--border);
+  .side-badge{ font:inherit; font-size:12.5px; color:var(--text1); background:var(--layer1); border:1px solid var(--border);
                border-radius:var(--r-sm); padding:8px 14px; cursor:pointer; }
-  .side-badge:hover{ border-color:var(--border-strong); color:#ffffff; }
-  .side-badge b{ color:#ffffff; font-family:var(--mono); }
+  .side-badge:hover{ border-color:var(--border-strong); color:var(--text1); }
+  .side-badge b{ color:var(--text1); font-family:var(--mono); }
 
   .cad-finished{ margin-top:34px; padding-top:20px; border-top:1px solid var(--border); }
   .cad-finished-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:14px; }
@@ -414,29 +477,31 @@ PAGE_TEMPLATE = """
   .acct-card .atags{ display:flex; gap:6px; flex-wrap:wrap; flex:none; max-width:340px; justify-content:flex-end; }
   /* Tags: white text on a transparent box (border-only), IBM Carbon style —
      the border color alone carries the category. */
-  .tagpill{ font-size:10.5px; font-weight:500; color:#fff; background:transparent; border:1px solid var(--border-strong);
+  .tagpill{ font-size:10.5px; font-weight:500; color:var(--text2); background:transparent; border:1px solid var(--border-strong);
             border-radius:0; padding:3px 9px; white-space:nowrap; cursor:pointer; position:relative; }
-  .tagpill.white{ border-color:var(--blue-border); }
-  .tagpill.risk{ border-color:rgba(250,77,86,.55); }
-  .tagpill.up{ border-color:rgba(66,190,101,.55); }
-  .tagpill.on{ background:#fff; color:#0a0a0c; border-color:#fff; }
+  .tagpill.white{ border-color:var(--sig-white); color:var(--sig-white); }
+  .tagpill.risk{ border-color:var(--sig-risk); color:var(--sig-risk); }
+  .tagpill.up{ border-color:var(--sig-up); color:var(--sig-up); }
+  .tagpill.on{ background:var(--text1); color:var(--bg); border-color:var(--text1); }
   /* tag tooltip */
   .tagpill[data-tip]:hover::after{
     content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
-    background:var(--layer3); color:#fff; border:1px solid var(--border-strong);
+    background:var(--layer3); color:var(--text1); border:1px solid var(--border-strong);
     font-size:11px; font-weight:400; line-height:1.45; padding:6px 10px; white-space:normal;
     width:200px; z-index:100; pointer-events:none; text-align:left; }
   /* tag dots in account rows — compact colored circles replacing full pills */
   .tagdot{ display:inline-block; width:9px; height:9px; border-radius:50%; flex:none; cursor:default; position:relative; }
   .tagdot[data-tip]:hover::after{
     content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
-    background:var(--layer3); color:#fff; border:1px solid var(--border-strong);
+    background:var(--layer3); color:var(--text1); border:1px solid var(--border-strong);
     font-size:11px; font-weight:400; line-height:1.45; padding:6px 10px; white-space:normal;
     width:190px; z-index:100; pointer-events:none; text-align:left; }
-  .tagdot.white{ background:var(--blue-text); }
-  .tagdot.risk{ background:var(--red); }
-  .tagdot.up{ background:var(--green); }
-  .tagdot.neutral{ background:var(--border-strong); }
+  /* Signals stay on the blue/purple/cool-gray ramp instead of the stoplight
+     colours. Intensity carries the meaning: light = opportunity, deep = risk. */
+  .tagdot.white{ background:var(--sig-white); }
+  .tagdot.risk{ background:var(--sig-risk); }
+  .tagdot.up{ background:var(--sig-up); }
+  .tagdot.neutral{ background:var(--sig-neutral); }
   /* tag legend row */
   .tag-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; margin-top:8px; padding:8px 0 2px; border-top:1px solid var(--border); }
   .tag-legend-item{ display:flex; align-items:center; gap:5px; color:var(--text3); }
@@ -445,11 +510,11 @@ PAGE_TEMPLATE = """
   .accts-layout{ display:flex; gap:18px; align-items:flex-start; }
   .accts-sidebar{ width:230px; flex:none; background:var(--layer1); border:1px solid var(--border); }
   .accts-sidebar h4{ font-size:11.5px; font-weight:600; color:var(--text3); padding:12px 14px 6px; }
-  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; color:#ffffff; background:none;
+  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; color:var(--text1); background:none;
           border:none; border-left:3px solid transparent; padding:9px 14px; cursor:pointer; }
-  .slist:hover{ background:var(--layer2); color:#ffffff; }
-  .slist.active{ background:var(--layer2); color:#ffffff; border-left-color:var(--blue); font-weight:600; }
-  .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:#ffffff; }
+  .slist:hover{ background:var(--layer2); color:var(--text1); }
+  .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:600; }
+  .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:var(--text1); }
   .accts-main{ flex:1; min-width:0; }
   .accts-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
   .accts-tools input{ width:320px; max-width:100%; }
@@ -488,8 +553,8 @@ PAGE_TEMPLATE = """
             border:none; border-right:1px solid var(--border); padding:7px 14px; cursor:pointer;
             transition:background .13s,color .13s; }
   .seg-btn:last-child{ border-right:none; }
-  .seg-btn:hover{ color:#fff; background:var(--layer2); }
-  .seg-btn.active{ color:#fff; background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
+  .seg-btn:hover{ color:var(--text1); background:var(--layer2); }
+  .seg-btn.active{ color:var(--text1); background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
   .viz-body{ display:flex; flex-direction:column; gap:16px; }
   .viz-stats{ display:flex; align-items:center; gap:34px; flex-wrap:wrap; }
   .vstat .v{ display:block; font-family:var(--mono); font-size:30px; font-weight:600;
@@ -502,7 +567,7 @@ PAGE_TEMPLATE = """
               transition:stroke-dashoffset .55s cubic-bezier(.4,.14,.3,1); }
   .viz-ring-txt{ position:absolute; inset:0; display:flex; flex-direction:column;
                  align-items:center; justify-content:center; gap:1px; }
-  .viz-ring-txt span{ font-family:var(--mono); font-size:15px; font-weight:600; color:#fff; }
+  .viz-ring-txt span{ font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text1); }
   .viz-ring-txt small{ font-size:9px; color:var(--text3); }
   /* carbon-charts layout: a labelled y-axis on the left, horizontal gridlines
      behind the plot, and a zero-rule the bars sit on. */
@@ -522,12 +587,12 @@ PAGE_TEMPLATE = """
   .vbar-seg{ width:100%; transition:height .5s cubic-bezier(.4,.14,.3,1); }
   /* Carbon's dark-theme data-viz gradients: Blue 30→50 and Purple 30→50. (The
      60-level stops are the *light*-theme pairing and go muddy on #161616.) */
-  .vbar-seg.email{ background:linear-gradient(180deg,#a6c8ff 0%,#4589ff 100%); }
-  .vbar-seg.call{ background:linear-gradient(180deg,#d4bbff 0%,#a56eff 100%); }
+  .vbar-seg.email{ background:linear-gradient(180deg,var(--viz-blue-lo) 0%,var(--viz-blue-hi) 100%); }
+  .vbar-seg.call{ background:linear-gradient(180deg,var(--viz-purple-lo) 0%,var(--viz-purple-hi) 100%); }
   .vbar-seg.zero{ background:var(--layer2); height:2px; }
   /* "Today" marker goes under the label, not around .vbar-stack — the stack is
      always full height, so outlining it drew an empty box above short bars. */
-  .vbar.now .vbar-lbl{ color:#fff; font-weight:600; position:relative; }
+  .vbar.now .vbar-lbl{ color:var(--text1); font-weight:600; position:relative; }
   .vbar.now .vbar-lbl::after{ content:''; position:absolute; left:0; right:0; bottom:-4px;
                               height:2px; background:var(--grad-brand); }
   .vbar-lbl{ font-size:10.5px; color:var(--text3); text-align:center; white-space:nowrap;
@@ -535,8 +600,8 @@ PAGE_TEMPLATE = """
   .vbar-val{ font-family:var(--mono); font-size:11px; color:var(--text2); }
   .viz-legend{ display:flex; gap:18px; font-size:11.5px; color:var(--text3); }
   .viz-legend i{ display:inline-block; width:10px; height:10px; margin-right:6px; }
-  .sw-email{ background:linear-gradient(180deg,#a6c8ff,#4589ff); }
-  .sw-call{ background:linear-gradient(180deg,#d4bbff,#a56eff); }
+  .sw-email{ background:linear-gradient(180deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
+  .sw-call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
   .viz-empty{ color:var(--text3); font-size:13px; padding:34px 0; text-align:center; }
   /* Period stepping on the Activity / Meetings panels. */
   .viz-nav{ display:flex; align-items:center; gap:8px; margin-top:3px; }
@@ -544,7 +609,7 @@ PAGE_TEMPLATE = """
   .step-btn{ font:inherit; font-size:14px; line-height:1; color:var(--text3); background:none;
              border:1px solid var(--border); cursor:pointer; padding:4px 9px;
              transition:color .12s,border-color .12s; }
-  .step-btn:hover{ color:#fff; border-color:var(--border-strong); }
+  .step-btn:hover{ color:var(--text1); border-color:var(--border-strong); }
   .step-now{ font:inherit; font-size:12px; color:var(--blue-text); background:none;
              border:none; cursor:pointer; padding:2px 4px; }
   .step-now:hover{ text-decoration:underline; }
@@ -552,6 +617,36 @@ PAGE_TEMPLATE = """
   .go-arrow{ margin-left:2px; }
   .cal-month-link{ cursor:pointer; }
   .cal-month-link:hover{ color:var(--blue-text); text-decoration:underline; }
+
+  /* ── Ask BobBee (watsonx Assistant) ─────────────────────────── */
+  .ask-fab{ position:fixed; right:22px; bottom:22px; z-index:130; width:52px; height:52px;
+            border:none; border-radius:50%; cursor:pointer; color:#fff;
+            background:var(--grad-brand); box-shadow:var(--shadow-lg);
+            display:flex; align-items:center; justify-content:center;
+            transition:transform .14s; }
+  .ask-fab:hover{ transform:scale(1.07); }
+  .ask-fab svg{ width:22px; height:22px; }
+  .ask-panel{ position:fixed; right:22px; bottom:86px; z-index:130; width:378px;
+              max-width:calc(100vw - 44px); height:min(560px, calc(100vh - 140px));
+              background:var(--layer1); border:1px solid var(--border-strong);
+              box-shadow:var(--shadow-lg); display:none; flex-direction:column; }
+  .ask-panel.open{ display:flex; }
+  .ask-note{ font-size:12px; color:var(--text3); padding:10px 18px;
+             border-bottom:1px solid var(--border); }
+  .ask-log{ flex:1; overflow-y:auto; padding:16px 18px; display:flex;
+            flex-direction:column; gap:12px; }
+  .ask-msg{ font-size:13.5px; line-height:1.6; padding:10px 13px; max-width:88%;
+            white-space:pre-wrap; }
+  .ask-msg.me{ align-self:flex-end; background:var(--blue); color:#fff; }
+  .ask-msg.bot{ align-self:flex-start; background:var(--layer2); color:var(--text2);
+                border-left:2px solid var(--purple); }
+  .ask-msg.offline{ border-left-color:var(--amber); }
+  .ask-tag{ display:block; font-size:11px; color:var(--text3); margin-top:6px; }
+  .ask-form{ display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--border); }
+  .ask-form input{ flex:1; min-width:0; font:inherit; font-size:13.5px;
+                   background:var(--layer2); border:1px solid var(--border);
+                   color:var(--text1); padding:9px 12px; }
+  .ask-form input:focus{ outline:none; border-color:var(--blue); }
 
   .list-loading{ display:flex; align-items:center; justify-content:center; gap:10px;
                  color:var(--text3); font-size:13px; padding:44px 0; }
@@ -586,19 +681,24 @@ PAGE_TEMPLATE = """
   .terr.empty{ opacity:.45; }
   /* Isometric presentation: tilt the plate the shape sits on, so the maps read
      as objects in space rather than flat clip-art. */
-  .terr-iso{ width:100%; perspective:640px; margin-bottom:10px; }
+  .terr-iso{ width:100%; margin-bottom:10px; }
   .usmap.single .terr-iso{ max-width:420px; margin-inline:auto; }
-  /* Enough tilt to read as isometric, not so much that the outline stops being
-     recognisable — the shape has to stay identifiable as the territory. */
-  .terr-svg{ width:100%; height:110px; display:block;
-             transform:rotateX(26deg) rotateZ(-15deg) scale(1.04);
-             transform-style:preserve-3d;
-             filter:drop-shadow(4px 9px 8px rgba(0,0,0,.6)); }
+  /* Flat, like the county-choropleth reference — the discrete region bands and
+     their separators are the point, and a tilt just distorts them. */
+  .terr-svg{ width:100%; height:120px; display:block; }
   .usmap.single .terr-svg{ height:230px; }
-  /* Dark plate so the heat blobs carry the colour rather than fighting a grey. */
-  .terr-base{ fill:#2a2130; }
-  .terr-edge{ fill:none; stroke:rgba(255,255,255,.34); stroke-width:1.4;
+  /* Plate under the regions; regions paint over it, unlit ones show through. */
+  .terr-plate{ fill:var(--map-base); }
+  .terr-region{ cursor:pointer; transition:filter .12s; }
+  .terr-region:hover{ filter:brightness(1.18); }
+  /* White separators between regions, exactly like a county choropleth. */
+  .terr-sep{ fill:none; stroke:var(--map-sep); stroke-width:1;
+             vector-effect:non-scaling-stroke; }
+  .terr-edge{ fill:none; stroke:var(--map-edge); stroke-width:1.4;
               vector-effect:non-scaling-stroke; }
+  .map-hover{ position:fixed; display:none; z-index:200; pointer-events:none;
+              background:var(--layer1); color:var(--text1); border:1px solid var(--border-strong);
+              font-size:12.5px; padding:6px 10px; box-shadow:var(--shadow-lg); white-space:nowrap; }
   .terr-code{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text1); }
   .terr-name{ font-size:11px; color:var(--text3); line-height:1.35; }
   .terr-val{ font-family:var(--mono); font-size:15px; font-weight:600; color:var(--text1); margin-top:4px; }
@@ -638,12 +738,12 @@ PAGE_TEMPLATE = """
   .cal-cell{ min-height:56px; background:transparent; padding:5px 7px; cursor:default;
              border:1px solid var(--border); }
   .cal-cell.out{ opacity:.3; }
-  .cal-cell.today{ border-color:#fff; }
+  .cal-cell.today{ border-color:var(--text1); }
   .cal-cell.has{ cursor:pointer; background:var(--layer2); border-color:var(--blue-border); }
   .cal-cell.has:hover{ background:var(--layer3); }
   .cal-cell.sel{ background:var(--blue-soft); border-color:var(--blue); }
-  .cal-cell .d{ font-family:var(--mono); font-size:11px; color:#ffffff; }
-  .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:#ffffff; }
+  .cal-cell .d{ font-family:var(--mono); font-size:11px; color:var(--text1); }
+  .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:var(--text1); }
   .cal-cell.compact{ min-height:34px; }
   .cal-quarter{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
   /* Year view: four quarter blocks, each a labelled row of three months. */
@@ -659,9 +759,9 @@ PAGE_TEMPLATE = """
   .cal-weekday:hover{ background:var(--layer2); }
   .cal-weekday.sel{ border-color:var(--blue); }
   .cal-weekday h5{ font-size:12px; margin-bottom:8px; }
-  .cal-weekday .cnt{ font-size:11.5px; color:#ffffff; margin-bottom:8px; }
+  .cal-weekday .cnt{ font-size:11.5px; color:var(--text1); margin-bottom:8px; }
   /* ── day-detail side panel (Plan tab) ──────────────────────── */
-  .day-panel{ position:fixed; top:0; right:0; width:360px; max-width:100vw; height:100vh; background:var(--layer1);
+  .day-panel{ position:fixed; top:56px; right:0; width:360px; max-width:100vw; height:calc(100vh - 56px); background:var(--layer1);
               border-left:1px solid var(--border); z-index:120; transform:translateX(100%);
               transition:transform .22s ease; display:flex; flex-direction:column; overflow:hidden; }
   .day-panel.open{ transform:translateX(0); }
@@ -673,7 +773,7 @@ PAGE_TEMPLATE = """
                            body.side-panel-open main{ padding-right:0; } }
 
   /* Contextual panel on the Email/Call tabs — same mechanics as the day panel. */
-  .side-panel{ position:fixed; top:0; right:0; width:380px; max-width:100vw; height:100vh;
+  .side-panel{ position:fixed; top:56px; right:0; width:380px; max-width:100vw; height:calc(100vh - 56px);
                background:var(--layer1); border-left:1px solid var(--border); z-index:120;
                transform:translateX(100%); transition:transform .22s ease; display:flex;
                flex-direction:column; overflow:hidden; }
@@ -698,7 +798,7 @@ PAGE_TEMPLATE = """
   .kebab-wrap{ position:relative; }
   .kebab{ font:inherit; font-size:17px; line-height:1; background:none; border:none;
           color:var(--text3); cursor:pointer; padding:2px 6px; }
-  .kebab:hover{ color:#fff; }
+  .kebab:hover{ color:var(--text1); }
   .kebab-menu{ display:none; position:absolute; top:calc(100% + 4px); right:0; z-index:60;
                min-width:206px; background:var(--layer2); border:1px solid var(--border-strong);
                box-shadow:0 14px 30px rgba(0,0,0,.5); }
@@ -706,7 +806,7 @@ PAGE_TEMPLATE = """
   .kebab-menu button{ display:block; width:100%; text-align:left; font:inherit; font-size:13.5px;
                       background:none; border:none; color:var(--text2); cursor:pointer;
                       padding:10px 14px; }
-  .kebab-menu button:hover{ background:var(--layer3); color:#fff; }
+  .kebab-menu button:hover{ background:var(--layer3); color:var(--text1); }
   .kebab-menu button.danger{ color:var(--red); border-top:1px solid var(--border); }
   .link{ cursor:pointer; }
   .email-card-to.link:hover, .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
@@ -714,8 +814,8 @@ PAGE_TEMPLATE = """
                    border-bottom:1px solid var(--border); flex:none; }
   .day-panel-head h3{ font-size:14px; margin:0; }
   .day-panel-close{ font:inherit; font-size:18px; background:none; border:none; color:var(--text3); cursor:pointer; padding:0 4px; line-height:1; }
-  .day-panel-close:hover{ color:#fff; }
-  .day-panel-sums{ padding:14px 20px 10px; flex:none; border-bottom:1px solid var(--border); font-size:13px; color:#ffffff; }
+  .day-panel-close:hover{ color:var(--text1); }
+  .day-panel-sums{ padding:14px 20px 10px; flex:none; border-bottom:1px solid var(--border); font-size:13px; color:var(--text1); }
   .day-panel-items{ flex:1; overflow-y:auto; padding:10px 20px 20px; }
   .day-panel-section{ font-size:11px; font-weight:600; color:var(--text2); text-transform:none;
                       padding:14px 0 6px; border-bottom:1px solid var(--border-strong); margin-bottom:2px; }
@@ -724,12 +824,12 @@ PAGE_TEMPLATE = """
   .day-panel-section + .panel-act{ border-top:none; }
   .panel-act .act-type{ margin-top:1px; }
   .panel-act-body{ flex:1; min-width:0; }
-  .panel-act-body .pa-acct{ font-weight:500; font-size:12.5px; color:#fff; word-break:break-word; }
+  .panel-act-body .pa-acct{ font-weight:500; font-size:12.5px; color:var(--text1); word-break:break-word; }
   .panel-act-body .pa-step{ font-size:11px; color:var(--text3); margin-top:2px; }
   /* legacy inline detail (kept for day-view fallback, hidden by default) */
   .day-detail{ margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:none; }
   .day-detail h3{ font-size:14px; margin-bottom:6px; }
-  .day-detail .sums{ color:#ffffff; font-size:13px; margin-bottom:12px; }
+  .day-detail .sums{ color:var(--text1); font-size:13px; margin-bottom:12px; }
   .act-row{ display:flex; gap:12px; align-items:center; padding:8px 0; border-top:1px solid var(--border); font-size:12.5px; }
   .act-row:first-of-type{ border-top:none; }
   .act-type{ width:52px; flex:none; font-size:10.5px; font-weight:600; text-align:center; border:1px solid var(--border-strong); padding:2px 0; }
@@ -749,14 +849,14 @@ PAGE_TEMPLATE = """
   .task-top{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
   .task-top h4{ font-size:14px; font-weight:600; margin:0; flex:1; }
   .task-dot{ width:10px; height:10px; flex:none; }
-  .task-dot.email{ background:linear-gradient(180deg,#a6c8ff,#4589ff); }
-  .task-dot.call{ background:linear-gradient(180deg,#d4bbff,#a56eff); }
+  .task-dot.email{ background:linear-gradient(180deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
+  .task-dot.call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
   .task-count{ font-size:12px; color:var(--text3); }
   .task-count b{ font-family:var(--mono); color:var(--text1); font-weight:600; }
   .task-meter{ height:6px; background:var(--layer2); margin-bottom:12px; }
   .task-fill{ height:100%; width:0; transition:width .5s cubic-bezier(.4,.14,.3,1); }
-  .task-fill.email{ background:linear-gradient(90deg,#4589ff,#a6c8ff); }
-  .task-fill.call{ background:linear-gradient(90deg,#a56eff,#d4bbff); }
+  .task-fill.email{ background:linear-gradient(90deg,var(--viz-blue-hi),var(--viz-blue-lo)); }
+  .task-fill.call{ background:linear-gradient(90deg,var(--viz-purple-hi),var(--viz-purple-lo)); }
   .task-list{ flex:1; overflow-y:auto; max-height:470px; margin-bottom:14px; }
   .task-row{ display:flex; align-items:baseline; gap:10px; padding:8px 0;
              border-bottom:1px solid var(--border); font-size:13px; }
@@ -776,8 +876,8 @@ PAGE_TEMPLATE = """
               letter-spacing:.16px; color:var(--text2);
               padding-bottom:8px; border-bottom:1px solid var(--border); }
   .todo-dot{ width:9px; height:9px; flex:none; }
-  .todo-dot.email{ background:linear-gradient(180deg,#a6c8ff,#4589ff); }
-  .todo-dot.call{ background:linear-gradient(180deg,#d4bbff,#a56eff); }
+  .todo-dot.email{ background:linear-gradient(180deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
+  .todo-dot.call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
   .todo-count{ margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--text3); }
   .todo-row{ display:flex; align-items:baseline; gap:12px; padding:9px 0;
              border-bottom:1px solid var(--border); font-size:13px; }
@@ -837,7 +937,7 @@ PAGE_TEMPLATE = """
   .email-card-addr{ font-size:11.5px; color:var(--blue-text); font-family:var(--mono); margin-top:1px; }
   .email-card-sub{ font-size:12px; color:var(--text3); margin-top:3px; }
   .email-card-cadence{ font-size:11px; color:var(--purple-text); margin-top:2px; }
-  .email-card-subject{ font-size:12.5px; font-weight:600; color:#fff; margin:8px 0 2px; }
+  .email-card-subject{ font-size:12.5px; font-weight:600; color:var(--text1); margin:8px 0 2px; }
   .email-card-subject span{ font-weight:400; color:var(--text3); }
   .email-body-wrap{ border-top:1px solid var(--border); padding-top:10px; flex:1; }
   .email-body-text{ font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2); min-height:100px; }
@@ -851,7 +951,7 @@ PAGE_TEMPLATE = """
   .email-sent{ font-size:12px; color:var(--green); display:none; }
   .email-sent.show{ display:inline; }
   .icon-btn{ font:inherit; font-size:14px; background:none; border:none; cursor:pointer; color:var(--text3); padding:4px 6px; line-height:1; }
-  .icon-btn:hover{ color:#fff; }
+  .icon-btn:hover{ color:var(--text1); }
 
   /* ── call tab ───────────────────────────────────────────────── */
   .call-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
@@ -867,7 +967,7 @@ PAGE_TEMPLATE = """
   .call-done-btn{ font:inherit; font-size:11.5px; margin-left:auto; background:none;
                   border:1px solid var(--border-strong); color:var(--text3); cursor:pointer;
                   padding:4px 11px; white-space:nowrap; transition:color .12s,border-color .12s; }
-  .call-done-btn:hover{ color:#fff; border-color:#fff; }
+  .call-done-btn:hover{ color:var(--text1); border-color:var(--text1); }
   .call-done-btn.on{ color:var(--green); border-color:rgba(66,190,101,.5); }
   .call-card-body{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .call-contacts{ background:var(--layer2); border:1px solid var(--border); padding:12px 14px; }
@@ -886,7 +986,7 @@ PAGE_TEMPLATE = """
   .call-brief p{ font-size:12px; line-height:1.6; margin:0; }
   .call-brief.loading p{ color:var(--text3); font-style:italic; }
   .brief-bullets{ margin:0; padding-left:16px; list-style:disc; }
-  .brief-bullets li{ font-size:12px; line-height:1.55; margin-bottom:5px; color:#fff; }
+  .brief-bullets li{ font-size:12px; line-height:1.55; margin-bottom:5px; color:var(--text1); }
   .brief-bullets li:last-child{ margin-bottom:0; }
   @media(max-width:700px){ .call-card-body{ grid-template-columns:1fr; } .email-grid{ grid-template-columns:1fr; } }
 
@@ -902,7 +1002,7 @@ PAGE_TEMPLATE = """
   .contact-row:first-of-type{ border-top:none; }
   .contact-row .cn{ flex:1; font-weight:500; }
   .contact-row .ct{ color:var(--text3); }
-  .dm-badge{ font-size:10px; font-weight:600; border:1px solid rgba(66,190,101,.55); padding:1px 7px; color:#fff; }
+  .dm-badge{ font-size:10px; font-weight:600; border:1px solid rgba(66,190,101,.55); padding:1px 7px; color:var(--text1); }
   .ai-panel{ border-color:var(--purple-border) !important; }
   .ai-panel h3{ color:var(--purple-text) !important; display:flex; align-items:center; gap:6px; }
 
@@ -943,7 +1043,7 @@ PAGE_TEMPLATE = """
   .kpi.ai{ border-color:var(--purple-border); }
   .kval{ font-family:var(--mono); font-size:30px; font-weight:600; color:var(--text1); line-height:1; }
   .kpi.ai .kval{ color:var(--purple-text); }
-  .klabel{ color:#ffffff; font-size:12px; margin-top:9px; display:flex; align-items:center; gap:5px; }
+  .klabel{ color:var(--text1); font-size:12px; margin-top:9px; display:flex; align-items:center; gap:5px; }
 
   /* ── ROI ────────────────────────────────────────────────────── */
   .roi-head{ margin:8px 0 14px; }
@@ -952,7 +1052,7 @@ PAGE_TEMPLATE = """
   .roi{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
   .roi-card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px 20px; }
   .roi-card.ai{ border-color:var(--purple-border); }
-  .rlabel{ color:#ffffff; font-size:12px; }
+  .rlabel{ color:var(--text1); font-size:12px; }
   .rval{ font-family:var(--mono); font-size:22px; font-weight:600; margin-top:8px; color:var(--text1); }
   .rval.blue{ color:var(--blue-text); }
   .roi-card.ai .rval{ color:var(--purple-text); }
@@ -986,7 +1086,7 @@ PAGE_TEMPLATE = """
   .alert{ background:rgba(250,77,86,.12); color:#ff8790; border-radius:var(--r-sm); padding:11px 15px; margin-bottom:10px;
           font-size:13px; font-weight:500; display:none; }
   .alert.show{ display:block; }
-  .note{ color:#ffffff; font-size:12.5px; line-height:1.55; margin-bottom:6px; }
+  .note{ color:var(--text1); font-size:12.5px; line-height:1.55; margin-bottom:6px; }
   .panel input[type=text],.panel input[type=password]{ margin:8px 8px 4px 0; }
 </style>
 </head>
@@ -1643,6 +1743,7 @@ PAGE_TEMPLATE = """
           <div class="set-split">
             <nav class="set-nav">
               <button class="set-navlink active" data-sec="about" onclick="showSetting('about')">About</button>
+              <button class="set-navlink" data-sec="appearance" onclick="showSetting('appearance')">Appearance</button>
               <button class="set-navlink" data-sec="access" onclick="showSetting('access')">Access &amp; sessions</button>
               <button class="set-navlink" data-sec="intel" onclick="showSetting('intel')">How account intelligence works</button>
               <button class="set-navlink" data-sec="ai" onclick="showSetting('ai')">Where AI is used</button>
@@ -1656,7 +1757,7 @@ PAGE_TEMPLATE = """
                   <p class="set-p">BobBee turns a raw territory list into a ranked, cadenced, day-by-day
                      outreach plan — who to email and call each day of the quarter, and why.</p>
                   <div class="w3-rows" style="margin-top:8px;">
-                    <div class="w3-row"><span class="k">Created by</span><span class="v">Sydney Chin &middot; Patrick McBridge &middot; Tim Zhou</span></div>
+                    <div class="w3-row"><span class="k">Created by</span><span class="v">Sydney Chin &middot; Patrick McBride &middot; Tim Zhou</span></div>
                     <div class="w3-row"><span class="k">Built for</span><span class="v">The 2026 IBMer watsonx Challenge</span></div>
                     <div class="w3-row"><span class="k">Audience</span><span class="v">Select Territory sellers working a multi-thousand account book</span></div>
                     <div class="w3-row"><span class="k">Model</span><span class="v">watsonx.ai Granite (ibm/granite-4-h-small)</span></div>
@@ -1664,6 +1765,18 @@ PAGE_TEMPLATE = """
                   </div>
                 </div>
               </section>
+              <section class="set-sec" id="set-appearance">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Appearance</h3></div>
+                  <p class="set-p">BobBee ships in dark mode. Light mode uses Carbon's
+                     White/Gray&nbsp;10 layering; the top bar stays dark in both.</p>
+                  <div class="seg" style="margin-top:14px;" id="themeToggle">
+                    <button class="seg-btn active" data-theme-opt="dark" onclick="setTheme('dark')">Dark</button>
+                    <button class="seg-btn" data-theme-opt="light" onclick="setTheme('light')">Light</button>
+                  </div>
+                </div>
+              </section>
+
               <section class="set-sec" id="set-access">
                 <div class="prof-card">
                   <div class="prof-card-head"><h3>Access &amp; sessions</h3></div>
@@ -1748,6 +1861,22 @@ PAGE_TEMPLATE = """
       </div>
     </section>
   </main>
+</div>
+
+<!-- ── Ask BobBee (watsonx Assistant) ── -->
+<button class="ask-fab" id="askFab" onclick="toggleAsk()" title="Ask BobBee">""" + _SPARKLE + """</button>
+<div class="ask-panel" id="askPanel">
+  <div class="day-panel-head">
+    <h3>""" + _SPARKLE + """ Ask BobBee</h3>
+    <button class="day-panel-close" onclick="toggleAsk(false)">&#10005;</button>
+  </div>
+  <div class="ask-note" id="askNote"></div>
+  <div class="ask-log" id="askLog"></div>
+  <form class="ask-form" onsubmit="askSend(event)">
+    <input id="askInput" type="text" autocomplete="off"
+           placeholder="How do cadences work?">
+    <button class="btn primary" type="submit">Send</button>
+  </form>
 </div>
 
 <!-- ── Contextual side panel (Email + Call tabs) ── -->
@@ -2009,16 +2138,14 @@ function renderAccounts(){
   // no cadence drops its cell and knocks the remaining columns out of line.
   const showRank = inCadenceView;
   // One template drives both the header and every row (see .acct-row CSS).
+  // All fractional so the table always fits its container — no sideways scroll.
+  // The name still gets the largest share, and industry stays left of centre.
   const cols = [
     showRank ? '38px' : null,
-    // Floor, not 0: with the day panel open the container narrows, and a
-    // minmax(0,1fr) account column collapses to "Ke…" while the fixed columns
-    // keep their width. The list scrolls sideways before the name gives up.
-    'minmax(200px,340px)', // account — capped so industry stays near the left
-    '190px',               // industry
-    '150px',               // location
-    'minmax(0,1fr)',       // spacer: absorbs slack instead of the name column
-    '110px',               // signals
+    'minmax(0,2.1fr)',  // account
+    'minmax(0,1.5fr)',  // industry
+    'minmax(0,1.2fr)',  // location
+    '104px',            // signals
   ].filter(Boolean).join(' ');
 
   const head = `<div class="acct-row acct-head">
@@ -2026,7 +2153,6 @@ function renderAccounts(){
       <span class="an">Account</span>
       <span class="ai">Industry</span>
       <span class="aloc">Location</span>
-      <span></span>
       <span class="atags">Signals</span>
     </div>`;
 
@@ -2041,7 +2167,6 @@ function renderAccounts(){
       <span class="an" title="${esc(a.account || '')}">${esc(a.account || '')}</span>
       <span class="ai" title="${esc(a.industry || '')}">${esc(a.industry || '')}</span>
       <span class="aloc">${esc(a.location || '')}</span>
-      <span></span>
       <span class="atags" style="display:flex;gap:4px;align-items:center;">${dots}</span>
     </div>`;
   }).join('') + '</div>';
@@ -2576,33 +2701,58 @@ async function loadBook(){
 const TERRITORY_SHAPES = {
   CA: {
     name: 'California', viewBox: '0 0 110 190',
-    path: 'M12 5 L72 5 L72 50 L98 110 L94 131 L90 149 L88 166 L60 170 L51 164 L43 156 L35 149 L29 144 L23 136 L21 129 L26 121 L24 111 L18 101 L16 85 L14 69 L11 47 L10 25 Z',
-    // Approximate positions inside the viewBox, used to place heat blobs.
-    cities: {'Sacramento':[46,78],'Oakland':[29,92],'Berkeley':[29,88],'San Jose':[36,100],
-             'Santa Clara':[34,98],'Fresno':[52,112],'Riverside':[70,150],'Pasadena':[60,148],
-             'Long Beach':[57,155],'Anaheim':[63,152],'Irvine':[66,155],'San Diego':[72,164]}
+    outline: '<path d="M12 5 L72 5 L72 50 L98 110 L94 131 L90 149 L88 166 L60 170 L51 164 L43 156 L35 149 L29 144 L23 136 L21 129 L26 121 L24 111 L18 101 L16 85 L14 69 L11 47 L10 25 Z"/>',
+    // Latitude bands, north to south. Real regions in real order — not invented
+    // county lines, which would be fabricated geography dressed up as data.
+    regions: [
+      {name: 'North Coast & Sacramento Valley', band: [0, 88],    cities: ['Sacramento']},
+      {name: 'Bay Area',                        band: [88, 106],  cities: ['Oakland','Berkeley','San Jose','Santa Clara']},
+      {name: 'Central Valley',                  band: [106, 126], cities: ['Fresno']},
+      {name: 'Central Coast',                   band: [126, 143], cities: []},
+      {name: 'Los Angeles',                     band: [143, 153], cities: ['Pasadena','Long Beach','Anaheim']},
+      {name: 'Inland Empire & Orange County',   band: [153, 161], cities: ['Riverside','Irvine']},
+      {name: 'San Diego',                       band: [161, 190], cities: ['San Diego']}
+    ]
   },
   HI: {
     name: 'Hawaii', viewBox: '0 0 200 120',
-    shapes: [[10,40,6,4,0],[30,31,12,9,0],[66,45,14,9,-18],[98,52,13,5,-8],
-             [100,66,7,6,0],[122,63,14,10,-14],[114,78,7,4,0],[163,93,24,20,0]],
-    cities: {'Honolulu':[66,47],'Pearl City':[60,45],'Kapolei':[55,48],'Kailua':[73,42],'Hilo':[172,95]}
+    // Island groups are their own regions — no bands needed.
+    regions: [
+      {name: 'Kauai & Niihau', cities: [],
+       svg: '<ellipse cx="10" cy="40" rx="6" ry="4"/><ellipse cx="30" cy="31" rx="12" ry="9"/>'},
+      {name: 'Oahu', cities: ['Honolulu','Pearl City','Kapolei','Kailua'],
+       svg: '<ellipse cx="66" cy="45" rx="14" ry="9" transform="rotate(-18 66 45)"/>'},
+      {name: 'Maui County', cities: [],
+       svg: '<ellipse cx="98" cy="52" rx="13" ry="5" transform="rotate(-8 98 52)"/>' +
+            '<ellipse cx="100" cy="66" rx="7" ry="6"/>' +
+            '<ellipse cx="122" cy="63" rx="14" ry="10" transform="rotate(-14 122 63)"/>' +
+            '<ellipse cx="114" cy="78" rx="7" ry="4"/>'},
+      {name: 'Hawaii Island', cities: ['Hilo'],
+       svg: '<ellipse cx="163" cy="93" rx="24" ry="20"/>'}
+    ]
   },
   GU: {
     name: 'Guam', viewBox: '0 0 100 160',
-    path: 'M46 16 L58 21 L62 40 L58 58 L52 70 L55 87 L63 101 L67 121 L58 141 L43 143 L35 126 L40 104 L44 86 L40 70 L38 50 L40 29 Z',
-    cities: {'Dededo':[48,40],'Tamuning':[53,72],'Hagåtña':[47,90]}
+    outline: '<path d="M46 16 L58 21 L62 40 L58 58 L52 70 L55 87 L63 101 L67 121 L58 141 L43 143 L35 126 L40 104 L44 86 L40 70 L38 50 L40 29 Z"/>',
+    regions: [
+      {name: 'Northern Guam', band: [0, 62],    cities: ['Dededo']},
+      {name: 'Central Guam',  band: [62, 100],  cities: ['Tamuning','Hagåtña']},
+      {name: 'Southern Guam', band: [100, 160], cities: []}
+    ]
   },
   MP: {
     name: 'Northern Mariana Islands', viewBox: '0 0 100 160',
-    shapes: [[50,38,12,26,0],[47,85,9,16,0],[53,126,12,9,0]],
-    cities: {'Saipan':[50,44],'Garapan':[49,28]}
+    regions: [
+      {name: 'Saipan', cities: ['Saipan','Garapan'], svg: '<ellipse cx="50" cy="38" rx="12" ry="26"/>'},
+      {name: 'Tinian', cities: [], svg: '<ellipse cx="47" cy="85" rx="9" ry="16"/>'},
+      {name: 'Rota',   cities: [], svg: '<ellipse cx="53" cy="126" rx="12" ry="9"/>'}
+    ]
   }
 };
-// Purple 70 → Purple 10. Low values stay saturated, high values go near-white.
+// Purple 70 → Purple 10. Discrete steps, like the reference legend.
 const MAP_STOPS = ['#6929c4','#8a3ffc','#a56eff','#be95ff','#d4bbff','#e8daff','#f6f2ff'];
 let _mapView = 'accounts';
-let _mapFocus = 'all';     // 'all' or a territory code
+let _mapFocus = 'all';
 let _mapData = null;
 
 function _mix(a, b, t){
@@ -2647,48 +2797,64 @@ function setMapFocus(code){
 // The body of one territory: base silhouette plus a soft blob per city, sized
 // and coloured by that city's share. Blobs are clipped to the outline, so the
 // heat stays inside the territory instead of bleeding into the card.
+// One territory rendered as a discrete choropleth: each sub-region gets its own
+// step colour and a white separator, like a county map. Regions defined by a
+// band are clipped to the territory outline so the silhouette stays correct.
 function territoryBody(code, t, idx){
   const shape = TERRITORY_SHAPES[code];
-  const cities = (t.cities || {})[code] || {};
-  const counts = Object.values(cities);
-  const cityMax = counts.length ? Math.max(...counts) : 0;
-  const cityMin = counts.length ? Math.min(...counts) : 0;
-  // City counts inside a territory cluster tightly (e.g. 84-109), so a 0-based
-  // scale puts every one at the top and the whole shape washes out to one
-  // colour. Spread the ramp across the actual observed range instead.
-  const span = Math.max(1, cityMax - cityMin);
-  const rel = n => (n - cityMin) / span;
+  const cityCounts = (t.cities || {})[code] || {};
   const clipId = `clip-${code}-${idx}`;
 
-  const outline = shape.path
-    ? `<path d="${shape.path}"/>`
-    : shape.shapes.map(([cx,cy,rx,ry,rot]) =>
-        `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" transform="rotate(${rot} ${cx} ${cy})"/>`).join('');
+  const regionValue = r => (r.cities || []).reduce((n, c) => n + (cityCounts[c] || 0), 0);
+  const values = shape.regions.map(regionValue);
+  const rMax = Math.max(1, ...values);
 
-  const blobs = Object.entries(shape.cities || {}).map(([city, [x,y]]) => {
-    const n = cities[city] || 0;
-    if (!n || !cityMax) return '';
-    const share = rel(n);
-    const r = 15 + share * 22;
-    // Colour by position in the range; opacity carries intensity so the darker
-    // plate still reads through the cooler spots.
-    const col = MAP_STOPS[Math.round(share * (MAP_STOPS.length - 1))];
-    const peak = 0.5 + share * 0.42;
-    const gid = `g-${code}-${idx}-${city.replace(/[^a-z]/gi,'')}`;
-    return `<defs><radialGradient id="${gid}">
-        <stop offset="0%" stop-color="${col}" stop-opacity="${peak.toFixed(2)}"/>
-        <stop offset="50%" stop-color="${col}" stop-opacity="${(peak*0.42).toFixed(2)}"/>
-        <stop offset="100%" stop-color="${col}" stop-opacity="0"/>
-      </radialGradient></defs>
-      <circle cx="${x}" cy="${y}" r="${r}" fill="url(#${gid})"/>`;
+  const [vw, vh] = shape.viewBox.split(' ').slice(2).map(Number);
+
+  const parts = shape.regions.map((r, ri) => {
+    const v = values[ri];
+    const fill = v ? mapColor(v, rMax) : 'var(--map-base)';
+    const tip = `${r.name} — ${v ? fmtMapVal(v, t.format) : 'no accounts'}`;
+    const body = r.band
+      ? `<rect x="-2" y="${r.band[0]}" width="${vw + 4}" height="${r.band[1] - r.band[0]}"/>`
+      : r.svg;
+    return `<g class="terr-region" fill="${fill}"
+              ${r.band ? `clip-path="url(#${clipId})"` : ''}
+              onmousemove="mapTip(event,'${esc(tip)}')" onmouseleave="mapTipHide()">${body}</g>`;
   }).join('');
 
-  return `<svg class="terr-svg" viewBox="${shape.viewBox}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <defs><clipPath id="${clipId}">${outline}</clipPath></defs>
-      <g class="terr-base">${outline}</g>
-      <g clip-path="url(#${clipId})">${blobs}</g>
-      <g class="terr-edge">${outline}</g>
+  // Separators: band edges inside the outline, or the island edges themselves.
+  const seps = shape.outline
+    ? shape.regions.filter(r => r.band && r.band[0] > 0).map(r =>
+        `<line x1="-2" y1="${r.band[0]}" x2="${vw + 4}" y2="${r.band[0]}" clip-path="url(#${clipId})"/>`).join('')
+    : shape.regions.map(r => r.svg).join('');
+
+  return `<svg class="terr-svg" viewBox="${shape.viewBox}" preserveAspectRatio="xMidYMid meet">
+      ${shape.outline ? `<defs><clipPath id="${clipId}">${shape.outline}</clipPath></defs>` : ''}
+      <g class="terr-plate">${shape.outline || shape.regions.map(r => r.svg).join('')}</g>
+      ${parts}
+      <g class="terr-sep">${seps}</g>
+      <g class="terr-edge">${shape.outline || shape.regions.map(r => r.svg).join('')}</g>
     </svg>`;
+}
+
+// Follows the cursor like the reference map's hover label.
+function mapTip(ev, text){
+  let el = document.getElementById('mapHover');
+  if (!el){
+    el = document.createElement('div');
+    el.id = 'mapHover';
+    el.className = 'map-hover';
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.left = (ev.clientX + 14) + 'px';
+  el.style.top  = (ev.clientY - 10) + 'px';
+}
+function mapTipHide(){
+  const el = document.getElementById('mapHover');
+  if (el) el.style.display = 'none';
 }
 
 async function loadTerritory(){
@@ -2742,6 +2908,83 @@ function showMapTip(st){
   tip.innerHTML = `<b>${esc((TERRITORY_SHAPES[st] || {}).name || st)}</b>
     <div class="mt-row">${d.accounts||0} accounts · ${d.cadences||0} in a Q3 cadence
     · ${fmtMapVal(Math.round(d.spend||0),'currency')} IBM spend this year</div>`;
+}
+
+// ── Ask BobBee (watsonx Assistant) ─────────────────────────────
+// Product Q&A only — the server never sends account data to the service.
+// Replies are tagged when they came from the local fallback set instead of the
+// live assistant, so a canned answer is never passed off as the real thing.
+const ASK_CLIENT_ID = 'c' + Math.random().toString(36).slice(2, 10);
+let _askReady = false;
+
+function toggleAsk(force){
+  const p = document.getElementById('askPanel');
+  const open = force === undefined ? !p.classList.contains('open') : force;
+  p.classList.toggle('open', open);
+  if (open){
+    if (!_askReady){ _askReady = true; askInit(); }
+    document.getElementById('askInput').focus();
+  }
+}
+
+async function askInit(){
+  let st = {configured: false};
+  try { st = await (await fetch('/api/assistant/status')).json(); } catch(e){}
+  document.getElementById('askNote').textContent = st.configured
+    ? 'Answers questions about BobBee. Your account data is never sent.'
+    : 'watsonx Assistant is not configured — answering from a small built-in set.';
+  askPush('bot', 'Ask me how cadences are built, what a tag means, or where a number comes from.', true);
+}
+
+function askPush(who, text, quiet){
+  const log = document.getElementById('askLog');
+  const el = document.createElement('div');
+  el.className = 'ask-msg ' + (who === 'me' ? 'me' : 'bot');
+  el.textContent = text;
+  if (who === 'bot' && quiet === false){
+    const tag = document.createElement('span');
+    tag.className = 'ask-tag';
+    tag.textContent = 'Offline answer — watsonx Assistant unreachable';
+    el.classList.add('offline');
+    el.appendChild(tag);
+  }
+  log.appendChild(el);
+  log.scrollTop = log.scrollHeight;
+  return el;
+}
+
+async function askSend(ev){
+  ev.preventDefault();
+  const input = document.getElementById('askInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  askPush('me', text, true);
+  const pending = askPush('bot', 'Thinking…', true);
+  let r = {reply: '', live: false};
+  try {
+    r = await (await fetch('/api/assistant/message', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text, client_id: ASK_CLIENT_ID})
+    })).json();
+  } catch(e){ r = {reply: 'Something went wrong sending that.', live: false}; }
+  pending.remove();
+  askPush('bot', r.reply || 'No answer came back.', r.live);
+}
+
+// ── theme ──────────────────────────────────────────────────────
+function setTheme(name){
+  const t = name === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  try { localStorage.setItem('bobbee_theme', t); } catch(e){}
+  document.querySelectorAll('#themeToggle .seg-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.themeOpt === t));
+}
+
+function initTheme(){
+  let t = 'dark';
+  try { t = localStorage.getItem('bobbee_theme') || 'dark'; } catch(e){}
+  setTheme(t);
 }
 
 // ── contextual right-hand panel (email + call tabs) ────────────
@@ -2899,6 +3142,7 @@ async function refreshDashboard(){ _vizLoaded = false; _bookLoaded = false; refr
 // ── app boot ──────────────────────────────────────────────────
 let _pollTimer = null;
 function startApp(){
+  initTheme();
   document.getElementById('app').style.display = 'block';
   fetchStatus(); fetchSeller(); fetchLoginStatus(); refreshGates(); fetchStrategizeStatus(); fetchAccountsList(); fetchSchedule();
   if (!_pollTimer) _pollTimer = setInterval(() => {

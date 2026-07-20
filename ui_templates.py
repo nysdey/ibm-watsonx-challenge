@@ -199,8 +199,8 @@ PAGE_TEMPLATE = """
   /* w3 renders the person's name very large and very light. */
   /* .page-head h2 (0,1,1) outranks a bare .w3-name (0,1,0), so this has to be
      at least as specific or the display size silently falls back to 24px. */
-  .page-head h2.w3-name{ font-size:88px; font-weight:300; letter-spacing:-.015em;
-                         line-height:1.05; margin-bottom:0; }
+  .page-head h2.w3-name{ font-size:52px; font-weight:300; letter-spacing:-.01em;
+                         line-height:1.1; margin-bottom:0; }
   .w3-head{ display:flex; gap:28px; align-items:flex-start; padding-bottom:26px; }
   .w3-avatar{ width:132px; height:132px; flex:none; display:flex; align-items:center;
               justify-content:center; font-size:34px; font-weight:500; color:var(--text1);
@@ -313,6 +313,12 @@ PAGE_TEMPLATE = """
   .set-sec:last-child{ margin-bottom:0; }
   .set-nav{ position:sticky; top:70px; }
   .set-p{ font-size:13.5px; color:var(--text2); line-height:1.62; margin:0 0 10px; }
+  /* watsonx.ai brand mark for the "Where AI is used" section. */
+  .ai-brand{ display:flex; align-items:center; gap:14px; padding-bottom:16px; margin-bottom:16px;
+             border-bottom:1px solid var(--border); }
+  .ai-brand img{ width:44px; height:44px; object-fit:contain; flex:none; }
+  .ai-brand-name{ font-size:16px; font-weight:600; color:var(--text1); }
+  .ai-brand-sub{ font-size:12.5px; color:var(--text3); font-family:var(--mono); margin-top:2px; }
   .set-steps{ margin:6px 0 0; padding-left:20px; display:flex; flex-direction:column; gap:11px; }
   .set-steps li{ font-size:13px; color:var(--text2); line-height:1.6; }
   .set-list{ margin:4px 0 12px; padding-left:20px; display:flex; flex-direction:column; gap:7px; }
@@ -619,18 +625,26 @@ PAGE_TEMPLATE = """
   .cal-month-link:hover{ color:var(--blue-text); text-decoration:underline; }
 
   /* ── Ask BobBee (watsonx Assistant) ─────────────────────────── */
-  .ask-fab{ position:fixed; right:22px; bottom:22px; z-index:130; width:52px; height:52px;
-            border:none; border-radius:50%; cursor:pointer; color:#fff;
-            background:var(--grad-brand); box-shadow:var(--shadow-lg);
-            display:flex; align-items:center; justify-content:center;
-            transition:transform .14s; }
+  /* chat-button.png is a self-contained gradient tile, so it *is* the button —
+     no plate, just clip the square to a circle. */
+  .ask-fab{ position:fixed; right:22px; bottom:22px; z-index:130; width:56px; height:56px;
+            border:none; border-radius:50%; cursor:pointer; padding:0; overflow:hidden;
+            box-shadow:var(--shadow-lg); display:block; transition:transform .14s; }
   .ask-fab:hover{ transform:scale(1.07); }
-  .ask-fab svg{ width:22px; height:22px; }
+  .ask-fab img{ width:100%; height:100%; object-fit:cover; display:block; }
   .ask-panel{ position:fixed; right:22px; bottom:86px; z-index:130; width:378px;
               max-width:calc(100vw - 44px); height:min(560px, calc(100vh - 140px));
               background:var(--layer1); border:1px solid var(--border-strong);
               box-shadow:var(--shadow-lg); display:none; flex-direction:column; }
   .ask-panel.open{ display:flex; }
+  .ask-title{ display:flex; align-items:center; gap:8px; }
+  .ask-title img{ width:22px; height:22px; object-fit:contain; }
+  /* Default (no attribute) and explicit dark → the light-on-dark mark; light
+     theme → the dark-on-light mark. */
+  .ask-title .wx-light{ display:none; }
+  .ask-title .wx-dark{ display:inline-block; }
+  :root[data-theme="light"] .ask-title .wx-light{ display:inline-block; }
+  :root[data-theme="light"] .ask-title .wx-dark{ display:none; }
   .ask-note{ font-size:12px; color:var(--text3); padding:10px 18px;
              border-bottom:1px solid var(--border); }
   .ask-log{ flex:1; overflow-y:auto; padding:16px 18px; display:flex;
@@ -1823,6 +1837,13 @@ PAGE_TEMPLATE = """
 
               <section class="set-sec" id="set-ai">
                 <div class="prof-card">
+                  <div class="ai-brand">
+                    <img src="/static/wx-ai.png" alt="watsonx.ai">
+                    <div>
+                      <div class="ai-brand-name">watsonx.ai</div>
+                      <div class="ai-brand-sub">Granite &middot; ibm/granite-4-h-small</div>
+                    </div>
+                  </div>
                   <div class="prof-card-head"><h3>Where AI is used</h3></div>
                   <p class="set-p">The colour convention runs through the whole app:
                      <b style="color:var(--blue-text)">blue</b> is deterministic pipeline data,
@@ -1864,10 +1885,14 @@ PAGE_TEMPLATE = """
 </div>
 
 <!-- ── Ask BobBee (watsonx Assistant) ── -->
-<button class="ask-fab" id="askFab" onclick="toggleAsk()" title="Ask BobBee">""" + _SPARKLE + """</button>
+<button class="ask-fab" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
+  <img src="/static/chat-button.png" alt="Ask BobBee"></button>
 <div class="ask-panel" id="askPanel">
   <div class="day-panel-head">
-    <h3>""" + _SPARKLE + """ Ask BobBee</h3>
+    <h3 class="ask-title">
+      <img class="wx-dark" src="/static/wx-chat-dark.png" alt="">
+      <img class="wx-light" src="/static/wx-chat.png" alt="">
+      Ask BobBee</h3>
     <button class="day-panel-close" onclick="toggleAsk(false)">&#10005;</button>
   </div>
   <div class="ask-note" id="askNote"></div>

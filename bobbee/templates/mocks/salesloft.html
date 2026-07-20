@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Salesloft demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-salesloft.css') }}">
+</head>
+<body>
+<div class="mockbar">Mock — simulated Salesloft. Contacts here were loaded by the dashboard's Fill Contacts action.</div>
+<div class="top"><span class="mark">Salesloft</span><span class="badge" style="background:rgba(255,255,255,.15);color:#fff">Demo</span><span class="me">Demo Seller &middot; demo.seller@ibm.com</span></div>
+<div class="layout">
+  <div class="side">
+    <h3>Team cadences</h3>
+    {% for c in cadences %}
+      <a class="cad {{ 'active' if c.name == selected else '' }}" href="/mock/salesloft?cadence={{ c.name|urlencode }}">
+        {{ c.name }}<div class="n">{{ c.count }} member{{ '' if c.count == 1 else 's' }}</div>
+      </a>
+    {% endfor %}
+  </div>
+  <div class="main">
+    <div class="h"><h1>{{ selected }}</h1><span class="badge">Team cadence</span></div>
+    <div class="stats">
+      <div class="stat"><div class="v">{{ total }}</div><div class="l">People</div></div>
+      <div class="stat"><div class="v">{{ at_step1 }}</div><div class="l">At step 1</div></div>
+      <div class="stat"><div class="v">{{ at_call }}</div><div class="l">At call step</div></div>
+      <div class="stat"><div class="v">{{ email_steps }}</div><div class="l">Email steps</div></div>
+    </div>
+    <div class="steps">
+      {% for s in steps %}
+        <div class="step {{ 'email' if s.type == 'email' else '' }}">
+          <span class="d">Day {{ s.day }}</span> &middot; {{ s.name }} <span class="d">({{ s.type }})</span>
+        </div>
+      {% endfor %}
+    </div>
+    {% if members %}
+    <table>
+      <thead><tr><th>Name</th><th>Title</th><th>Company</th><th>Current step</th><th>Added</th></tr></thead>
+      <tbody>
+        {% for m in members %}
+        <tr>
+          <td>{{ m.first_name }} {{ m.last_name }}</td>
+          <td>{{ m.title }}</td>
+          <td>{{ m.company }}</td>
+          <td><span class="pill {{ 'call' if m.step == 'Call' else 's1' }}">{{ m.step }}</span></td>
+          <td>{{ m.added_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No one is loaded into this cadence yet.<br>
+      Run Fill Contacts on the dashboard to load contacts here.</div>
+    {% endif %}
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bobbee"
+version = "1.0.0"
+description = "AI-powered outbound planning and personalization for IBM sellers"
+requires-python = ">=3.10"
+dependencies = [
+  "Flask==3.1.3",
+  "openpyxl==3.1.5",
+  "python-dotenv==1.0.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["bobbee*"]
+
+[tool.setuptools.package-data]
+bobbee = [
+  "templates/*.html",
+  "templates/mocks/*.html",
+  "data/*.xlsx",
+  "static/*.png",
+  "static/css/*.css",
+  "static/js/*.js",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

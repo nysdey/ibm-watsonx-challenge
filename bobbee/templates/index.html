@@ -1,0 +1,888 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>IBM BobBee</title>
+<link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body>
+
+<!-- ── IBM Login gate ─────────────────────────────────────────── -->
+<div class="gate" id="loginGate" style="display:none">
+  <div class="gate-card">
+    <img class="gate-logo-img" src="/static/logo.png" alt="BobBee">
+    <h1>Sign in to BobBee</h1>
+    <p class="gate-sub">Use your IBM ID to continue.</p>
+    <form onsubmit="submitLogin(event)">
+      <input type="email" id="loginEmail" placeholder="you@ibm.com" autocomplete="username" required>
+      <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password" required>
+      <div class="gate-err" id="loginErr"></div>
+      <button class="btn primary big" type="submit" id="loginBtn">Sign in</button>
+    </form>
+    <div class="gate-note">Demo sign-in — this uses mock data and never contacts IBM. Only your email is kept (locally), to pick the accounts in your territory; the password is discarded. Any email works.</div>
+  </div>
+</div>
+
+<!-- ── main app ───────────────────────────────────────────────── -->
+<div id="app" style="display:none">
+  <header class="topbar">
+    <button class="brand" onclick="showPage('dashboard')">
+      <img class="brand-logo" src="/static/logo.png" alt="">
+      <div class="brand-name">IBM <b>BobBee</b></div>
+    </button>
+    <nav class="topnav">
+      <button class="navlink active" data-page="dashboard" onclick="showPage('dashboard')">Dashboard</button>
+      <button class="navlink" data-page="plan" onclick="showPage('plan')">Schedule</button>
+      <button class="navlink" data-page="accounts" onclick="showPage('accounts')">Accounts</button>
+      <button class="navlink" data-page="cadences" onclick="showPage('cadences')">Cadences</button>
+      <button class="navlink" data-page="email" onclick="showPage('email')">Email</button>
+      <button class="navlink" data-page="call" onclick="showPage('call')">Call</button>
+    </nav>
+    <div class="topsearch">
+      <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29 27.586l-7.552-7.552a11.018 11.018 0 10-1.414 1.414L27.586 29zM4 13a9 9 0 119 9 9.01 9.01 0 01-9-9z"/></svg>
+      <input type="text" id="globalSearch" placeholder="Search accounts, cadences and more"
+             autocomplete="off" oninput="globalSearch(this.value)"
+             onkeydown="if(event.key==='Enter') globalSearchGo()">
+    </div>
+    <div class="topbar-actions">
+      <button class="ask-navbtn" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
+        <img src="/static/wx-chat-dark.png" alt="Ask BobBee"></button>
+      <div class="profile-wrap">
+        <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">Tim Zhou</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Dashboard (home) -->
+    <section id="page-dashboard" class="page active">
+
+      <div id="dashboardEmpty" class="empty-state" style="display:none">
+        <h3>Import accounts to get started</h3>
+        <p>BobBee builds your day from your accounts. Import them first.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="dashboardStrat" class="empty-state" style="display:none">
+        <h3>Strategize your accounts</h3>
+        <p>Your accounts are in — run Strategize to build cadences and your daily plan.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+
+      <div id="dashboardBody" style="display:none">
+        <!-- Greeting + pacing -->
+        <div class="td-greet">
+          <h2 id="tdGreet">Good morning</h2>
+          <span class="td-meta" id="tdMeta">—</span>
+        </div>
+
+        <!-- AI speaks first: the generated morning brief -->
+        <section class="brief-card">
+          <div class="brief-head">
+            <span class="brief-mark"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg></span>
+            <span class="brief-eyebrow">Your morning brief</span>
+            <span class="brief-src">watsonx</span>
+          </div>
+          <p class="brief-body" id="briefBody">—</p>
+          <div class="brief-actions">
+            <button class="btn primary brief-cta" onclick="startMyDay()">
+              <span class="cta-play">&#9654;</span> Start my day</button>
+            <button class="btn brief-ghost" onclick="openAsk()">Ask about my book</button>
+          </div>
+        </section>
+
+        <!-- The two work engines -->
+        <div class="today-grid">
+          <section class="task-card">
+            <div class="task-top">
+              <h4>Emails</h4>
+              <span class="task-count"><b id="taskEmailDone">0</b> of <b id="taskEmailTotal">0</b> sent</span>
+            </div>
+            <div class="task-meter"><div class="task-fill email" id="taskEmailFill"></div></div>
+            <div class="task-list" id="taskEmailList"></div>
+            <button class="btn primary task-action" onclick="showPage('email')">Start drafting <span class="go-arrow">&#8594;</span></button>
+          </section>
+          <section class="task-card">
+            <div class="task-top">
+              <h4>Calls</h4>
+              <span class="task-count"><b id="taskCallDone">0</b> of <b id="taskCallTotal">0</b> done</span>
+            </div>
+            <div class="task-meter"><div class="task-fill call" id="taskCallFill"></div></div>
+            <div class="task-list" id="taskCallList"></div>
+            <button class="btn primary task-action" onclick="showPage('call')">Start calling <span class="go-arrow">&#8594;</span></button>
+          </section>
+        </div>
+
+        <!-- Everything below is REVIEW — available, not dominant. Collapsed. -->
+        <details class="review-fold" ontoggle="if(this.open){loadViz();loadBook();}">
+          <summary class="review-summary">
+            <span class="review-chevron">&#9662;</span>
+            Review &amp; analytics
+            <span class="review-hint" id="reviewHint">Activity · Meetings · Book of business</span>
+          </summary>
+
+        <div class="dash-panel viz-panel" style="margin-top:14px;">
+          <div class="viz-head">
+            <div>
+              <h3>Activity</h3>
+              <div class="viz-nav">
+                <button class="step-btn" onclick="stepViz(-1)" title="Previous">&#8592;</button>
+                <p class="viz-label" id="vizLabel">—</p>
+                <button class="step-btn" onclick="stepViz(1)" title="Next">&#8594;</button>
+                <button class="step-now" id="vizNowBtn" onclick="stepVizNow()" style="display:none">Today</button>
+              </div>
+            </div>
+            <div class="seg" id="vizPeriods">
+              <button class="seg-btn" data-period="day" onclick="setVizPeriod('day')">Daily</button>
+              <button class="seg-btn active" data-period="week" onclick="setVizPeriod('week')">Weekly</button>
+              <button class="seg-btn" data-period="month" onclick="setVizPeriod('month')">Monthly</button>
+              <button class="seg-btn" data-period="quarter" onclick="setVizPeriod('quarter')">Quarterly</button>
+            </div>
+          </div>
+          <div class="viz-body">
+            <div class="viz-stats">
+              <div class="vstat"><span class="v" id="vizEmails">0</span><span class="l">Emails</span></div>
+              <div class="vstat"><span class="v" id="vizCalls">0</span><span class="l">Calls</span></div>
+              <div class="vstat"><span class="v" id="vizAccounts">0</span><span class="l">Accounts</span></div>
+              <div class="viz-ring-wrap">
+                <svg class="viz-ring" viewBox="0 0 120 120" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stop-color="#0f62fe"/><stop offset="100%" stop-color="#8a3ffc"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="60" cy="60" r="52" class="ring-track"/>
+                  <circle cx="60" cy="60" r="52" class="ring-fill" id="vizRing"/>
+                </svg>
+                <div class="viz-ring-txt"><span id="vizPct">0%</span><small>completed</small></div>
+              </div>
+            </div>
+            <div class="viz-plot">
+              <div class="viz-yaxis" id="vizYAxis"></div>
+              <div class="viz-grid">
+                <div id="vizGrid"></div>
+                <div class="viz-chart" id="vizChart"></div>
+              </div>
+            </div>
+            <div class="viz-legend">
+              <span><i class="sw sw-email"></i>Emails</span>
+              <span><i class="sw sw-call"></i>Calls</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-panel viz-panel" style="margin-top:14px;">
+          <div class="viz-head">
+            <div>
+              <h3>Meetings &amp; opportunities</h3>
+              <div class="viz-nav">
+                <button class="step-btn" id="mtgPrev" onclick="stepMtg(-1)" title="Previous week">&#8592;</button>
+                <p class="viz-label" id="mtgLabel">—</p>
+                <button class="step-btn" id="mtgNext" onclick="stepMtg(1)" title="Next week">&#8594;</button>
+              </div>
+            </div>
+            <div class="seg" id="mtgScope">
+              <button class="seg-btn active" data-scope="quarter" onclick="setMtgScope('quarter')">Quarter</button>
+              <button class="seg-btn" data-scope="week" onclick="setMtgScope('week')">Week</button>
+            </div>
+          </div>
+          <div class="viz-stats">
+            <div class="vstat"><span class="v" id="mtgTotal">0</span><span class="l">Total meetings</span></div>
+            <div class="vstat"><span class="v" id="mtgBooked">0</span><span class="l">Booked meetings</span></div>
+            <div class="vstat"><span class="v" id="mtgCompleted">0</span><span class="l">Completed meetings</span></div>
+            <div class="vstat"><span class="v" id="mtgUpcoming">0</span><span class="l">Upcoming</span></div>
+            <div class="vstat"><span class="v" id="mtgCancelled">0</span><span class="l">Cancelled</span></div>
+            <div class="vstat"><span class="v" id="mtgOI">0</span><span class="l">OI (opportunities identified)</span></div>
+            <div class="vstat"><span class="v" id="mtgOIValue">—</span><span class="l">OI value</span></div>
+          </div>
+        </div>
+
+        <div class="dash-panel viz-panel" style="margin-top:14px;">
+          <div class="viz-head">
+            <div>
+              <h3>Book of business</h3>
+              <p class="viz-label" id="bobLabel">—</p>
+            </div>
+          </div>
+          <div class="viz-stats" style="margin-bottom:20px;">
+            <div class="vstat"><span class="v" id="bobTotal">0</span><span class="l">Accounts</span></div>
+            <div class="vstat"><span class="v" id="bobCovered">0</span><span class="l">In a cadence</span></div>
+            <div class="vstat"><span class="v" id="bobSpend">—</span><span class="l">IBM spend</span></div>
+            <div class="vstat"><span class="v" id="bobIndustries">0</span><span class="l">Industries</span></div>
+          </div>
+          <div class="bob-grid">
+            <div class="bob-block">
+              <div class="bob-title">Coverage</div>
+              <div class="bar-meter" id="bobCoverage"></div>
+            </div>
+            <div class="bob-block">
+              <div class="bob-title">Top industries</div>
+              <div class="bar-list" id="bobIndList"></div>
+            </div>
+            <div class="bob-block">
+              <div class="bob-title">By territory</div>
+              <div class="bar-list" id="bobTerrList"></div>
+            </div>
+          </div>
+        </div>
+        </details>
+
+      </div>
+    </section>
+
+    <!-- Plan -->
+    <section id="page-plan" class="page">
+      <div class="page-head">
+        <h2>Schedule</h2>
+        <p>Your quarter, distributed — who to email and call, every day.</p>
+      </div>
+
+      <div id="planEmpty" class="empty-state" style="display:none">
+        <h3>Import accounts to get started</h3>
+        <p>The schedule is built from your strategized accounts.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="planStrat" class="empty-state" style="display:none">
+        <h3>Strategize your accounts</h3>
+        <p>Run Strategize on the Accounts tab to distribute cadences across the quarter.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+
+      <div id="planBody" style="display:none">
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="cal-arrow" onclick="calStep(-1)" title="Previous">&#8249;</button>
+            <span class="cal-label" id="calLabel"></span>
+            <button class="cal-arrow" onclick="calStep(1)" title="Next">&#8250;</button>
+            <button class="cal-today" onclick="calToday()">Today</button>
+          </div>
+          <div class="range-toggle">
+            <button class="range-btn" data-view="year" onclick="setCalView('year')">Year</button>
+            <button class="range-btn" data-view="quarter" onclick="setCalView('quarter')">Quarter</button>
+            <button class="range-btn active" data-view="month" onclick="setCalView('month')">Month</button>
+            <button class="range-btn" data-view="week" onclick="setCalView('week')">Week</button>
+            <button class="range-btn" data-view="day" onclick="setCalView('day')">Day</button>
+          </div>
+        </div>
+        <div class="cal-summary" id="calSummary"></div>
+        <div class="cal-legend" id="calLegend" style="display:none">
+          <span><i class="ll ll-e"></i>Emails</span>
+          <span><i class="ll ll-c"></i>Calls</span>
+          <span class="cal-legend-hint">bar length shows the day's load</span>
+        </div>
+        <div id="calGrid"></div>
+      </div>
+    </section>
+
+    <!-- Accounts -->
+    <section id="page-accounts" class="page">
+      <div class="page-head">
+        <h2>Accounts</h2>
+        <p>Import, strategize, and work your book of business.</p>
+      </div>
+
+      <div id="acctsEmpty" class="empty-state" style="display:none">
+        <div class="pipe-step import-first" id="card-gma">
+          <div class="pipe-title">Import accounts</div>
+          <div class="pipe-sub">IBM Sales Cloud + install base + segmentation</div>
+          <div class="pipe-status" id="gmaStatus"><span class="dot pending"></span><span class="amsg">Not started</span></div>
+          <div class="pipe-seller" id="gmaSeller"></div>
+          <div class="pipe-foot">
+            <span class="pipe-records" id="gmaResults"></span>
+            <button class="btn primary" id="gmaBtn" onclick="runGetMyAccounts()">Import accounts</button>
+          </div>
+          <div class="pipe-chips" id="gmaChips"></div>
+          <button class="link showlog" id="gmaLogToggle" onclick="toggleLog('gma')" style="display:none">Show details</button>
+          <div class="alog" id="gmaLog"></div>
+        </div>
+      </div>
+
+      <div id="acctsBody" style="display:none">
+        <div class="accts-head">
+          <span class="accts-count" id="acctsCount"></span>
+          <button class="btn primary" id="strategizeBtn" onclick="runStrategize()">Sort accounts into cadences</button>
+        </div>
+
+        <!-- Refresh cadences confirmation modal -->
+        <div class="modal" id="refreshModal" onclick="if(event.target===this) closeRefreshModal()">
+          <div class="modal-card" style="max-width:520px;">
+            <div class="modal-head">
+              <h2>Refresh cadences?</h2>
+              <button class="link" onclick="closeRefreshModal()">Cancel</button>
+            </div>
+            <p style="font-size:var(--fs-label); line-height:1.6; margin:0 0 14px;">
+              This will re-run account intelligence on all accounts that haven't been touched yet —
+              pulling in the latest signals, news, and market data. Granite will re-evaluate urgency,
+              re-rank accounts, and adjust cadence groupings based on what's changed since the last run.
+            </p>
+            <p style="font-size:var(--fs-label); color:var(--blue-text); margin:0 0 22px; line-height:1.55;">
+              Accounts already contacted this quarter will <strong>stay in their current cadence and plan</strong> —
+              only untouched accounts are re-evaluated.
+            </p>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+              <button class="btn" onclick="closeRefreshModal()">Cancel</button>
+              <button class="btn primary" onclick="confirmRefresh()">Yes, refresh cadences</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stages" id="stages" style="display:none">
+          <div class="stage" id="stage-contacts">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Contacts check</div><div class="smsg">Checking each account's contacts in ZoomInfo for an IT decision-maker.</div></div>
+          </div>
+          <div class="stage" id="stage-scoring">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Signals &amp; quarter segmentation</div><div class="smsg">Waiting…</div></div>
+          </div>
+          <div class="stage" id="stage-cadences">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Cadences, ranking &amp; tags</div><div class="smsg">Waiting…</div></div>
+          </div>
+          <div class="stage" id="stage-schedule">
+            <span class="dot pending sicon"></span>
+            <div><div class="stitle">Quarter distribution</div><div class="smsg">Waiting…</div></div>
+          </div>
+        </div>
+
+        <div class="accts-layout" id="acctsLayout">
+          <aside class="accts-sidebar" id="acctsSidebar" style="display:none"></aside>
+          <div class="accts-main">
+            <div class="accts-tools" id="acctsTools" style="display:none">
+              <input type="text" id="acctSearch" placeholder="Search accounts..." oninput="searchAccounts()">
+              <div class="tag-legend" id="tagLegend" style="display:none">
+                <span class="tag-legend-item"><span class="tagdot white"></span> Whitespace / Bluemix footprint</span>
+                <span class="tag-legend-item"><span class="tagdot up"></span> Growing spend</span>
+                <span class="tag-legend-item"><span class="tagdot risk"></span> At-risk / Competitive</span>
+                <span class="tag-legend-item"><span class="tagdot neutral"></span> Other signal</span>
+              </div>
+            </div>
+            <div id="acctList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cadences -->
+    <section id="page-cadences" class="page">
+      <div class="page-head">
+        <h2>Cadences</h2>
+        <p>Your active outreach sequences — steps, timeline, and account progress.</p>
+      </div>
+      <div id="cadencesEmpty" class="empty-state" style="display:none">
+        <h3>Upload accounts to get started</h3>
+        <p>Go to Accounts, import your accounts, and run Sort accounts into cadences. Your cadences will appear here once strategizing is complete.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="cadencesStratEmpty" class="empty-state" style="display:none">
+        <h3>Sort accounts into cadences first</h3>
+        <p>Your accounts are in — run "Sort accounts into cadences" on the Accounts tab to build your outreach sequences.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="cadencesBody" style="display:none">
+        <div id="cadencesList"></div>
+      </div>
+    </section>
+
+    <!-- Email -->
+    <section id="page-email" class="page">
+      <div class="page-head">
+        <h2>Email</h2>
+        <p id="emailDateLabel">Today's outbound emails across all cadences.</p>
+      </div>
+      <div id="emailEmpty" class="empty-state" style="display:none">
+        <h3>Upload accounts to get started</h3>
+        <p>Go to the Accounts tab, import your accounts, and run Sort accounts into cadences. Email drafts will appear here once your quarter is planned.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="emailStratEmpty" class="empty-state" style="display:none">
+        <h3>Sort accounts into cadences first</h3>
+        <p>Your accounts are in — run "Sort accounts into cadences" on the Accounts tab to build cadences and unlock email drafts.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="emailBody" style="display:none">
+        <div class="email-toolbar">
+          <span id="emailCountLabel" style="font-size:var(--fs-label);"></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn ai" id="generateEmailsBtn" onclick="generateAllEmails()"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg> Draft all emails</button>
+            <button class="btn primary" id="sendAllBtn" onclick="sendAllEmails()" disabled>Send all</button>
+          </div>
+        </div>
+        <div class="email-grid" id="emailGrid"></div>
+      </div>
+    </section>
+
+    <!-- Call -->
+    <section id="page-call" class="page">
+      <div class="page-head">
+        <h2>Call</h2>
+        <p id="callDateLabel">Today's call list across all cadences.</p>
+      </div>
+      <div id="callEmpty" class="empty-state" style="display:none">
+        <h3>Upload accounts to get started</h3>
+        <p>Go to the Accounts tab, import your accounts, and run Sort accounts into cadences. Call plans will appear here once your quarter is planned.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="callStratEmpty" class="empty-state" style="display:none">
+        <h3>Sort accounts into cadences first</h3>
+        <p>Your accounts are in — run "Sort accounts into cadences" on the Accounts tab to build cadences and unlock call plans.</p>
+        <button class="btn primary" onclick="showPage('accounts')">Go to Accounts</button>
+      </div>
+      <div id="callBody" style="display:none">
+        <div class="call-toolbar">
+          <span id="callCountLabel" style="font-size:var(--fs-label);"></span>
+          <button class="btn ai" id="generateBriefsBtn" onclick="generateAllBriefs()"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg> Generate all briefings</button>
+        </div>
+        <div class="call-list" id="callList"></div>
+      </div>
+    </section>
+
+    <!-- Profile -->
+    <section id="page-profile" class="page">
+      <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <h2 class="w3-name">Tim Zhou</h2>
+        </div>
+      </div>
+      <div class="profile-page">
+        <div class="profile-tabs">
+          <button class="profile-tab active" data-ptab="profile" onclick="switchProfileTab('profile')">Profile</button>
+          <button class="profile-tab" data-ptab="personalization" onclick="switchProfileTab('personalization')">Personalization</button>
+          <button class="profile-tab" data-ptab="settings" onclick="switchProfileTab('settings')">Settings</button>
+        </div>
+
+        <!-- ── Profile tab ── -->
+        <div class="profile-section active" id="ptab-profile">
+
+          <!-- w3-style identity header -->
+          <div class="w3-head">
+            <div class="w3-avatar" id="w3Avatar">TZ</div>
+            <div class="w3-ident">
+              <div class="w3-role">TSS - Infrastructure - FSS/PUB - CA/HI/GU/MP</div>
+              <div class="w3-fn">Sales</div>
+              <div class="w3-loc">
+                <a class="w3-link" href="#" onclick="return false">Brookhaven, GA, United States</a>
+                <span class="w3-sep">|</span><span id="w3Clock">—</span>
+              </div>
+              <div class="w3-org">International Business Machines Corporation</div>
+              <div class="w3-meta">IBM employee, Regular <span class="w3-sep">|</span> Talent ID: 0K3692897</div>
+            </div>
+          </div>
+
+          <div class="w3-contact">
+            <div class="w3-ctile">
+              <div class="w3-cicon blue">✉</div>
+              <div class="w3-clabel">Email (Preferred)</div>
+              <a class="w3-link" href="mailto:tim.zhou@ibm.com">tim.zhou@ibm.com</a>
+            </div>
+            <div class="w3-ctile">
+              <div class="w3-cicon purple">#</div>
+              <div class="w3-clabel">Slack</div>
+              <a class="w3-link" href="#" onclick="return false">@Tim Zhou</a>
+            </div>
+          </div>
+
+          <!-- Details left, territory map right (sticky, fills the column) -->
+          <div class="prof-split">
+            <div class="prof-main">
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Contact</h3></div>
+                <div class="w3-rows">
+                  <div class="w3-row"><span class="k">Preferred contact</span><span class="v">The best way to contact me is via email</span></div>
+                  <div class="w3-row"><span class="k">Email</span><span class="v"><a class="w3-link" href="mailto:tim.zhou@ibm.com">tim.zhou@ibm.com</a></span></div>
+                  <div class="w3-row"><span class="k">Slack</span><span class="v"><a class="w3-link" href="#" onclick="return false">@Tim Zhou</a></span></div>
+                  <div class="w3-row"><span class="k">Primary language</span><span class="v">English</span></div>
+                  <div class="w3-row"><span class="k">Business address</span><span class="v">1001 Summit Blvd<br>Brookhaven, GA 30319-6408, US<br><span class="dim">Building: HU5 · Office: MOBILE</span></span></div>
+                  <div class="w3-row"><span class="k">Work location code</span><span class="v">HU5</span></div>
+                  <div class="w3-row"><span class="k">Campus ID</span><span class="v">US152024</span></div>
+                </div>
+              </div>
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Business information</h3></div>
+                <div class="w3-rows">
+                  <div class="w3-row"><span class="k">Organization</span><span class="v">Sales &gt; Global Sales &gt; IBM Technology, Americas</span></div>
+                  <div class="w3-row"><span class="k">Department name</span><span class="v">SELA Infra Territory Sales</span></div>
+                  <div class="w3-row"><span class="k">Business unit</span><span class="v">Sales</span></div>
+                  <div class="w3-row"><span class="k">Department code</span><span class="v">FCY</span></div>
+                  <div class="w3-row"><span class="k">Org code</span><span class="v">GF</span></div>
+                  <div class="w3-row"><span class="k">Division code</span><span class="v">12</span></div>
+                  <div class="w3-row"><span class="k">Cost center</span><span class="v">FCY</span></div>
+                </div>
+              </div>
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Expertise</h3></div>
+                <div class="w3-exp">
+                  <div class="w3-expitem">
+                    <div class="w3-expname">Territory Sales Specialist (Select Territory)</div>
+                    <div class="w3-expdesc">Territory Sales Specialists focus on Select Territory accounts. They are digital sellers who cover an entire suite of products on both an outbound and inbound basis.</div>
+                    <span class="badge neutral">Generalist</span>
+                  </div>
+                  <div class="w3-expitem">
+                    <div class="w3-expname">Brand Sales Specialist - Digital</div>
+                    <div class="w3-expdesc">Responsible for their Brand's Digital Focus Product offerings and accountable for creating opportunities in a specific segment.</div>
+                    <span class="badge neutral">Storage Portfolio</span>
+                  </div>
+                  <div class="w3-expitem">
+                    <div class="w3-expname">Holding Code Digital Sales</div>
+                    <div class="w3-expdesc">Exclusively for employees that have been or will be in a commissionable code.</div>
+                    <span class="badge neutral">Generalist</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="prof-card">
+                <div class="prof-card-head"><h3>Credentials</h3></div>
+                <div class="w3-creds">
+                  <span class="w3-cred">Aerospace and Defense Industry Jumpstart</span>
+                  <span class="w3-cred">Storage for FlashSystem - Foundational</span>
+                  <span class="w3-cred">Global Sales School</span>
+                </div>
+              </div>
+
+              <div style="margin-top:4px;font-size:var(--fs-caption);color:var(--text3);">Profile data sourced from IBM w3. Contact your manager to update territory or role.</div>
+            </div>
+
+            <aside class="prof-aside">
+              <div class="prof-card viz-panel map-card">
+                <div class="viz-head">
+                  <div>
+                    <h3>Territory coverage</h3>
+                    <p class="viz-label" id="mapLabel">—</p>
+                  </div>
+                </div>
+                <div class="seg seg-wrap" id="mapViews">
+                  <button class="seg-btn active" data-view="accounts" onclick="setMapView('accounts')">Accounts</button>
+                  <button class="seg-btn" data-view="cadences" onclick="setMapView('cadences')">In cadence</button>
+                  <button class="seg-btn" data-view="spend" onclick="setMapView('spend')">IBM spend</button>
+                  <button class="seg-btn" data-view="industries" onclick="setMapView('industries')">Industry mix</button>
+                </div>
+                <div class="seg seg-wrap" id="mapFocus" style="margin-top:8px;">
+                  <button class="seg-btn active" data-focus="all" onclick="setMapFocus('all')">All</button>
+                  <button class="seg-btn" data-focus="CA" onclick="setMapFocus('CA')">CA</button>
+                  <button class="seg-btn" data-focus="HI" onclick="setMapFocus('HI')">HI</button>
+                  <button class="seg-btn" data-focus="GU" onclick="setMapFocus('GU')">GU</button>
+                  <button class="seg-btn" data-focus="MP" onclick="setMapFocus('MP')">MP</button>
+                </div>
+                <div class="viz-stats" style="margin:16px 0;">
+                  <div class="vstat"><span class="v" id="mapTotal">0</span><span class="l" id="mapTotalLbl">Total</span></div>
+                  <div class="vstat"><span class="v" id="mapStates">0</span><span class="l">Territories</span></div>
+                  <div class="vstat"><span class="v" id="mapTop">—</span><span class="l">Top territory</span></div>
+                </div>
+                <div class="usmap" id="usMap"></div>
+                <div class="map-foot">
+                  <div class="map-scale">
+                    <span>0</span><i class="scale-bar"></i><span id="mapScaleMax">0</span>
+                  </div>
+                </div>
+                <div class="map-note">Territories with no accounts are unlit. Click one for detail.</div>
+                <div class="map-tip" id="mapTip" style="display:none"></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- ── Personalization tab ── -->
+        <div class="profile-section" id="ptab-personalization">
+          <div class="ai-note">
+            <span class="ai-note-mark"><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg></span>
+            <div>These settings shape what <b>watsonx.ai</b> writes for you. Anything carrying
+              this mark &mdash; and the purple accent &mdash; is model-generated, not
+              deterministic application data.</div>
+          </div>
+
+          <!-- Email style -->
+          <div class="prof-card">
+            <div class="prof-card-head">
+              <h3><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg> Email writing style</h3>
+              <button class="reset-link" onclick="resetPref('email')">Reset to default</button>
+            </div>
+            <div class="field-grid single" style="gap:14px;">
+              <div class="field">
+                <label>Tone</label>
+                <select id="pref-email-tone">
+                  <option value="professional">Professional</option>
+                  <option value="conversational">Conversational</option>
+                  <option value="direct">Direct &amp; concise</option>
+                  <option value="warm">Warm &amp; relationship-first</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Context / framing</label>
+                <textarea id="pref-email-context" placeholder="e.g. Always open with a reference to the account's recent news or financial results. Avoid mentioning competitors by name."></textarea>
+                <span class="hint">Granite will use this as a standing instruction when drafting every email.</span>
+              </div>
+              <div class="field">
+                <label>Example email (optional)</label>
+                <textarea id="pref-email-example" rows="6" placeholder="Paste a real email you've sent that reflects your preferred style. Granite will match its structure, length, and voice."></textarea>
+              </div>
+              <div class="field">
+                <label>Behavior notes</label>
+                <textarea id="pref-email-behavior" placeholder="e.g. Keep emails under 150 words. Always end with a specific ask. Never use bullet points."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call briefings -->
+          <div class="prof-card">
+            <div class="prof-card-head">
+              <h3><svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg> Pre-call briefings</h3>
+              <button class="reset-link" onclick="resetPref('call')">Reset to default</button>
+            </div>
+            <div class="field-grid single" style="gap:14px;">
+              <div class="field">
+                <label>What to know before each call</label>
+                <textarea id="pref-call-know" placeholder="e.g. Recent news about the company, current IBM spend and trend, any open opportunities or past deals."></textarea>
+                <span class="hint">Granite will always surface these data points in the pre-call brief.</span>
+              </div>
+              <div class="field">
+                <label>What AI should provide</label>
+                <textarea id="pref-call-provide" placeholder="e.g. A one-sentence opening line I can use. The top objection I might face and a response. A suggested product to mention."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cadence preferences -->
+          <div class="prof-card">
+            <div class="prof-card-head">
+              <h3>Cadence defaults</h3>
+              <button class="reset-link" onclick="resetPref('cadence')">Reset to default</button>
+            </div>
+            <div class="pref-row">
+              <label>Number of touches per cadence</label>
+              <span class="pref-hint">steps</span>
+              <input type="number" id="pref-cad-steps" min="3" max="20" value="7">
+            </div>
+            <div class="pref-row">
+              <label>Cadence duration</label>
+              <span class="pref-hint">days</span>
+              <input type="number" id="pref-cad-days" min="7" max="90" value="14">
+            </div>
+            <div class="pref-row">
+              <label>Preferred first touch type</label>
+              <select id="pref-cad-first">
+                <option value="email">Email</option>
+                <option value="call">Call</option>
+                <option value="either">Either</option>
+              </select>
+            </div>
+            <div class="pref-row">
+              <label>Accounts started per day</label>
+              <span class="pref-hint">accounts</span>
+              <input type="number" id="pref-cad-starts" min="1" max="10" value="3">
+            </div>
+            <div class="pref-row">
+              <label>Max accounts per cadence</label>
+              <span class="pref-hint">accounts</span>
+              <input type="number" id="pref-cad-cap" min="3" max="30" value="8">
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
+            <button class="btn primary" onclick="savePrefs()">Save preferences</button>
+          </div>
+        </div>
+
+        <!-- ── Settings tab ── -->
+        <div class="profile-section" id="ptab-settings">
+          <div class="set-split">
+            <nav class="set-nav">
+              <button class="set-navlink active" data-sec="about" onclick="showSetting('about')">About</button>
+              <button class="set-navlink" data-sec="appearance" onclick="showSetting('appearance')">Appearance</button>
+              <button class="set-navlink" data-sec="access" onclick="showSetting('access')">Access &amp; sessions</button>
+              <button class="set-navlink" data-sec="intel" onclick="showSetting('intel')">How account intelligence works</button>
+              <button class="set-navlink" data-sec="ai" onclick="showSetting('ai')">Where AI is used</button>
+              <button class="set-navlink" data-sec="data" onclick="showSetting('data')">Data sources</button>
+            </nav>
+
+            <div class="set-body">
+              <section class="set-sec active" id="set-about">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>About IBM BobBee</h3></div>
+                  <p class="set-p">BobBee turns a raw territory list into a ranked, cadenced, day-by-day
+                     outreach plan — who to email and call each day of the quarter, and why.</p>
+                  <div class="w3-rows" style="margin-top:8px;">
+                    <div class="w3-row"><span class="k">Created by</span><span class="v">Sydney Chin &middot; Patrick McBride &middot; Tim Zhou</span></div>
+                    <div class="w3-row"><span class="k">Built for</span><span class="v">The 2026 IBMer watsonx Challenge</span></div>
+                    <div class="w3-row"><span class="k">Audience</span><span class="v">Select Territory sellers working a multi-thousand account book</span></div>
+                    <div class="w3-row"><span class="k">Model</span><span class="v">watsonx.ai Granite (ibm/granite-4-h-small)</span></div>
+                    <div class="w3-row"><span class="k">Design</span><span class="v">IBM Carbon, Gray 100 dark theme, IBM Plex</span></div>
+                  </div>
+                </div>
+              </section>
+              <section class="set-sec" id="set-appearance">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Appearance</h3></div>
+                  <p class="set-p">BobBee ships in dark mode. Light mode uses Carbon's
+                     White/Gray&nbsp;10 layering; the top bar stays dark in both.</p>
+                  <div class="seg" style="margin-top:14px;" id="themeToggle">
+                    <button class="seg-btn active" data-theme-opt="dark" onclick="setTheme('dark')">Dark</button>
+                    <button class="seg-btn" data-theme-opt="light" onclick="setTheme('light')">Light</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-access">
+                <div class="prof-card">
+                  <div class="prof-card-head">
+                    <h3>Access &amp; sessions</h3>
+                    <button class="btn logout-btn" onclick="logout()">Sign out</button>
+                  </div>
+                  <p class="set-p">Connected systems and the sessions BobBee is using on your behalf.
+                     Nothing here is sent anywhere — every service is mocked locally. Signing out
+                     clears the session and resets the demo book.</p>
+                  <div class="signed-as" id="signedAs" style="margin-top:14px;"></div>
+                </div>
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Sessions</h3></div>
+                  <div class="alert" id="loginAlert"></div>
+                  <div id="loginRows"></div>
+                </div>
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Saved password</h3></div>
+                  <p class="set-p">One IBM W3ID sign-in covers ISC, ZoomInfo, and Salesloft (all SSO
+                     through IBM). In this clone the login is mocked — only the email is kept locally,
+                     the password is discarded.</p>
+                  <div id="credRows"></div>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-intel">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>How account intelligence works</h3></div>
+                  <p class="set-p">Sorting accounts into cadences follows five transparent scoring and
+                     scheduling stages, so you can see why an account landed where it did.</p>
+                  <ol class="set-steps">
+                    <li><b>Contacts.</b> Every account is checked for a real IT decision-maker. Accounts
+                        without one are set aside into <i>No contacts</i> rather than being worked blind.</li>
+                    <li><b>Scoring.</b> Account Tiering scores what's left on IBM spend and trend, install
+                        base, company size, and recent buying signals.</li>
+                    <li><b>Quarter segmentation.</b> Accounts are split across the four quarters by their
+                        buying signals. Only the current quarter's accounts continue; the rest are saved
+                        to <i>Future quarters</i>.</li>
+                    <li><b>Cadence and rank.</b> Each account is matched to a play, ranked within its
+                        cadence, and tagged. Accounts past the per-cadence cap drop to <i>Leftovers</i>
+                        and rejoin the pool for a future quarter.</li>
+                    <li><b>Distribution.</b> Cadence starts are spread across the quarter's weekdays, and
+                        each account's touches are laid on its cadence's step days — producing the
+                        day-by-day schedule.</li>
+                  </ol>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-ai">
+                <div class="prof-card">
+                  <div class="ai-brand">
+                    <img src="/static/wx-ai.png" alt="watsonx.ai">
+                    <div>
+                      <div class="ai-brand-name">watsonx.ai</div>
+                      <div class="ai-brand-sub">Granite &middot; ibm/granite-4-h-small</div>
+                    </div>
+                  </div>
+                  <div class="prof-card-head"><h3>Where AI is used</h3></div>
+                  <p class="set-p">The colour convention runs through the whole app:
+                     <b style="color:var(--blue-text)">blue</b> is deterministic application data,
+                     <b style="color:var(--purple-text)">purple with a sparkle</b> is generated by
+                     watsonx.ai. Only two things are model-generated:</p>
+                  <ul class="set-list">
+                    <li><b>Play and sales angle</b> on the account detail popup.</li>
+                    <li><b>Pre-call briefs</b> on the Call tab.</li>
+                  </ul>
+                  <p class="set-p">Everything else — scoring, ranking, cadence assignment, the schedule,
+                     email drafts — is deterministic Python. If watsonx is unreachable or has no key, both
+                     features fall back to deterministic output built from the same account data, so the
+                     app keeps working.</p>
+                </div>
+              </section>
+
+              <section class="set-sec" id="set-data">
+                <div class="prof-card">
+                  <div class="prof-card-head"><h3>Data sources</h3></div>
+                  <div class="w3-rows">
+                    <div class="w3-row"><span class="k">IBM Sales Cloud / ISC</span><span class="v">Territory accounts, coverage IDs, IBM spend, relationship status</span></div>
+                    <div class="w3-row"><span class="k">IBM install base</span><span class="v">Installed products per account, used for whitespace</span></div>
+                    <div class="w3-row"><span class="k">ZoomInfo</span><span class="v">Company revenue and size, contacts and their titles</span></div>
+                    <div class="w3-row"><span class="k">Salesloft</span><span class="v">Cadence definitions, steps, and per-account progress</span></div>
+                    <div class="w3-row"><span class="k">News and signals</span><span class="v">Funding, M&amp;A, leadership and expansion events per account</span></div>
+                    <div class="w3-row"><span class="k">watsonx.ai</span><span class="v">Granite, for plays/angles and pre-call briefs only</span></div>
+                  </div>
+                  <p class="set-p" style="margin-top:16px;">Every source except watsonx.ai is mocked with
+                     deterministic local data, so the app runs with no logins, no VPN, and no internet.</p>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ── Ask BobBee (watsonx Assistant) — trigger lives in the top nav ── -->
+<div class="ask-panel" id="askPanel">
+  <div class="day-panel-head">
+    <h3 class="ask-title">
+      <img class="wx-dark" src="/static/wx-chat-dark.png" alt="">
+      <img class="wx-light" src="/static/wx-chat.png" alt="">
+      Ask BobBee</h3>
+    <button class="day-panel-close" onclick="toggleAsk(false)">&#10005;</button>
+  </div>
+  <div class="ask-note" id="askNote"></div>
+  <div class="ask-log" id="askLog"></div>
+  <form class="ask-form" onsubmit="askSend(event)">
+    <input id="askInput" type="text" autocomplete="off"
+           placeholder="How do cadences work?">
+    <button class="btn primary" type="submit">Send</button>
+  </form>
+</div>
+
+<!-- ── Contextual side panel (Email + Call tabs) ── -->
+<div class="side-panel" id="sidePanel">
+  <div class="day-panel-head">
+    <h3 id="sidePanelTitle">Details</h3>
+    <button class="day-panel-close" onclick="closeSidePanel()">&#10005;</button>
+  </div>
+  <div class="side-panel-body" id="sidePanelBody"></div>
+</div>
+
+<!-- ── Day-detail side panel (Plan tab) — outside #app so position:fixed is always viewport-relative ── -->
+<div class="day-panel" id="dayPanel">
+  <div class="day-panel-head">
+    <h3 id="dayPanelTitle">—</h3>
+    <button class="day-panel-close" onclick="closeDayPanel()">&#10005;</button>
+  </div>
+  <div class="day-panel-sums" id="dayPanelSums"></div>
+  <div class="day-panel-items" id="dayPanelItems"></div>
+</div>
+
+<!-- ── account detail modal ─────────────────────────────────────── -->
+<div class="modal" id="acctModal" onclick="if(event.target===this) closeAcctModal()">
+  <div class="modal-card wide">
+    <div class="modal-head">
+      <h2 id="acctModalTitle">Account</h2>
+      <button class="link" onclick="closeAcctModal()">Close</button>
+    </div>
+    <div id="acctModalBody"></div>
+  </div>
+</div>
+
+<!-- ── Details (Access) modal ─────────────────────────────────── -->
+<script>window.BOBBEE_CONFIG = {{ {'today': today, 'realToday': real_today}|tojson }};</script>
+<script src="{{ url_for('static', filename='js/app-shell.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/accounts.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/schedule.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/assistant.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/panels.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/workflows.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mock sign in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-login.css') }}">
+</head>
+<body>
+<div class="mockbar">Mock — this is a simulated {{ label }} sign-in. No real credentials, no network.</div>
+<div class="loginwrap" style="--brand:{{ brand }}">
+  <div class="card">
+    <div class="logo" style="background:{{ brand }}">{{ label[0] }}</div>
+    <h1>Sign in to {{ label }}</h1>
+    <p class="sub">Continue with your IBM W3ID</p>
+    <form method="POST" action="/mock/{{ service }}/signin">
+      <label>Email</label>
+      <input type="email" name="email" value="{{ email }}" placeholder="you@ibm.com" required>
+      <label>Password</label>
+      <input type="password" name="password" placeholder="••••••••" value="demo">
+      <button type="submit">Sign in</button>
+    </form>
+    <div class="sso">Single sign-on via IBM W3ID (simulated)</div>
+    <div class="note">This window stands in for the real {{ label }} login the dashboard would open.
+      Nothing you type here is stored or sent anywhere.</div>
+  </div>
+</div>
+</body>
+</html>

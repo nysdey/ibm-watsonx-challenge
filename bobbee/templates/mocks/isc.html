@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISC demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-isc.css') }}">
+</head>
+<body>
+<div class="mockbar">Mock — simulated ISC (Salesforce Territory Prospecting). Accounts are synthetic.</div>
+<div class="top"><span class="mark">ISC</span><span class="badge" style="background:rgba(255,255,255,.15);color:#fff">Territory Prospecting</span></div>
+<div class="wrap">
+  <h1>Accounts</h1>
+  <p class="sub">{{ rows|length }} accounts across your coverage IDs</p>
+  <table>
+    <thead><tr><th>Account name</th><th>Coverage ID</th><th>Industry</th><th>Tech client status</th><th>Contacts</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td>{{ r.name }}</td><td>{{ r.coverage }}</td><td>{{ r.industry }}</td>
+          <td><span class="st">{{ r.status }}</span></td><td>{{ r.contacts }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

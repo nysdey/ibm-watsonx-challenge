@@ -1,312 +1,58 @@
-# IBM BobBee — AI account intelligence & outbound planning for IBM sellers
+# IBM BobBee
 
-BobBee turns a raw list of territory accounts into a **ranked, cadenced, day-by-day
-outreach plan** — who to email and call, every day of the quarter, and why. It is a
-self-contained demo: every external system (IBM Sales Cloud/ISC, the IBM install
-base, ZoomInfo, Salesloft, news/buying signals) is **mocked with deterministic fake
-data**, so it runs on any machine with no logins, no VPN, and no internet.
+BobBee is a local sales-planning web application for an IBM territory seller. It
+turns a deterministic demo account book into ranked cadences, a quarterly outreach
+schedule, daily email and call queues, account intelligence, and dashboard analytics.
 
-The **one real, live integration is IBM watsonx.ai** (Granite,
-`ibm/granite-4-h-small`). It is used in exactly two, clearly-scoped places — the
-account **Play + Sales Angle** and the **pre-call briefs** — and everything else is
-deterministic Python. See [Where AI is used (and its limits)](#where-ai-is-used-and-its-limits).
-watsonx is fully **fail-soft**: with no key (or over quota, or a network blip) the
-app degrades to deterministic output and keeps working.
+The application is web-first. It does not launch scraper programs, automate browsers,
+or pass Excel workbooks between pipeline folders. All demo data is normalized into one
+document and accessed through explicit application services.
 
-- **Run it:** [Quick start](#quick-start)
-- **What it does, screen by screen:** [How it works](#how-it-works)
-- **The account-intelligence pipeline:** [Account intelligence, step by step](#account-intelligence-step-by-step)
-- **AI usage + limits:** [Where AI is used (and its limits)](#where-ai-is-used-and-its-limits)
-- **watsonx.ai setup:** [Configuring live AI](#configuring-live-ai-watsonxai)
-- **Under the hood:** [Architecture](#architecture)
-
----
-
-## Quick start
+## Run
 
 ```bash
 npm start
 ```
 
-First run creates a `.venv`, installs the dependencies (Flask, openpyxl,
-python-dotenv), and launches the app. Equivalent manual steps:
+The first run creates `.venv`, installs the dependencies, and starts BobBee at
+`http://localhost:5488`. Sign in with any email and password; the password is discarded.
+
+The normal product flow is:
+
+1. Accounts → Import accounts
+2. Accounts → Sort accounts into cadences
+3. Use Dashboard, Schedule, Cadences, Email, Call, and Profile
+
+## Development
 
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python3 run_pipeline.py
+npm run check
 ```
 
-- Always opens at **`http://localhost:5488`** — bookmark it. If a previous BobBee is
-  still holding that port, it's stopped and the port reclaimed, so the URL never moves
-  between restarts. (It's `http`, not `https`: there's no TLS certificate for local
-  dev, and `localhost` and `127.0.0.1` are interchangeable here.) Only if some *other*
-  app owns 5488 does it fall back to a free port and say so. Override the preferred
-  port with `BOBBEE_PORT=5489 npm start`.
-- **Live reload is on.** Edit a file (including the UI in `ui_templates.py`), save, and
-  refresh the browser — the change appears, no manual restart. While the demo seed is
-  on (below), your imported/strategized data **also survives a full restart** — it is
-  no longer wiped on launch.
-- **Sign in with any email** (e.g. `demo.seller@ibm.com`) and any password — the email
-  picks a stable demo territory; nothing is sent anywhere, the password is discarded.
+This runs the Python test suite and syntax-checks every browser module.
 
-First-time path through the app: **Accounts → Import accounts → Sort accounts into
-cadences.** That one action ("strategize") builds everything the other tabs show
-(Dashboard, Plan, Cadences, Email, Call). Until you do it, those tabs show an
-"import accounts to get started" prompt.
+The main entry points are:
 
-> **Temporary (UI work):** startup runs those two steps for you, so the app opens on a
-> populated book of business and you can go straight to styling. It calls the same
-> workers the buttons call — nothing in that flow is stubbed or removed.
->
-> Your progress is **kept on disk between restarts**: the launch-time wipe
-> (`_reset_for_fresh_demo`) is skipped while the seed is on, and the seed only rebuilds
-> what's actually missing. So the first build costs ~25s and every restart after that is
-> instant.
->
-> Set **`BOBBEE_SEED_DEMO=0`** to restore the original behaviour exactly — clean slate on
-> every launch, real first-run empty state. Remove the `_seed_demo_state()` call in
-> `run_pipeline.py` when you're done with the UI pass.
->
-> **`BOBBEE_DEMO_DATE`** pins what the app thinks "today" is. Cadences only schedule work
-> on weekdays, so on a weekend every today-view is legitimately empty and there's nothing
-> to look at. `BOBBEE_DEMO_DATE=monday` (currently set in `.env`) jumps to the next Monday;
-> `BOBBEE_DEMO_DATE=2026-07-22` pins an exact date; unset it for the real date. Server and
-> client both read it, so the dashboard, plan calendar, and email/call lists all agree.
+- [`bobbee/app.py`](bobbee/app.py) — canonical Flask application factory
+- [`bobbee/api/`](bobbee/api/) — HTTP blueprints and request validation
+- [`bobbee/services/`](bobbee/services/) — application commands and UI read models
+- [`bobbee/domain/`](bobbee/domain/) — pure scoring and scheduling rules
+- [`bobbee/infrastructure/`](bobbee/infrastructure/) — atomic repository and deterministic demo-data adapter
+- [`bobbee/integrations/`](bobbee/integrations/) — optional watsonx.ai and Assistant clients
+- [`bobbee/templates/`](bobbee/templates/) — Jinja page templates
+- [`bobbee/static/`](bobbee/static/) — design system, page CSS, browser feature modules, and images
+- [`tests/`](tests/) — domain, API-flow, security-boundary, and architecture tests
 
----
+Generated state is written to `instance/state.json` and is intentionally ignored by Git.
+Set `BOBBEE_DATA_PATH` to place it elsewhere or `BOBBEE_ACCOUNT_COUNT` to change the
+default 1,911-account demo book.
 
-## How it works
+## Optional watsonx configuration
 
-BobBee is a single dark, IBM Carbon-styled web app. A colour convention runs
-throughout: **blue = deterministic pipeline data**, **purple + a ✦ sparkle = content
-generated by watsonx.ai**. The top nav is **Schedule · Accounts · Cadences · Email ·
-Call**, with a global search box, with the logo returning to the **Dashboard** and a profile avatar (top-right)
-for identity/personalization/access.
+The deterministic application works without external services. To enable live Granite
+writing, copy `.env.example` to `.env` and configure the `WATSONX_*` values. The AI
+integration is fail-soft: scoring, tiers, cadence membership, and dates remain
+deterministic if watsonx is unavailable.
 
-### Accounts — import, then strategize
-The home base for your book of business.
-
-1. **Import accounts** — stands in for uploading a CSV of account names. Pulls the
-   territory (mock ISC/Sales Cloud), joins the IBM install base, and segments —
-   producing a ~1,900-account book. *(Deterministic.)*
-2. **Sort accounts into cadences** ("strategize") — runs the full account-intelligence
-   pipeline (below) with a live 4-stage progress display.
-3. After strategizing, the tab defaults to a **searchable list of all accounts** with
-   **tag chips you can filter by** (e.g. *Whitespace: Cloud*, *Bluemix footprint*,
-   *Competitive displacement*, *Growing/At-risk spend*), and a **sidebar of pre-made
-   lists**: *All accounts*, one list **per cadence**, plus the set-aside lists
-   *Leftovers*, *No contacts*, and *Future quarters*.
-4. **Click any account** for a full popup: everything BobBee knows from **IBM Sales
-   Cloud** (relationship, IBM spend + trend, install base, competitor), **ZoomInfo**
-   (revenue, employees, contacts + which are decision-makers), **Salesloft** (cadence,
-   rank, scheduled touches), **recent news/signals**, and an **✦ AI analysis** block
-   (urgency, best product fit, recommended play, angle).
-
-### Schedule — the quarter, distributed
-A calendar with **Year / Quarter / Month / Week / Day** views (Year is grouped into
-its four quarters). Cadences are laid out from the *start* of the quarter, so weeks
-already behind you show the work that happened rather than a blank grid. Each day shows its activity
-load (e.g. `6e · 3c` = 6 emails, 3 calls). **Click a day** and a panel slides in from
-the right showing that day's plan — how many emails, calls, and accounts touched —
-**grouped under an "Emails" header then a "Calls" header**.
-
-### Profile — identity, territory, settings
-Three tabs. **Profile** is a w3-style identity card plus a **territory coverage**
-choropleth — outline maps of the four covered territories (CA/HI/GU/MP), toggleable
-between accounts, cadence coverage, IBM spend, and industry mix. **Personalization**
-holds the AI writing/cadence preferences. **Settings** carries access & sessions, how
-the account-intelligence pipeline works, where AI is used, the data sources, and About.
-
-### Dashboard — your day at a glance
-Just **today** (not the whole calendar): today's emails/calls/accounts-touched with
-the activity list, this-week totals, a cadence snapshot (active / pending / completed),
-and **notable news** for the accounts you're working this week. Plus a **meetings &
-opportunities** tally (total / booked / completed / upcoming / cancelled, and OI count
-and value) and a **book of business** panel (size, cadence coverage, spend, industry and
-territory mix).
-
-> Meetings and OI have **no source system** in this demo — neither the ISC export nor the
-> mock Salesloft records them. `_meeting_stats()` derives them from the outbound schedule
-> with fixed rates, seeded per account name so they're stable across restarts. Treat them
-> as illustrative, not as pipeline data.
-
-### Ask BobBee — in-app help (watsonx Assistant)
-A chat panel (sparkle button, bottom-right) answering questions **about the app** —
-how cadences are built, what a tag means, where a number comes from. Backed by
-**watsonx Assistant** over its v2 REST API, in BobBee's own theme rather than the
-hosted web-chat widget.
-
-**Scope is deliberate: the seller's book is never sent.** No account names, contacts,
-spend or schedule data leave the machine — only a short product-description string
-(`_SYSTEM_CONTEXT` in `assistant.py`). Configure with `WXA_API_KEY`,
-`WXA_SERVICE_URL`, `WXA_ASSISTANT_ID` (see `.env.example`). Unset or unreachable, the
-panel falls back to a small local answer set and **labels those replies as offline**
-rather than passing them off as the assistant's.
-
-### Cadences — the playbooks
-Every cadence's definition: its ordered steps (email/call/other by day), its account
-roster, and each account's progress relative to today's schedule.
-
-### Email — today's outbound
-Today's scheduled emails across all cadences, each with a **draft** and the target
-decision-maker. **Draft all emails** writes them; **Send all** is **disabled until at
-least one email is actually drafted** (you can't send what hasn't been written). You
-can edit, redraft, or send individually. *(Email drafts are deterministic templates
-grounded in the account's data — not a watsonx call; see the AI section for why.)*
-
-### Call — today's call list, with AI pre-call briefs
-Today's calls, each with the account's contacts, phone numbers (click-to-call), and a
-**✦ Pre-call brief**. **Generate all briefings** produces, per account, a tight
-**bulleted** brief written by **watsonx.ai** from every connected source (Sales Cloud,
-ZoomInfo, Salesloft, recent news). Fail-soft to deterministic bullets from the same
-data.
-
----
-
-## Account intelligence, step by step
-
-"Sort accounts into cadences" runs this pipeline (`_run_strategize` in
-`run_pipeline.py`). Stages 3 & 5 are where the deterministic/AI split matters most.
-
-1. **Upload accounts.** Territory pull → IBM install-base join → segmentation. *(Deterministic, `fake_data.py`.)*
-2. **Remove accounts with no IT decision-maker.** Each account's ZoomInfo contacts are
-   checked for a real budget-holder title (CIO, CTO, VP Infrastructure, Director of IT,
-   …). Accounts with only influencer-level contacts are set aside into the **No contacts**
-   list, not carried forward. *(Deterministic.)*
-3. **Score and split into quarters.** Account Tiering scores every account on private
-   signals (IBM spend, IT spend, annual revenue, install footprint, headcount) and
-   public signals (industry trends, news). Accounts are portioned across the four
-   calendar quarters; **only the current quarter proceeds**, the rest are saved to
-   **Future quarters**. *(Tier numbers/scores: deterministic. The **Play** + **Sales
-   Angle** for each account: **watsonx.ai** — see below.)*
-4. **Build and rank cadences.** Current-quarter accounts are grouped into Salesloft
-   cadences by their Play, then **ranked within each cadence** by urgency (score, which
-   already weighs spend/revenue/signals), and **tagged** with notable facts. *(Deterministic, using the watsonx-chosen Play.)*
-5. **Drop the overflow.** Each cadence keeps its top **8** accounts; accounts that don't
-   make a cadence (and the tail below the cut) go to the **Leftovers** list. *(Deterministic.)*
-6. **Every cadence becomes its own list** in the Accounts sidebar.
-7. **Distribute across the quarter.** Cadence starts are spread over the remaining
-   weekdays (≈3 new accounts/day), and each account's email/call touches are laid on
-   the cadence's step days — producing the per-day "who to email and call" schedule the
-   Plan/Email/Call/Dashboard tabs read. *(Deterministic.)*
-8. **Untouched accounts** (Future quarters + Leftovers) are the pool that re-runs
-   through the same algorithm for the next quarter.
-
-Outputs land in `Account_Intelligence/output/` as JSON: `latest.json` (cadences with
-ranked, tagged accounts), `schedule.json` (per-day activities), `no_contacts.json`,
-`leftovers.json`, `other_quarters.json`.
-
----
-
-## Where AI is used (and its limits)
-
-**The design rule:** watsonx.ai provides **judgment and narrative**; deterministic
-Python owns **every number and decision that must be reproducible** (tiers, scores,
-quarter split, cadence membership, ranking, the schedule). The model never moves a
-number — so results are auditable and the app is identical run-to-run except for the
-AI-written prose. In the UI, anything AI-generated is **purple with a ✦**.
-
-**watsonx.ai (Granite) is called in exactly two places in the main flow:**
-
-| Feature | When | Call shape | Fallback if AI is off/over-quota |
-|---|---|---|---|
-| **Account Play + Sales Angle** | During *Sort into cadences* (scoring stage) | **One batched call**, capped at **120 accounts/run** (`advise_accounts`) | Rule-based Play classifier + templated angle |
-| **Pre-call briefs** | Call tab → *Generate all briefings* | **One call per account, on demand** (`advise_call_brief`) | Deterministic bullet brief from the same data |
-
-Everything else is deterministic — including the **Email tab drafts** (a template
-grounded in account data, intentionally not a per-email model call), segmentation,
-scoring, quarter/cadence/rank logic, the schedule, KPIs, and dashboard counts. *(A
-legacy `/bobby` page can draft one watsonx email per person; it isn't in the main nav.)*
-
-**Is there a limit to how much AI there is?** Two kinds:
-
-1. **By design (bounded on purpose).** AI is confined to the two narrative touchpoints
-   above. The Play/Angle call is a single batched request capped at 120 accounts;
-   briefs are one-per-account and only run when you click *Generate all briefings*. The
-   app's AI footprint is deliberately small — it is not calling a model on every row,
-   click, or page.
-2. **watsonx.ai plan quota (a real ceiling).** Foundation-model inference bills **tokens
-   as Resource Units**. The free **Lite** plan caps usage per month (on the order of
-   **~300,000 tokens** and **~20 capacity-unit-hours**). Each Granite call spends input
-   + output tokens (roughly ~1–1.5k tokens per brief; a few thousand for the tiering
-   batch), so the Lite plan comfortably covers demos and light use but is **not
-   unlimited**. When you hit the monthly cap — or a short-term per-request rate limit
-   (HTTP 429) — calls fail; the app **fail-softs to deterministic output** so nothing
-   breaks, and a within-run **retry with exponential backoff + jitter** absorbs
-   transient rate limiting. To raise the ceiling, move the project to a paid watsonx.ai
-   plan; no code change is required.
-
-**How to confirm AI is actually live:** on the Call tab, generate briefings — the
-`/api/call_brief` response includes `"source": "watsonx"` when the live call
-succeeded (vs `"deterministic"` on fallback). The legacy Bobby page also has a
-**Watsonx Activity** panel showing real model / latency / token counts.
-
----
-
-## Configuring live AI (watsonx.ai)
-
-The app runs fully without any of this (deterministic fallback). To enable live
-Granite:
-
-1. `cp .env.example .env` at the repo root.
-2. Fill in `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, and `WATSONX_URL` (your project's
-   region endpoint, e.g. `https://us-south.ml.cloud.ibm.com`). `WATSONX_MODEL_ID`
-   defaults to `ibm/granite-4-h-small`.
-3. **Associate a Watson Machine Learning (watsonx.ai Runtime) instance with the
-   project** — in the watsonx.ai console: *Project → Manage → Services & integrations →
-   Associate service*. Without this, calls return `no_associated_service_instance_error`.
-4. Restart the app. `run_pipeline.py` loads `.env` itself (via `python-dotenv`); every
-   pipeline subprocess inherits the environment, so one `.env` at the root is enough.
-
-**Common setup errors** (both hit during this project's own setup):
-
-- `container_not_found: Failed to find project_id …` — wrong project ID, or `WATSONX_URL`'s
-  region doesn't match where the project lives (`us-south` / `eu-de` / `eu-gb` / `jp-tok`).
-- `no_associated_service_instance_error` — the project has no WML/Runtime instance
-  associated (step 3 above).
-
-The watsonx client itself is `llm_advisor.py`: IBM Cloud IAM token exchange →
-`POST /ml/v1/text/chat`, using only the Python standard library (no SDK dependency),
-with token caching, retry-with-backoff, and per-call telemetry.
-
----
-
-## Architecture
-
-| File | Role |
-|---|---|
-| `run_pipeline.py` | The Flask app — routes, the account-intelligence orchestrator (`_run_strategize`), and all `/api/*` data endpoints. Loads `.env`, fixed port + live-reload. |
-| `ui_templates.py` | All UI (HTML/CSS/JS) as `render_template_string` templates. One dark IBM-Carbon design system; blue = deterministic, purple + ✦ = AI. |
-| `llm_advisor.py` | The **watsonx.ai** REST client (IAM + `/ml/v1/text/chat`), the `advise_accounts` / `advise_call_brief` / `advise_plan_summary` helpers, retry/backoff, telemetry, and fail-soft. |
-| `fake_data.py` | The deterministic, seeded data engine — a stable account pool (identity consistent across every step so joins actually attach), plus ZoomInfo enrichment, news signals, and Salesloft cadences/people. |
-| `mock_salesloft.py` | A tiny JSON-backed "Salesloft server" the mock UI and steps coordinate through. |
-| `mock_ui_templates.py` | The in-app mock tool windows (`/mock/isc`, `/mock/zoominfo`, `/mock/salesloft`, and their login pages). |
-| `Account_Tiering/` | The scoring subprocess (deterministic tier/score) that also invokes the watsonx Play/Angle enrichment. |
-| `Account_Intelligence/output/` | Strategize outputs (cadences, schedule, set-aside lists) as JSON. |
-
-Everything external is mocked behind the same function signatures the real
-integrations would have (grep the tree for `MOCK` docstrings), so the mock modules are
-swap points for real ISC/ZoomInfo/Salesloft connectors later.
-
-### Key API endpoints
-`/api/accounts/list` · `/api/accounts/detail` · `/api/call_brief` ·
-`/api/schedule` · `/api/dashboard` · `/api/cadences` · `/api/strategize/run` ·
-`/api/get_my_accounts/run` · `/api/accounts/{no_contacts,leftovers,other_quarters}`.
-
----
-
-## Tests
-
-```bash
-.venv/bin/python3 tests/test_dashboard.py     # clone invariants (no pytest needed)
-.venv/bin/pip install pytest
-.venv/bin/python3 -m pytest tests/ -q         # + auth-guard / guard tests
-```
-
-## Further docs
-
-`docs/` holds deeper design notes (`ARCHITECTURE.md`, `SECURITY.md`, `OPERATIONS.md`,
-`GOTCHAS.md`, `CHANGELOG.md`) and the product requirements document
-(`WATSONX_CHALLENGE_PRD.md`). Where those predate the current account-intelligence UI,
-this README is the source of truth.
+See [Architecture](docs/ARCHITECTURE.md), [Development](docs/DEVELOPMENT.md), and
+[Security](docs/SECURITY.md) for the maintained technical reference.

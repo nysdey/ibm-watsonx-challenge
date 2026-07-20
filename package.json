@@ -4,10 +4,12 @@
   "private": true,
   "description": "BobBee — AI-powered outbound planning and personalization for IBM sellers (Flask/Python backend, launched via npm).",
   "scripts": {
-    "setup": "python3 -m venv .venv && .venv/bin/pip install -r requirements.txt",
-    "start": "test -x .venv/bin/python3 || npm run setup && .venv/bin/python3 run_pipeline.py",
+    "setup": "python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt",
+    "start": "(test -x .venv/bin/python3 || npm run setup) && .venv/bin/python3 -m flask --app wsgi:app run --host 127.0.0.1 --port ${BOBBEE_PORT:-5488}",
     "dev": "npm run start",
-    "test": ".venv/bin/python3 -m pytest tests/ -q"
+    "test": ".venv/bin/python3 -m pytest",
+    "check:js": "for file in bobbee/static/js/*.js; do node --check \"$file\"; done",
+    "check": "npm run test && npm run check:js"
   },
   "engines": {
     "node": ">=16"

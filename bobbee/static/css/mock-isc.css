@@ -1,0 +1,11 @@
+.top{position:fixed;top:30px;left:0;right:0;height:56px;background:#0176d3;color:#fff;display:flex;
+       align-items:center;padding:0 22px;gap:12px;z-index:40}
+  .top .mark{font-weight:700;font-size:17px}
+  .wrap{padding:100px 30px 40px}
+  h1{font-size:20px;margin:0 0 4px;font-weight:600}
+  .sub{color:#a8a8ae;margin:0 0 20px;font-size:13.5px}
+  table{width:100%;border-collapse:collapse;background:#18181b;border:1px solid #29292d;border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid #29292d}
+  th{background:#16232e;font-size:11px;font-weight:600;color:#5b96ff}
+  tr:last-child td{border-bottom:none}
+  .st{font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;background:#16233f;color:#7c9cff}

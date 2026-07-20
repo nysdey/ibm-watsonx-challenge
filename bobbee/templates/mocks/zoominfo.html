@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZoomInfo demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mock-zoominfo.css') }}">
+</head>
+<body>
+<div class="mockbar">Mock — simulated ZoomInfo. Company revenue/employee data is synthetic.</div>
+<div class="top"><span class="mark">ZoomInfo</span><span class="badge" style="background:rgba(255,255,255,.15);color:#fff">Demo</span></div>
+<div class="wrap">
+  <h1>Companies</h1>
+  <p class="sub">{{ rows|length }} companies in the current territory (Infra Outbound buyer group)</p>
+  <table>
+    <thead><tr><th>Company</th><th>Industry</th><th>Domain</th><th>Revenue</th><th>Employees</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr><td>{{ r.name }}</td><td>{{ r.industry }}</td><td>{{ r.domain }}</td>
+          <td class="num">{{ r.revenue }}</td><td class="num">{{ r.employees }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

@@ -15,7 +15,8 @@
   .profile-page{ max-width:1600px; }
 
   /* ── w3-style identity header ───────────────────────────────── */
-  .w3-head{ display:flex; gap:28px; align-items:flex-start; padding-bottom:26px; }
+  .w3-head{ display:grid; grid-template-columns:132px minmax(0,1fr) minmax(260px,340px); gap:28px;
+            align-items:stretch; padding-bottom:26px; }
   .w3-avatar{ width:132px; height:132px; flex:none; display:flex; align-items:center;
               justify-content:center; font-size:var(--fs-icon-lg); font-weight:500; color:var(--text1);
               background:var(--grad-brand); letter-spacing:.02em; }
@@ -30,30 +31,40 @@
   .w3-meta{ font-size:var(--fs-body); color:var(--text2); margin-top:3px; }
   .w3-link{ color:var(--blue-text); text-decoration:none; }
   .w3-link:hover{ text-decoration:underline; }
-  .w3-contact{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-               gap:16px; padding:24px 0; border-top:1px solid var(--border); }
-  .w3-ctile{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:20px; }
+  /* Contact methods form the equal-height right side of the identity header. */
+  .w3-contact{ display:flex; flex-direction:column; justify-content:center; gap:18px;
+               min-width:0; padding-left:24px; border-left:1px solid var(--border); }
+  .w3-ctile{ display:grid; grid-template-columns:26px minmax(0,1fr); column-gap:9px;
+              align-items:center; min-width:0; }
   .w3-ctile.off{ opacity:.5; }
-  .w3-cicon{ width:38px; height:38px; display:flex; align-items:center; justify-content:center;
-             border-radius:50%; background:var(--layer2); color:var(--text2); font-size:var(--fs-icon-md);
-             margin-bottom:16px; }
+  .w3-cicon{ grid-row:1 / span 2; width:26px; height:26px; display:flex; align-items:center; justify-content:center;
+             border-radius:50%; background:var(--layer2); color:var(--text2); font-size:var(--fs-label); }
   /* Identity chrome: both contact icons use the brand gradient (same as the
      avatar). Purple is reserved for watsonx, so it isn't used standalone here. */
   .w3-cicon.blue,
   .w3-cicon.purple{ background:var(--grad-brand); color:var(--text1); }
   .w3-clabel{ font-size:var(--fs-label); color:var(--text3); margin-bottom:3px; }
   .w3-cval{ font-size:var(--fs-label); color:var(--text2); }
+  @media(max-width:900px){ .w3-head{ grid-template-columns:100px minmax(0,1fr); gap:20px; }
+                           .w3-avatar{ width:100px; height:100px; }
+                           .w3-contact{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr;
+                                        padding:18px 0 0; border-left:none; border-top:1px solid var(--border); } }
+  @media(max-width:560px){ .w3-head{ grid-template-columns:1fr; }
+                           .w3-avatar{ width:84px; height:84px; }
+                           .w3-contact{ grid-template-columns:1fr; } }
 
   /* Details column + sticky map column. */
-  .prof-split{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px;
+  /* The map is the profile's primary visual object; concise work context sits
+     beside it instead of competing with it as an equally dense directory page. */
+  .prof-split{ display:grid; grid-template-columns:minmax(300px,.72fr) minmax(460px,1.28fr); gap:28px;
                align-items:start; }
-  /* The map column is sticky so a short single-state view follows the scroll of
-     the much longer details column instead of leaving a tall blank to scroll past. */
-  .prof-aside{ min-width:0; position:sticky; top:72px; align-self:start; }
+  /* Profile columns belong to one document flow: neither side should pin or
+     scroll independently while the other one moves. */
+  .prof-aside{ min-width:0; align-self:start; }
   .map-card{ margin-bottom:0; }
   .map-card .usmap{ max-width:none; }
   .seg-wrap{ flex-wrap:wrap; }
-  @media(max-width:1080px){ .prof-split{ grid-template-columns:1fr; } .prof-aside{ position:static; } }
+  @media(max-width:1080px){ .prof-split{ grid-template-columns:1fr; } }
 
   .w3-rows{ display:flex; flex-direction:column; }
   .w3-row{ display:grid; grid-template-columns:minmax(120px,34%) 1fr; gap:16px;
@@ -80,7 +91,9 @@
   .profile-section.active{ display:block; }
   .prof-card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px; margin-bottom:16px; }
   .prof-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
-  .prof-card-head h3{ font-size:var(--fs-body); font-weight:600; margin:0; }
+  /* One heading token for every card/panel. No browser-default h3 sizing. */
+  .prof-card-head h3,
+  .viz-head h3{ font-size:var(--fs-body); line-height:var(--lh-body); font-weight:600; margin:0; }
   .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
   .field-grid.single{ grid-template-columns:1fr; }
   .field{ display:flex; flex-direction:column; gap:5px; }
@@ -555,8 +568,8 @@
   /* Geographic silhouettes with a restrained isometric extrusion. */
   .terr-iso{ width:100%; margin-bottom:10px; }
   .usmap.single .terr-iso{ max-width:300px; margin-inline:auto; margin-bottom:6px; }
-  .terr-svg{ width:100%; height:120px; display:block; }
-  .usmap.single .terr-svg{ height:150px; }
+  .terr-svg{ width:100%; height:148px; display:block; }
+  .usmap.single .terr-svg{ height:220px; }
   .geo-shadow{ fill:rgba(0,0,0,.28); }
   .geo-extrusion{ fill:#0043ce; opacity:.86; }
   .geo-face{ stroke:var(--map-edge); stroke-width:1.2; vector-effect:non-scaling-stroke;
@@ -683,6 +696,12 @@
   @media(max-width:760px){ .dv-cols{ grid-template-columns:1fr; } }
   .dv-colhead{ display:flex; align-items:center; gap:9px; font-size:var(--fs-body); font-weight:600;
                color:var(--text1); padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+  /* Day view uses the same semantic colour language as the rest of the product:
+     email is blue; calls are purple. The accent is structural, not decorative. */
+  .dv-col.email .dv-colhead{ border-bottom:2px solid var(--blue); color:var(--blue-text); }
+  .dv-col.call .dv-colhead{ border-bottom:2px solid var(--purple); color:var(--purple-text); }
+  .dv-col.email .dv-n{ color:var(--blue-text); }
+  .dv-col.call .dv-n{ color:var(--purple-text); }
   .dv-dot{ width:9px; height:9px; border-radius:50%; flex:none; }
   .dv-dot.email{ background:linear-gradient(180deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
   .dv-dot.call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
@@ -969,23 +988,25 @@
   /* ── call tab ───────────────────────────────────────────────── */
   .call-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .call-list{ display:flex; flex-direction:column; gap:10px; }
-  .call-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
-  /* Rank shares the account name's baseline (both on the same line), so the
-     number reads as aligned with the account it ranks. */
-  .call-card-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:14px; }
-  .call-card-rank{ font-family:var(--mono); font-size:var(--fs-body); line-height:var(--lh-body); color:var(--text3); width:18px; flex:none; text-align:right; }
-  .call-card-acct{ font-size:var(--fs-caption); color:var(--text3); }
+  .call-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:20px; }
+  /* A stable three-column header avoids the drifting baseline caused by the
+     previous nested flex row: rank | account context | completion action. */
+  .call-card-head{ display:grid; grid-template-columns:28px minmax(0,1fr) auto; align-items:start; gap:12px; margin-bottom:18px; }
+  .call-card-rank{ font-family:var(--mono); font-size:var(--fs-body); line-height:var(--lh-body); color:var(--text3); text-align:right; padding-top:1px; }
+  .call-card-summary{ min-width:0; }
+  .call-card-titleline{ display:flex; align-items:baseline; gap:10px; min-width:0; }
+  .call-card-acct{ margin-top:3px; font-size:var(--fs-caption); color:var(--text3); }
   .call-card-name{ font-weight:600; font-size:var(--fs-body); flex:1; cursor:pointer; }
   .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
-  .call-card-step{ font-size:var(--fs-caption); color:var(--blue-text); }
+  .call-card-step{ display:block; margin-top:4px; font-size:var(--fs-caption); color:var(--blue-text); }
   .call-card.done{ opacity:.62; }
   .call-done-btn{ border-radius:var(--r-sm); font:inherit; font-size:var(--fs-caption); margin-left:auto; background:none;
                   border:1px solid var(--border-strong); color:var(--text3); cursor:pointer;
                   padding:4px 11px; white-space:nowrap; transition:color .12s,border-color .12s; }
   .call-done-btn:hover{ color:var(--text1); border-color:var(--text1); }
   .call-done-btn.on{ color:var(--green); border-color:rgba(66,190,101,.5); }
-  .call-card-body{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .call-contacts{ border-radius:var(--r-md); background:var(--layer2); border:1px solid var(--border); padding:12px 14px; }
+  .call-card-body{ display:grid; grid-template-columns:minmax(230px,.85fr) minmax(0,1.15fr); gap:16px; align-items:stretch; }
+  .call-contacts{ border-radius:var(--r-md); background:var(--layer2); border:1px solid var(--border); padding:16px; }
   .call-contacts h4{ font-size:var(--fs-caption); font-weight:600; color:var(--text3); margin-bottom:10px; }
   .call-person{ padding:8px 0; border-top:1px solid var(--border); }
   .call-person:first-of-type{ border-top:none; }
@@ -1000,14 +1021,16 @@
   .btn.call:hover{ background:#0353e9; border-color:#0353e9; }
   /* Neutral panel like the contacts side, with a subtle purple accent (border +
      eyebrow) marking it as AI — not a full saturated purple block. */
-  .call-brief{ border-radius:var(--r-md); background:var(--layer2); border:1px solid var(--border); border-left:2px solid var(--purple); padding:12px 14px; }
+  .call-brief{ border-radius:var(--r-md); background:var(--layer2); border:1px solid var(--border); border-left:2px solid var(--purple); padding:16px; }
   .call-brief h4{ font-size:var(--fs-caption); font-weight:600; color:var(--purple-text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
   .call-brief p{ font-size:var(--fs-caption); line-height:1.6; margin:0; }
   .call-brief.loading p{ color:var(--text3); font-style:italic; }
   .brief-bullets{ margin:0; padding-left:16px; list-style:disc; }
   .brief-bullets li{ font-size:var(--fs-caption); line-height:1.55; margin-bottom:5px; color:var(--text1); }
   .brief-bullets li:last-child{ margin-bottom:0; }
-  @media(max-width:700px){ .call-card-body{ grid-template-columns:1fr; } .email-grid{ grid-template-columns:1fr; } }
+  @media(max-width:700px){ .call-card-head{ grid-template-columns:24px minmax(0,1fr); }
+                           .call-done-btn{ grid-column:2; justify-self:start; margin-top:2px; }
+                           .call-card-body{ grid-template-columns:1fr; } .email-grid{ grid-template-columns:1fr; } }
 
   /* ── account detail modal ──────────────────────────────────── */
   .modal-card.wide{ width:820px; }
@@ -1124,9 +1147,12 @@
   .cred-block{ margin-top:16px; }
   .cred-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:var(--fs-label); }
   .cred-name{ font-weight:500; color:var(--text1); }
-  .cred-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  .cred-form{ display:grid; grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto; gap:10px; align-items:center; }
   /* Compact, recessed fields — same height as the button and darker than the
      card so they read as inputs, not bright white boxes. */
-  .cred-form input[type=text],.cred-form input[type=password]{ flex:1 1 200px; min-width:0;
-      font-size:var(--fs-body); line-height:var(--lh-body); padding:7px 14px; background:var(--bg); border-color:var(--border-strong); }
-  .cred-form .btn{ flex:none; }
+  .cred-form input[type=text],.cred-form input[type=password]{ min-width:0; height:37px; box-sizing:border-box;
+      font-size:var(--fs-body); line-height:var(--lh-body); padding:7px 14px; background:var(--layer1) !important;
+      border-color:var(--border-strong); color-scheme:dark; -webkit-box-shadow:0 0 0 1000px var(--layer1) inset;
+      -webkit-text-fill-color:var(--text1); }
+  .cred-form .btn{ height:37px; box-sizing:border-box; }
+  @media(max-width:700px){ .cred-form{ grid-template-columns:1fr; } .cred-form .btn{ justify-self:start; } }

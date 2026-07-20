@@ -383,17 +383,17 @@ function renderCallList(){
     return `<div class="call-card ${isDone ? 'done' : ''} ${_focusKey === a.account ? 'focused' : ''}" id="callcard-${i}">
       <div class="call-card-head">
         <span class="call-card-rank">${i + 1}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:baseline;gap:10px;">
+        <div class="call-card-summary">
+          <div class="call-card-titleline">
             <span class="call-card-name" onclick="openSidePanel('account', ${i}, 'call')">${esc(a.account)}</span>
-            <span class="call-card-step">${esc(displayStepLabel(a.step))} &middot; ${esc(cadenceLabel(a.cadence))}</span>
-            <button class="call-done-btn ${isDone ? 'on' : ''}"
-                    onclick="toggleCallDone('${esc(a.account)}','${esc(a.step)}')">
-              ${isDone ? '&#10003; Called' : 'Mark as called'}
-            </button>
           </div>
+          <span class="call-card-step">${esc(displayStepLabel(a.step))} &middot; ${esc(cadenceLabel(a.cadence))}</span>
           ${dm ? `<div class="call-card-acct">Primary contact: ${esc(dm.first_name)} ${esc(dm.last_name)}, ${esc(dm.title)}</div>` : ''}
         </div>
+        <button class="call-done-btn ${isDone ? 'on' : ''}"
+                onclick="toggleCallDone('${esc(a.account)}','${esc(a.step)}')">
+          ${isDone ? '&#10003; Called' : 'Mark as called'}
+        </button>
       </div>
       <div class="call-card-body">
         <div class="call-contacts">

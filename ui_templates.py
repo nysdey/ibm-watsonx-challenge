@@ -554,12 +554,12 @@ PAGE_TEMPLATE = """
   /* ── accounts layout (sidebar lists + search/filter) ─────────── */
   .accts-layout{ display:flex; gap:18px; align-items:flex-start; }
   .accts-sidebar{ width:240px; flex:none; background:var(--layer1); border:1px solid var(--border);
-                  padding:8px 0 10px; }
+                  padding:6px 0 6px; }
   /* Section headers — readable, evenly spaced; first one doesn't over-pad the top. */
-  .accts-sidebar h4{ font-size:var(--fs-body); font-weight:600; color:var(--text2); padding:14px 16px 8px; }
-  .accts-sidebar h4:first-child{ padding-top:8px; }
+  .accts-sidebar h4{ font-size:var(--fs-body); font-weight:600; color:var(--text2); padding:10px 16px 5px; }
+  .accts-sidebar h4:first-child{ padding-top:6px; }
   .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:var(--fs-body); color:var(--text1);
-          background:none; border:none; border-left:3px solid transparent; padding:9px 16px 9px 13px; cursor:pointer; }
+          background:none; border:none; border-left:3px solid transparent; padding:6px 16px 6px 13px; cursor:pointer; }
   .slist:hover{ background:var(--layer2); color:var(--text1); }
   .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:600; }
   .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:var(--text1); }
@@ -665,15 +665,15 @@ PAGE_TEMPLATE = """
   .cal-month-link:hover{ color:var(--blue-text); text-decoration:underline; }
 
   /* ── Ask BobBee (watsonx Assistant) ─────────────────────────── */
-  /* glow-circle-chat.png is a self-contained glowing circle on transparency —
-     it IS the button, no plate, glow shows past the edges. */
-  .ask-fab{ position:fixed; right:20px; bottom:20px; z-index:130; width:60px; height:60px;
-            border:none; background:none; cursor:pointer; padding:0;
-            display:flex; align-items:center; justify-content:center; transition:transform .14s; }
-  .ask-fab:hover{ transform:scale(1.07); }
-  .ask-fab img{ width:100%; height:100%; object-fit:contain; display:block; }
-  .ask-panel{ border-radius:var(--r-lg); position:fixed; right:22px; bottom:86px; z-index:130; width:378px;
-              max-width:calc(100vw - 44px); height:min(560px, calc(100vh - 140px));
+  /* Lives in the top nav, not a corner bubble (per the design review). The exact
+     glow-circle-chat.png shown at natural size — no zoom, no clip, no plate. */
+  .ask-navbtn{ display:flex; align-items:center; justify-content:center; flex:none;
+               width:52px; background:none; border:none; cursor:pointer; padding:0;
+               transition:background .11s; }
+  .ask-navbtn:hover{ background:var(--layer2); }
+  .ask-navbtn img{ width:34px; height:34px; object-fit:contain; display:block; }
+  .ask-panel{ border-radius:var(--r-lg); position:fixed; right:22px; top:64px; z-index:130; width:378px;
+              max-width:calc(100vw - 44px); height:min(560px, calc(100vh - 88px));
               background:var(--layer1); border:1px solid var(--border-strong);
               box-shadow:var(--shadow-lg); display:none; flex-direction:column; }
   .ask-panel.open{ display:flex; }
@@ -1097,8 +1097,8 @@ PAGE_TEMPLATE = """
     right:calc(-50% + 12px); height:1px; background:var(--border); }
   .step-dot{ width:24px; height:24px; border:1px solid var(--border-strong); background:var(--layer2);
              display:flex; align-items:center; justify-content:center; font-size:9.5px; font-weight:600; z-index:1; }
-  .step-dot.email{ border-color:var(--purple-border); background:var(--purple-soft); }
-  .step-dot.call{ border-color:var(--blue-border); background:var(--blue-soft); }
+  .step-dot.email{ border-color:var(--blue-border); background:var(--blue-soft); }
+  .step-dot.call{ border-color:var(--purple-border); background:var(--purple-soft); }
   .step-label{ font-size:10px; margin-top:5px; text-align:center; color:var(--text3); max-width:80px; line-height:1.35; }
   .step-day{ font-family:var(--mono); font-size:9.5px; color:var(--text3); margin-top:2px; }
   .cad-accounts{ padding:0; }
@@ -1128,7 +1128,7 @@ PAGE_TEMPLATE = """
   .email-card-to{ font-weight:600; font-size:13.5px; }
   .email-card-addr{ font-size:11.5px; color:var(--blue-text); font-family:var(--mono); margin-top:1px; }
   .email-card-sub{ font-size:12px; color:var(--text3); margin-top:3px; }
-  .email-card-cadence{ font-size:11px; color:var(--purple-text); margin-top:2px; }
+  .email-card-cadence{ font-size:11px; color:var(--text3); margin-top:2px; }
   .email-card-subject{ font-size:12.5px; font-weight:600; color:var(--text1); margin:8px 0 2px; }
   .email-card-subject span{ font-weight:400; color:var(--text3); }
   .email-body-wrap{ border-top:1px solid var(--border); padding-top:10px; flex:1; }
@@ -1171,8 +1171,10 @@ PAGE_TEMPLATE = """
   .call-person-info{ display:flex; gap:14px; margin-top:6px; flex-wrap:wrap; }
   .call-person-phone{ font-family:var(--mono); font-size:11.5px; color:var(--blue-text); }
   .call-person-email{ font-family:var(--mono); font-size:11px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
-  .btn.call{ background:var(--green); border-color:var(--green); color:#000; font-weight:600; padding:4px 12px; font-size:12px; }
-  .btn.call:hover{ background:#37a659; }
+  /* Call is a primary deterministic action → IBM Blue, not green. Green is
+     reserved for "done" states (mark-as-called, completed). */
+  .btn.call{ background:var(--blue); border-color:var(--blue); color:#fff; font-weight:600; padding:4px 12px; font-size:12px; }
+  .btn.call:hover{ background:#0353e9; border-color:#0353e9; }
   .call-brief{ border-radius:var(--r-md); background:var(--purple-soft); border:1px solid var(--purple-border); padding:12px 14px; }
   .call-brief h4{ font-size:11.5px; font-weight:600; color:var(--purple-text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
   .call-brief p{ font-size:12px; line-height:1.6; margin:0; }
@@ -1194,7 +1196,7 @@ PAGE_TEMPLATE = """
   .contact-row:first-of-type{ border-top:none; }
   .contact-row .cn{ flex:1; font-weight:500; }
   .contact-row .ct{ color:var(--text3); }
-  .dm-badge{ border-radius:var(--r-sm); font-size:10px; font-weight:600; border:1px solid rgba(66,190,101,.55); padding:1px 7px; color:var(--text1); }
+  .dm-badge{ border-radius:var(--r-sm); font-size:10px; font-weight:600; border:1px solid var(--border-strong); padding:1px 7px; color:var(--text2); }
   /* AI analysis is the hero of the account popup — brand-gradient wash, purple
      edge, and the AI elevation, so it reads as watsonx output at a glance. */
   .ai-panel{ background:var(--grad-brand-soft) !important; border-color:var(--purple) !important;
@@ -1329,6 +1331,8 @@ PAGE_TEMPLATE = """
              onkeydown="if(event.key==='Enter') globalSearchGo()">
     </div>
     <div class="topbar-actions">
+      <button class="ask-navbtn" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
+        <img src="/static/chat-icon.png" alt="Ask BobBee"></button>
       <div class="profile-wrap">
         <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">?</button>
       </div>
@@ -2104,9 +2108,7 @@ PAGE_TEMPLATE = """
   </main>
 </div>
 
-<!-- ── Ask BobBee (watsonx Assistant) ── -->
-<button class="ask-fab" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
-  <img src="/static/glow-circle-chat-c.png" alt="Ask BobBee"></button>
+<!-- ── Ask BobBee (watsonx Assistant) — trigger lives in the top nav ── -->
 <div class="ask-panel" id="askPanel">
   <div class="day-panel-head">
     <h3 class="ask-title">

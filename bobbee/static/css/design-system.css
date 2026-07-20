@@ -33,8 +33,8 @@
     /* ── Type scale (the design kit) ───────────────────────────────
        One method: each step is size / line-height / weight. Use the .t-*
        classes (or these vars) instead of ad-hoc font-sizes.
-         display  36/40/300  — hero numbers, the profile name
-         h1       28/34/400  — page titles
+         display  44/52/300  — shared page titles
+         h1       28/34/400  — modal and feature titles
          h2       20/26/600  — section headers
          h3       16/22/600  — card / panel titles
          body-lg  15/23/400  — lead paragraphs (the morning brief)
@@ -124,6 +124,8 @@
   .mono{ font-family:var(--mono); }
   /* ── Type-scale utilities (the design kit) ─────────────────────── */
   .t-display{ font-size:var(--fs-display); line-height:var(--lh-display); font-weight:300; letter-spacing:-.01em; }
+  .page-title{ font-family:var(--font); font-size:var(--fs-display); line-height:var(--lh-display);
+               font-weight:300; letter-spacing:-.015em; }
   .t-h1{ font-size:var(--fs-h1); line-height:var(--lh-h1); font-weight:400; letter-spacing:-.01em; }
   .t-h2{ font-size:var(--fs-h2); line-height:var(--lh-h2); font-weight:600; }
   .t-h3{ font-size:var(--fs-h3); line-height:var(--lh-h3); font-weight:600; }
@@ -132,6 +134,7 @@
   .t-label{ font-size:var(--fs-label); line-height:var(--lh-label); font-weight:500; color:var(--text3); }
   .t-caption{ font-size:var(--fs-caption); line-height:var(--lh-caption); font-weight:400; }
   .t-mono{ font-family:var(--mono); font-size:var(--fs-mono); line-height:var(--lh-mono); }
+  @media(max-width:640px){ .page-title{ font-size:36px; line-height:44px; } }
 
   .btn{ font:inherit; font-size:var(--fs-body); font-weight:500; color:var(--text1); background:var(--layer2);
         border:1px solid var(--border); border-radius:var(--r-sm); padding:7px 14px; cursor:pointer;

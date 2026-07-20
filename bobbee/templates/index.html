@@ -6,7 +6,7 @@
 <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
 <script src="{{ url_for('static', filename='js/theme-init.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
@@ -78,7 +78,7 @@
       <div id="dashboardBody" style="display:none">
         <!-- Greeting + pacing -->
         <div class="td-greet">
-          <h2 id="tdGreet">Good morning</h2>
+          <h2 class="page-title" id="tdGreet">Good morning</h2>
           <span class="td-meta" id="tdMeta">—</span>
         </div>
 
@@ -239,7 +239,7 @@
     <!-- Plan -->
     <section id="page-plan" class="page">
       <div class="page-head">
-        <h2>Schedule</h2>
+        <h2 class="page-title">Schedule</h2>
         <p>Your quarter, distributed — who to email and call, every day.</p>
       </div>
 
@@ -283,7 +283,7 @@
     <!-- Accounts -->
     <section id="page-accounts" class="page">
       <div class="page-head">
-        <h2>Accounts</h2>
+        <h2 class="page-title">Accounts</h2>
         <p>Import, strategize, and work your book of business.</p>
       </div>
 
@@ -372,7 +372,7 @@
     <!-- Cadences -->
     <section id="page-cadences" class="page">
       <div class="page-head">
-        <h2>Cadences</h2>
+        <h2 class="page-title">Cadences</h2>
         <p>Your active outreach sequences — steps, timeline, and account progress.</p>
       </div>
       <div id="cadencesEmpty" class="empty-state" style="display:none">
@@ -393,7 +393,7 @@
     <!-- Email -->
     <section id="page-email" class="page">
       <div class="page-head">
-        <h2>Email</h2>
+        <h2 class="page-title">Email</h2>
         <p id="emailDateLabel">Today's outbound emails across all cadences.</p>
       </div>
       <div id="emailEmpty" class="empty-state" style="display:none">
@@ -421,7 +421,7 @@
     <!-- Call -->
     <section id="page-call" class="page">
       <div class="page-head">
-        <h2>Call</h2>
+        <h2 class="page-title">Call</h2>
         <p id="callDateLabel">Today's call list across all cadences.</p>
       </div>
       <div id="callEmpty" class="empty-state" style="display:none">
@@ -447,7 +447,7 @@
     <section id="page-profile" class="page">
       <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <h2 class="w3-name">Tim Zhou</h2>
+          <h2 class="page-title">Tim Zhou</h2>
         </div>
       </div>
       <div class="profile-page">

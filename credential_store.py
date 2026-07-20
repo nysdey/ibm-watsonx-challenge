@@ -43,6 +43,18 @@ def save(key, email, password):
         return False, str(e)
 
 
+def clear(key):
+    """Forget the signed-in identity for `key` (logout). Returns (ok, error)."""
+    data = _load()
+    if key in data:
+        del data[key]
+        try:
+            _save_store(data)
+        except Exception as e:
+            return False, str(e)
+    return True, None
+
+
 def has(key):
     return key in _load()
 

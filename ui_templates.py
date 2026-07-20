@@ -44,18 +44,37 @@ _DESIGN_CSS = """
     --viz-blue-lo:#a6c8ff; --viz-blue-hi:#4589ff;
     --viz-purple-lo:#d4bbff; --viz-purple-hi:#a56eff;
     --map-base:#2a2130; --map-edge:rgba(255,255,255,.34); --map-sep:rgba(255,255,255,.55);
-    --gate-glow:rgba(138,63,252,.08);
+    --gate-glow:rgba(138,63,252,.05);
     --shadow-lg:0 16px 36px rgba(0,0,0,.45);
-    /* Gradients. IBM's brand gradient runs blue 60 → purple 60; keep every
-       gradient on that axis so "futuristic" never drifts off-palette. Surface
-       gradients stay near-black so they read as depth, not as color. */
+    /* Gradients — kept subtle and sleek. Brand gradient for the few accent
+       moments; surface/glow washes are gentle (depth, not decoration). */
     --grad-brand:linear-gradient(135deg,#0f62fe 0%,#8a3ffc 100%);
-    --grad-brand-soft:linear-gradient(135deg,rgba(15,98,254,.18) 0%,rgba(138,63,252,.18) 100%);
-    --grad-surface:linear-gradient(160deg,#262626 0%,#1c1c1c 100%);
-    --grad-glow:radial-gradient(900px 420px at 15% -10%,rgba(15,98,254,.16),transparent 60%),
-                radial-gradient(760px 400px at 95% 0%,rgba(138,63,252,.13),transparent 62%);
+    --grad-brand-soft:linear-gradient(135deg,rgba(15,98,254,.12) 0%,rgba(138,63,252,.12) 100%);
+    --grad-surface:linear-gradient(160deg,#262626 0%,#202020 100%);
+    --grad-glow:radial-gradient(900px 420px at 12% -20%,rgba(15,98,254,.07),transparent 58%);
     /* IBM Carbon: sharp, rectangular corners everywhere. */
     --r-sm:0; --r-md:0; --r-lg:0;
+    --shadow-ai:0 0 0 1px rgba(138,63,252,.24), 0 8px 22px rgba(0,0,0,.35);
+
+    /* ── Type scale (the design kit) ───────────────────────────────
+       One method: each step is size / line-height / weight. Use the .t-*
+       classes (or these vars) instead of ad-hoc font-sizes.
+         display  36/40/300  — hero numbers, the profile name
+         h1       28/34/400  — page titles
+         h2       20/26/600  — section headers
+         h3       16/22/600  — card / panel titles
+         body-lg  15/23/400  — lead paragraphs (the morning brief)
+         body     14/21/400  — default text
+         label    13/18/500  — captions, table headers, meta (sentence case)
+         mono     14/20/500  — numerals & IDs (IBM Plex Mono)                */
+    --fs-display:36px; --lh-display:40px;
+    --fs-h1:28px;      --lh-h1:34px;
+    --fs-h2:20px;      --lh-h2:26px;
+    --fs-h3:16px;      --lh-h3:22px;
+    --fs-body-lg:15px; --lh-body-lg:23px;
+    --fs-body:14px;    --lh-body:21px;
+    --fs-label:13px;   --lh-label:18px;
+    --fs-mono:14px;    --lh-mono:20px;
     --font:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
     --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
   }
@@ -105,7 +124,8 @@ _DESIGN_CSS = """
 
   *{ box-sizing:border-box; }
   html,body{ background:var(--bg); }
-  body{ font-family:var(--font); color:var(--text1); margin:0; font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased; }
+  body{ font-family:var(--font); color:var(--text1); margin:0;
+        font-size:var(--fs-body); line-height:var(--lh-body); -webkit-font-smoothing:antialiased; }
   ::selection{ background:rgba(91,150,255,.3); }
   ::-webkit-scrollbar{ width:10px; height:10px; }
   ::-webkit-scrollbar-track{ background:transparent; }
@@ -113,9 +133,18 @@ _DESIGN_CSS = """
   a{ color:var(--blue-text); }
   h1,h2,h3{ font-weight:600; letter-spacing:-.01em; margin:0; color:var(--text1); }
   .mono{ font-family:var(--mono); }
+  /* ── Type-scale utilities (the design kit) ─────────────────────── */
+  .t-display{ font-size:var(--fs-display); line-height:var(--lh-display); font-weight:300; letter-spacing:-.01em; }
+  .t-h1{ font-size:var(--fs-h1); line-height:var(--lh-h1); font-weight:400; letter-spacing:-.01em; }
+  .t-h2{ font-size:var(--fs-h2); line-height:var(--lh-h2); font-weight:600; }
+  .t-h3{ font-size:var(--fs-h3); line-height:var(--lh-h3); font-weight:600; }
+  .t-body-lg{ font-size:var(--fs-body-lg); line-height:var(--lh-body-lg); font-weight:400; }
+  .t-body{ font-size:var(--fs-body); line-height:var(--lh-body); font-weight:400; }
+  .t-label{ font-size:var(--fs-label); line-height:var(--lh-label); font-weight:500; color:var(--text3); }
+  .t-mono{ font-family:var(--mono); font-size:var(--fs-mono); line-height:var(--lh-mono); }
 
-  .btn{ font:inherit; font-size:14.5px; font-weight:500; color:var(--text1); background:var(--layer2);
-        border:1px solid var(--border); border-radius:var(--r-sm); padding:9px 16px; cursor:pointer;
+  .btn{ font:inherit; font-size:var(--fs-body); font-weight:500; color:var(--text1); background:var(--layer2);
+        border:1px solid var(--border); border-radius:var(--r-sm); padding:7px 14px; cursor:pointer;
         transition:background .15s,border-color .15s,transform .08s; white-space:nowrap; }
   .btn:hover{ background:var(--layer3); border-color:var(--border-strong); }
   .btn:active{ transform:scale(.98); }
@@ -130,17 +159,22 @@ _DESIGN_CSS = """
 
   .card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); }
 
-  .badge{ display:inline-flex; align-items:center; gap:5px; font-size:12.5px; font-weight:500; padding:4px 10px;
-          border-radius:var(--r-sm); border:1px solid transparent; line-height:1.3; white-space:nowrap; }
-  .badge.blue{ background:var(--blue-soft); color:var(--blue-text); border-color:var(--blue-border); }
-  .badge.ai{ background:var(--purple-soft); color:var(--purple-text); border-color:var(--purple-border); }
-  .badge.green{ background:rgba(66,190,101,.13); color:var(--green); border-color:rgba(66,190,101,.3); }
-  .badge.neutral{ background:var(--layer2); color:var(--text2); border-color:var(--border); }
+  /* One chip style everywhere: neutral surface, neutral text, a colored dot for
+     category. Never a colored fill with lighter-same-color text. */
+  .badge{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:500; padding:4px 10px;
+          border-radius:var(--r-sm); border:1px solid var(--border); background:var(--layer2);
+          color:var(--text2); line-height:1.3; white-space:nowrap; }
+  .badge.blue::before, .badge.ai::before, .badge.green::before{ content:''; width:8px; height:8px;
+          border-radius:50%; flex:none; }
+  .badge.blue::before{ background:var(--sig-white); }
+  .badge.ai::before{ background:var(--purple); }
+  .badge.green::before{ background:var(--green); }
   .spark{ width:11px; height:11px; flex:none; }
 
-  .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--text3); flex:none; }
-  .dot.done{ background:var(--green); }
-  .dot.running{ background:var(--amber); animation:pulse 1.4s ease-in-out infinite; }
+  .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--text3); flex:none; }
+  /* Running = blue, blinking. Done = solid blue (the blinking stops). */
+  .dot.done{ background:var(--blue); }
+  .dot.running{ background:var(--blue); animation:pulse 1.1s ease-in-out infinite; }
   .dot.err{ background:var(--red); }
   .dot.pending{ background:var(--text3); }
   @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
@@ -193,7 +227,7 @@ PAGE_TEMPLATE = """
   .gate-note{ color:var(--text3); font-size:12px; line-height:1.55; margin-top:20px; }
 
   /* ── profile page ───────────────────────────────────────────── */
-  .profile-page{ max-width:1360px; }
+  .profile-page{ max-width:1600px; }
 
   /* ── w3-style identity header ───────────────────────────────── */
   /* w3 renders the person's name very large and very light. */
@@ -218,7 +252,7 @@ PAGE_TEMPLATE = """
   .w3-link:hover{ text-decoration:underline; }
   .w3-contact{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
                gap:14px; padding:24px 0 28px; border-top:1px solid var(--border); }
-  .w3-ctile{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px 20px; }
+  .w3-ctile{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:18px 20px 20px; }
   .w3-ctile.off{ opacity:.5; }
   .w3-cicon{ width:38px; height:38px; display:flex; align-items:center; justify-content:center;
              border-radius:50%; background:var(--layer2); color:var(--text2); font-size:17px;
@@ -250,7 +284,7 @@ PAGE_TEMPLATE = """
   .w3-expname{ font-size:13.5px; font-weight:600; color:var(--text1); }
   .w3-expdesc{ font-size:12.5px; color:var(--text3); margin:4px 0 8px; line-height:1.5; }
   .w3-creds{ display:flex; flex-direction:column; gap:10px; }
-  .w3-cred{ font-size:13px; color:var(--text2); padding:11px 14px; background:var(--layer2);
+  .w3-cred{ border-radius:var(--r-md); font-size:13px; color:var(--text2); padding:11px 14px; background:var(--layer2);
             border-left:2px solid transparent; border-image:var(--grad-brand) 1; }
   .profile-tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:28px; }
   /* The name is display-scale, so the default page-head gap reads as a hole. */
@@ -262,29 +296,28 @@ PAGE_TEMPLATE = """
   .profile-tab.active{ color:var(--text1); border-bottom-color:var(--blue); }
   .profile-section{ display:none; }
   .profile-section.active{ display:block; }
-  .prof-card{ background:var(--layer1); border:1px solid var(--border); padding:24px 26px; margin-bottom:16px; }
+  .prof-card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px 26px; margin-bottom:16px; }
   .prof-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
   .prof-card-head h3{ font-size:14px; font-weight:600; margin:0; }
   .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
   .field-grid.single{ grid-template-columns:1fr; }
   .field{ display:flex; flex-direction:column; gap:5px; }
   .field label{ font-size:12px; font-weight:600; color:var(--text3); }
-  .field input[type=text],.field input[type=email],.field textarea,.field select{
-    font:inherit; font-size:13.5px; border:1px solid var(--border); background:var(--layer2);
-    color:var(--text1); padding:9px 12px; outline:none; width:100%; resize:vertical; }
+  .field input[type=text],.field input[type=email],.field textarea,.field select{border-radius:var(--r-sm); font:inherit; font-size:13.5px; border:1px solid var(--border); background:var(--layer2);
+    color:var(--text1); padding:9px 12px; outline:none; width:100%; resize:vertical;}
   .field input:focus,.field textarea:focus,.field select:focus{
     border-color:var(--blue-text); box-shadow:0 0 0 2px var(--blue-soft); }
-  .field input[readonly]{ color:var(--text3); background:var(--layer1); cursor:default; }
+  .field input[readonly]{ color:var(--text3); background:var(--layer1); cursor:default; border-radius:var(--r-sm); }
   .field textarea{ min-height:80px; font-family:var(--font); font-size:13px; line-height:1.55; }
   .field .hint{ font-size:11.5px; color:var(--text3); margin-top:2px; }
   .pref-row{ display:flex; align-items:center; gap:14px; padding:11px 0; border-top:1px solid var(--border); }
   .pref-row:first-of-type{ border-top:none; }
   .pref-row label{ font-size:13px; flex:1; min-width:0; }
   .pref-row .pref-hint{ font-size:11.5px; color:var(--text3); }
-  .pref-row input[type=number]{ width:72px; font:inherit; font-size:13.5px; border:1px solid var(--border);
+  .pref-row input[type=number]{ border-radius:var(--r-sm); width:72px; font:inherit; font-size:13.5px; border:1px solid var(--border);
     background:var(--layer2); color:var(--text1); padding:7px 10px; outline:none; text-align:center; }
   .pref-row input[type=number]:focus{ border-color:var(--blue-text); }
-  .pref-row select{ width:180px; font:inherit; font-size:13px; border:1px solid var(--border);
+  .pref-row select{ border-radius:var(--r-sm); width:180px; font:inherit; font-size:13px; border:1px solid var(--border);
     background:var(--layer2); color:var(--text1); padding:7px 10px; outline:none; }
   .reset-link{ font:inherit; font-size:12px; color:var(--text3); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; }
   .reset-link:hover{ color:var(--text1); }
@@ -300,7 +333,7 @@ PAGE_TEMPLATE = """
 
   /* ── Settings tab: sidebar + section body ───────────────────── */
   .set-split{ display:grid; grid-template-columns:236px minmax(0,1fr); gap:24px; align-items:start; }
-  .set-nav{ display:flex; flex-direction:column; border:1px solid var(--border); background:var(--layer1); }
+  .set-nav{ border-radius:var(--r-lg); display:flex; flex-direction:column; border:1px solid var(--border); background:var(--layer1); }
   .set-navlink{ font:inherit; font-size:13.5px; text-align:left; color:var(--text2); background:none;
                 border:none; border-left:2px solid transparent; cursor:pointer; padding:12px 16px;
                 border-bottom:1px solid var(--border); transition:background .12s,color .12s; }
@@ -325,6 +358,8 @@ PAGE_TEMPLATE = """
   .set-list li{ font-size:13px; color:var(--text2); line-height:1.6; }
   @media(max-width:900px){ .set-split{ grid-template-columns:1fr; } }
 
+  .logout-btn{ font-size:13px; padding:7px 14px; color:var(--text2); }
+  .logout-btn:hover{ border-color:var(--red); color:var(--red); }
   .access-link{ display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--blue-text); background:none;
                 border:none; cursor:pointer; font:inherit; padding:0; margin-top:4px; }
   .access-link:hover{ text-decoration:underline; }
@@ -346,22 +381,20 @@ PAGE_TEMPLATE = """
   .brand-name{ font-size:17px; font-weight:400; letter-spacing:.01em; color:var(--text1);
                white-space:nowrap; }
   .brand-name b{ font-weight:600; }
-  .topnav{ display:flex; align-items:stretch; gap:0; flex:none; }
-  /* Every item the same width, so the bar reads as an even row of tabs rather
-     than spacing that tracks word length. */
-  .navlink{ font:inherit; font-size:14.5px; font-weight:400; color:var(--text2); background:none;
-            border:none; cursor:pointer; padding:0 8px; width:118px; flex:none;
+  .topnav{ display:flex; align-items:stretch; gap:0; flex:none; margin-left:8px; }
+  .navlink{ font:inherit; font-size:var(--fs-body); font-weight:400; color:var(--text2); background:none;
+            border:none; cursor:pointer; padding:0 18px; flex:none;
             position:relative; transition:background .11s,color .11s; }
   .navlink:hover{ color:var(--text1); background:var(--layer2); }
   .navlink.active{ color:var(--text1); background:var(--layer1); }
-  .navlink.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:3px;
-                          background:var(--grad-brand); }
-  /* w3-style global search: fills the bar between the nav and the avatar. */
-  .topsearch{ flex:0 1 400px; display:flex; align-items:center; gap:12px; min-width:0;
-              margin-right:auto; padding:0 18px; background:var(--layer1);
+  .navlink.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px;
+                          background:var(--blue); }
+  /* Global search sits at the right, next to the avatar — not jammed against the nav. */
+  .topsearch{ flex:0 1 340px; display:flex; align-items:center; gap:10px; min-width:0;
+              margin-left:auto; padding:0 16px; background:var(--layer1);
               border-left:1px solid var(--border); border-right:1px solid var(--border); }
-  .topsearch svg{ width:18px; height:18px; flex:none; color:var(--text3); }
-  .topsearch input{ flex:1; min-width:0; font:inherit; font-size:14.5px; background:none;
+  .topsearch svg{ width:17px; height:17px; flex:none; color:var(--text3); }
+  .topsearch input{ flex:1; min-width:0; font:inherit; font-size:var(--fs-body); background:none;
                     border:none; color:var(--text1); padding:0; height:36px; }
   .topsearch input::placeholder{ color:var(--text3); }
   .topsearch input:focus{ outline:none; }
@@ -372,11 +405,12 @@ PAGE_TEMPLATE = """
   .icon-btn:hover{ background:var(--layer2); color:var(--text1); }
   .icon-btn svg{ width:20px; height:20px; }
   .profile-wrap{ position:relative; flex:none; display:flex; align-items:center; gap:10px;
-                 padding:0 22px; border-left:1px solid var(--border); }
-  .profile-btn{ width:44px; height:44px; border-radius:50%; background:var(--layer2); border:1px solid var(--border);
-                color:var(--text1); font-size:12px; font-weight:600; font-family:var(--font); cursor:pointer;
-                display:flex; align-items:center; justify-content:center; }
-  .profile-btn:hover{ border-color:var(--border-strong); }
+                 padding:0 18px; }
+  /* Sharp, gradient-brand avatar tile — matches the IBM theme (not a bubble). */
+  .profile-btn{ width:36px; height:36px; border-radius:0; background:var(--grad-brand); border:none;
+                color:#fff; font-size:13px; font-weight:600; letter-spacing:.02em; font-family:var(--font);
+                cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .profile-btn:hover{ filter:brightness(1.1); }
   .profile-menu{ position:absolute; top:calc(100% + 10px); right:0; background:var(--layer1); border:1px solid var(--border);
                  border-radius:var(--r-md); min-width:180px; box-shadow:var(--shadow-lg); display:none;
                  overflow:hidden; z-index:60; }
@@ -388,11 +422,12 @@ PAGE_TEMPLATE = """
   .warndot{ position:absolute; top:4px; right:6px; width:8px; height:8px; border-radius:50%; background:var(--red);
             box-shadow:0 0 0 3px rgba(250,77,86,.18); }
 
-  main{ max-width:1180px; margin:0 auto; padding:36px 28px 100px; }
+  /* Wider content — fill more of the screen, less dead margin. */
+  main{ max-width:1600px; margin:0 auto; padding:32px 40px 100px; }
   .page{ display:none; } .page.active{ display:block; }
   .page-head{ margin-bottom:24px; }
-  .page-head h2{ font-size:24px; }
-  .page-head p{ color:var(--text1); font-size:14.5px; margin:5px 0 0; }
+  .page-head h2{ font-size:var(--fs-h1); line-height:var(--lh-h1); font-weight:400; }
+  .page-head p{ color:var(--text3); font-size:var(--fs-body); margin:5px 0 0; }
 
   /* ── dashboard ──────────────────────────────────────────────── */
   .empty-state{ text-align:center; padding:70px 20px; background:var(--layer1); border:1px solid var(--border);
@@ -402,13 +437,13 @@ PAGE_TEMPLATE = """
   .empty-state .btn{ width:auto; }
   /* Same segmented control as the dashboard/profile toggles (.seg / .seg-btn) —
      one control style for "pick a view" everywhere in the app. */
-  .range-toggle{ display:inline-flex; border:1px solid var(--border); margin-bottom:18px; }
+  .range-toggle{ border-radius:var(--r-sm); display:inline-flex; border:1px solid var(--border); overflow:hidden; }
   .range-btn{ font:inherit; font-size:12.5px; font-weight:500; color:var(--text3); background:none;
               border:none; border-right:1px solid var(--border); cursor:pointer; padding:7px 15px;
               transition:background .13s,color .13s; }
   .range-btn:last-child{ border-right:none; }
   .range-btn:hover{ color:var(--text1); background:var(--layer2); }
-  .range-btn.active{ color:var(--text1); background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
+  .range-btn.active{ color:var(--text1); background:var(--layer1); box-shadow:inset 0 -2px 0 var(--blue); }
   .aitem{ display:flex; align-items:center; gap:14px; padding:13px 16px; background:var(--layer1); border:1px solid var(--border);
           border-radius:var(--r-md); margin-bottom:8px; }
   .aitem .adate{ width:78px; flex:none; font-size:11px; color:var(--text3); font-family:var(--mono); }
@@ -443,17 +478,17 @@ PAGE_TEMPLATE = """
   /* Carbon data-table header: sits on layer2, sticks while the list scrolls. */
   .acct-head{ position:sticky; top:0; z-index:2; background:var(--layer2); cursor:default;
               border-bottom:1px solid var(--border-strong); }
-  .acct-head span{ font-size:11px !important; font-weight:600 !important; letter-spacing:.16px;
+  .acct-head span{ font-size:13px !important; font-weight:600 !important; letter-spacing:.16px;
                    color:var(--text2) !important; }
   .acct-head .atags{ justify-content:flex-end; }
 
   .stages{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
-  .stage{ display:flex; align-items:flex-start; gap:12px; padding:15px 18px; background:var(--layer1);
+  .stage{ display:flex; align-items:center; gap:12px; padding:15px 18px; background:var(--layer1);
           border:1px solid var(--border); border-radius:var(--r-md); transition:border-color .2s,box-shadow .2s; }
   .stage.running{ border-color:var(--blue-border); box-shadow:0 0 0 3px var(--blue-soft); }
   .stage.done{ border-color:rgba(66,190,101,.32); }
   .stage.err{ border-color:rgba(250,77,86,.4); }
-  .stage .sicon{ margin-top:2px; flex:none; }
+  .stage .sicon{ flex:none; }
   .stage .stitle{ font-weight:600; font-size:13.5px; }
   .stage .smsg{ color:var(--text3); font-size:12.5px; margin-top:3px; }
 
@@ -481,14 +516,18 @@ PAGE_TEMPLATE = """
   .acct-card .aname{ font-weight:500; font-size:13.5px; }
   .acct-card .ameta{ color:var(--text3); font-size:11.5px; margin-top:2px; }
   .acct-card .atags{ display:flex; gap:6px; flex-wrap:wrap; flex:none; max-width:340px; justify-content:flex-end; }
-  /* Tags: white text on a transparent box (border-only), IBM Carbon style —
-     the border color alone carries the category. */
-  .tagpill{ font-size:10.5px; font-weight:500; color:var(--text2); background:transparent; border:1px solid var(--border-strong);
-            border-radius:0; padding:3px 9px; white-space:nowrap; cursor:pointer; position:relative; }
-  .tagpill.white{ border-color:var(--sig-white); color:var(--sig-white); }
-  .tagpill.risk{ border-color:var(--sig-risk); color:var(--sig-risk); }
-  .tagpill.up{ border-color:var(--sig-up); color:var(--sig-up); }
+  /* Filter tags: neutral chip, neutral text, a colored dot for the category.
+     Selected state inverts to solid. */
+  .tagpill{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500;
+            color:var(--text2); background:var(--layer2); border:1px solid var(--border);
+            border-radius:var(--r-sm); padding:4px 10px; white-space:nowrap; cursor:pointer; position:relative; }
+  .tagpill::before{ content:''; width:8px; height:8px; border-radius:50%; flex:none; background:var(--text3); }
+  .tagpill.white::before{ background:var(--sig-white); }
+  .tagpill.risk::before{ background:var(--sig-risk); }
+  .tagpill.up::before{ background:var(--sig-up); }
+  .tagpill:hover{ border-color:var(--border-strong); color:#fff; }
   .tagpill.on{ background:var(--text1); color:var(--bg); border-color:var(--text1); }
+  .tagpill.on::before{ background:var(--bg); }
   /* tag tooltip */
   .tagpill[data-tip]:hover::after{
     content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
@@ -514,10 +553,13 @@ PAGE_TEMPLATE = """
 
   /* ── accounts layout (sidebar lists + search/filter) ─────────── */
   .accts-layout{ display:flex; gap:18px; align-items:flex-start; }
-  .accts-sidebar{ width:230px; flex:none; background:var(--layer1); border:1px solid var(--border); }
-  .accts-sidebar h4{ font-size:11.5px; font-weight:600; color:var(--text3); padding:12px 14px 6px; }
-  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; color:var(--text1); background:none;
-          border:none; border-left:3px solid transparent; padding:9px 14px; cursor:pointer; }
+  .accts-sidebar{ width:240px; flex:none; background:var(--layer1); border:1px solid var(--border);
+                  padding:8px 0 10px; }
+  /* Section headers — readable, evenly spaced; first one doesn't over-pad the top. */
+  .accts-sidebar h4{ font-size:var(--fs-body); font-weight:600; color:var(--text2); padding:14px 16px 8px; }
+  .accts-sidebar h4:first-child{ padding-top:8px; }
+  .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:var(--fs-body); color:var(--text1);
+          background:none; border:none; border-left:3px solid transparent; padding:9px 16px 9px 13px; cursor:pointer; }
   .slist:hover{ background:var(--layer2); color:var(--text1); }
   .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:600; }
   .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:var(--text1); }
@@ -530,7 +572,7 @@ PAGE_TEMPLATE = """
   .dash-grid{ display:flex; gap:14px; align-items:stretch; }
   .dash-grid > .dash-panel{ flex:1.4; min-width:0; }
   .dash-side{ flex:1; display:flex; flex-direction:column; gap:14px; }
-  .dash-panel{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
+  .dash-panel{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px 20px; }
   .dash-panel h3{ font-size:13.5px; margin-bottom:14px; }
   .dash-nums{ display:flex; gap:26px; margin-bottom:12px; flex-wrap:wrap; }
   .dnum .v{ display:block; font-family:var(--mono); font-size:26px; font-weight:600; }
@@ -543,24 +585,22 @@ PAGE_TEMPLATE = """
   @media(max-width:900px){ .dash-grid{ flex-direction:column; } }
 
   /* ── dashboard activity visualization ───────────────────────── */
-  .viz-panel{ position:relative; overflow:hidden; margin-bottom:14px;
+  .viz-panel{ border-radius:var(--r-lg); position:relative; overflow:hidden; margin-bottom:14px;
               background:var(--grad-surface); }
-  /* Brand-gradient hairline along the top edge + a soft glow behind the chart. */
-  .viz-panel::before{ content:''; position:absolute; inset:0 0 auto 0; height:2px;
-                      background:var(--grad-brand); }
+  /* A whisper of depth behind the chart — no loud gradient bar on top. */
   .viz-panel::after{ content:''; position:absolute; inset:0; background:var(--grad-glow);
-                     pointer-events:none; }
+                     pointer-events:none; opacity:.6; }
   .viz-panel > *{ position:relative; z-index:1; }
   .viz-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
              flex-wrap:wrap; margin-bottom:18px; }
   .viz-label{ font-size:12.5px; color:var(--text3); margin:3px 0 0; }
-  .seg{ display:flex; border:1px solid var(--border); flex:none; }
+  .seg{ border-radius:var(--r-sm); display:flex; border:1px solid var(--border); flex:none; }
   .seg-btn{ font:inherit; font-size:12.5px; font-weight:500; color:var(--text3); background:none;
             border:none; border-right:1px solid var(--border); padding:7px 14px; cursor:pointer;
             transition:background .13s,color .13s; }
   .seg-btn:last-child{ border-right:none; }
   .seg-btn:hover{ color:var(--text1); background:var(--layer2); }
-  .seg-btn.active{ color:var(--text1); background:var(--grad-brand-soft); box-shadow:inset 0 -2px 0 var(--blue); }
+  .seg-btn.active{ color:var(--text1); background:var(--layer1); box-shadow:inset 0 -2px 0 var(--blue); }
   .viz-body{ display:flex; flex-direction:column; gap:16px; }
   .viz-stats{ display:flex; align-items:center; gap:34px; flex-wrap:wrap; }
   .vstat .v{ display:block; font-family:var(--mono); font-size:30px; font-weight:600;
@@ -612,7 +652,7 @@ PAGE_TEMPLATE = """
   /* Period stepping on the Activity / Meetings panels. */
   .viz-nav{ display:flex; align-items:center; gap:8px; margin-top:3px; }
   .viz-nav .viz-label{ margin:0; min-width:150px; }
-  .step-btn{ font:inherit; font-size:14px; line-height:1; color:var(--text3); background:none;
+  .step-btn{ border-radius:var(--r-sm); font:inherit; font-size:14px; line-height:1; color:var(--text3); background:none;
              border:1px solid var(--border); cursor:pointer; padding:4px 9px;
              transition:color .12s,border-color .12s; }
   .step-btn:hover{ color:var(--text1); border-color:var(--border-strong); }
@@ -625,14 +665,14 @@ PAGE_TEMPLATE = """
   .cal-month-link:hover{ color:var(--blue-text); text-decoration:underline; }
 
   /* ── Ask BobBee (watsonx Assistant) ─────────────────────────── */
-  /* chat-button.png is a self-contained gradient tile, so it *is* the button —
-     no plate, just clip the square to a circle. */
-  .ask-fab{ position:fixed; right:22px; bottom:22px; z-index:130; width:56px; height:56px;
-            border:none; border-radius:50%; cursor:pointer; padding:0; overflow:hidden;
-            box-shadow:var(--shadow-lg); display:block; transition:transform .14s; }
+  /* glow-circle-chat.png is a self-contained glowing circle on transparency —
+     it IS the button, no plate, glow shows past the edges. */
+  .ask-fab{ position:fixed; right:20px; bottom:20px; z-index:130; width:60px; height:60px;
+            border:none; background:none; cursor:pointer; padding:0;
+            display:flex; align-items:center; justify-content:center; transition:transform .14s; }
   .ask-fab:hover{ transform:scale(1.07); }
-  .ask-fab img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .ask-panel{ position:fixed; right:22px; bottom:86px; z-index:130; width:378px;
+  .ask-fab img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .ask-panel{ border-radius:var(--r-lg); position:fixed; right:22px; bottom:86px; z-index:130; width:378px;
               max-width:calc(100vw - 44px); height:min(560px, calc(100vh - 140px));
               background:var(--layer1); border:1px solid var(--border-strong);
               box-shadow:var(--shadow-lg); display:none; flex-direction:column; }
@@ -652,12 +692,12 @@ PAGE_TEMPLATE = """
   .ask-msg{ font-size:13.5px; line-height:1.6; padding:10px 13px; max-width:88%;
             white-space:pre-wrap; }
   .ask-msg.me{ align-self:flex-end; background:var(--blue); color:#fff; }
-  .ask-msg.bot{ align-self:flex-start; background:var(--layer2); color:var(--text2);
+  .ask-msg.bot{ border-radius:var(--r-md); align-self:flex-start; background:var(--layer2); color:var(--text2);
                 border-left:2px solid var(--purple); }
   .ask-msg.offline{ border-left-color:var(--amber); }
   .ask-tag{ display:block; font-size:11px; color:var(--text3); margin-top:6px; }
   .ask-form{ display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--border); }
-  .ask-form input{ flex:1; min-width:0; font:inherit; font-size:13.5px;
+  .ask-form input{ border-radius:var(--r-sm); flex:1; min-width:0; font:inherit; font-size:13.5px;
                    background:var(--layer2); border:1px solid var(--border);
                    color:var(--text1); padding:9px 12px; }
   .ask-form input:focus{ outline:none; border-color:var(--blue); }
@@ -688,7 +728,7 @@ PAGE_TEMPLATE = """
   /* ── territory choropleth (per-territory outlines) ──────────── */
   .usmap{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; flex:1; }
   .usmap.single{ grid-template-columns:1fr; }
-  .terr{ font:inherit; text-align:center; background:var(--layer1); border:1px solid var(--border);
+  .terr{ border-radius:var(--r-md); font:inherit; text-align:center; background:var(--layer1); border:1px solid var(--border);
          cursor:pointer; padding:14px 12px 12px; display:flex; flex-direction:column;
          align-items:center; gap:2px; transition:border-color .13s,background .13s; }
   .terr:hover{ border-color:var(--border-strong); background:var(--layer2); }
@@ -710,7 +750,7 @@ PAGE_TEMPLATE = """
              vector-effect:non-scaling-stroke; }
   .terr-edge{ fill:none; stroke:var(--map-edge); stroke-width:1.4;
               vector-effect:non-scaling-stroke; }
-  .map-hover{ position:fixed; display:none; z-index:200; pointer-events:none;
+  .map-hover{ border-radius:var(--r-sm); position:fixed; display:none; z-index:200; pointer-events:none;
               background:var(--layer1); color:var(--text1); border:1px solid var(--border-strong);
               font-size:12.5px; padding:6px 10px; box-shadow:var(--shadow-lg); white-space:nowrap; }
   .terr-code{ font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text1); }
@@ -732,33 +772,67 @@ PAGE_TEMPLATE = """
   .scale-bar{ display:block; width:180px; height:10px;
               background:linear-gradient(90deg,#6929c4 0%,#8a3ffc 28%,#a56eff 50%,#be95ff 68%,#d4bbff 82%,#f6f2ff 100%); }
   .map-note{ font-size:11.5px; color:var(--text3); }
-  .map-tip{ margin-top:14px; padding:12px 14px; background:var(--layer2);
+  .map-tip{ border-radius:var(--r-md); margin-top:14px; padding:12px 14px; background:var(--layer2);
             border-left:2px solid transparent; border-image:var(--grad-brand) 1;
             font-size:12.5px; }
   .map-tip b{ font-weight:600; }
   .map-tip .mt-row{ color:var(--text3); margin-top:3px; }
 
   /* ── plan calendar ──────────────────────────────────────────── */
-  .cal-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
+  .cal-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:18px; flex-wrap:wrap; }
   .cal-nav{ display:flex; align-items:center; gap:10px; }
+  .cal-arrow{ font:inherit; font-size:20px; line-height:1; color:var(--text2); background:none;
+              border:1px solid var(--border); border-radius:var(--r-sm); cursor:pointer;
+              width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+              transition:border-color .12s, color .12s; }
+  .cal-arrow:hover{ color:#fff; border-color:var(--border-strong); }
+  .cal-today{ font:inherit; font-size:13px; color:var(--blue-text); background:none; border:none;
+              cursor:pointer; padding:6px 8px; }
+  .cal-today:hover{ text-decoration:underline; }
+  /* Month orientation strip. */
+  .cal-summary{ display:flex; gap:34px; align-items:flex-end; flex-wrap:wrap;
+                padding:16px 20px; margin-bottom:14px; background:var(--grad-surface);
+                border:1px solid var(--border); border-radius:var(--r-lg); }
+  .cal-stat{ display:flex; flex-direction:column; gap:3px; }
+  .cal-stat .v{ font-family:var(--mono); font-size:22px; font-weight:600; color:var(--text1); }
+  .cal-stat .l{ font-size:12px; color:var(--text3); }
+  .cal-sum-empty{ font-size:13.5px; color:var(--text3); }
+  .cal-legend{ display:flex; align-items:center; gap:18px; font-size:12.5px; color:var(--text3);
+               margin-bottom:12px; }
+  .cal-legend .ll{ display:inline-block; width:12px; height:8px; border-radius:2px; margin-right:6px;
+                   vertical-align:middle; }
+  .cal-legend .ll-e{ background:linear-gradient(90deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
+  .cal-legend .ll-c{ background:linear-gradient(90deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
+  .cal-legend-hint{ color:var(--text3); }
   .cal-nav .btn{ padding:6px 12px; }
   .cal-label{ font-weight:600; font-size:14px; min-width:150px; text-align:center; }
-  .cal-month{ background:var(--layer1); border:1px solid var(--border); padding:14px; }
+  .cal-month{ border-radius:var(--r-md); background:var(--layer1); border:1px solid var(--border); padding:14px; }
   .cal-month h4{ font-size:13px; margin-bottom:10px; }
   .cal-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:2px; }
   .cal-grid .dow{ font-size:10.5px; color:var(--text3); text-align:center; padding:4px 0; }
   /* Empty days recede into the card; only days with work take the lighter
      layer2 fill, so the month reads as activity rather than a slab of gray. */
-  .cal-cell{ min-height:56px; background:transparent; padding:5px 7px; cursor:default;
-             border:1px solid var(--border); }
-  .cal-cell.out{ opacity:.3; }
-  .cal-cell.today{ border-color:var(--text1); }
-  .cal-cell.has{ cursor:pointer; background:var(--layer2); border-color:var(--blue-border); }
-  .cal-cell.has:hover{ background:var(--layer3); }
+  .cal-cell{ border-radius:var(--r-sm); min-height:72px; background:transparent; padding:8px 9px;
+             cursor:default; border:1px solid var(--border); display:flex; flex-direction:column;
+             gap:7px; transition:border-color .12s, background .12s; }
+  .cal-cell.out{ opacity:0; border-color:transparent; }
+  .cal-cell.has{ cursor:pointer; background:var(--layer1); border-color:var(--border); }
+  .cal-cell.has:hover{ background:var(--layer2); border-color:var(--border-strong); }
+  .cal-cell.today{ border-color:var(--blue); box-shadow:inset 0 0 0 1px var(--blue); }
   .cal-cell.sel{ background:var(--blue-soft); border-color:var(--blue); }
-  .cal-cell .d{ font-family:var(--mono); font-size:11px; color:var(--text1); }
-  .cal-cell .acts{ font-size:10.5px; margin-top:4px; color:var(--text1); }
-  .cal-cell.compact{ min-height:34px; }
+  .cell-head{ display:flex; align-items:baseline; justify-content:space-between; }
+  .cell-num{ font-family:var(--mono); font-size:13px; color:var(--text2); }
+  .cal-cell.today .cell-num{ color:var(--blue-text); font-weight:600; }
+  .cell-count{ font-family:var(--mono); font-size:12px; color:var(--text1); font-weight:600; }
+  /* Load bar: emails (blue) over calls (purple), width ∝ the day's load. */
+  .cell-bar{ display:flex; height:7px; border-radius:100px; overflow:hidden; background:var(--layer2);
+             margin-top:auto; }
+  .cell-bar .cbar-e{ background:linear-gradient(90deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
+  .cell-bar .cbar-c{ background:linear-gradient(90deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
+  /* Compact (year/quarter): a load dot instead of a bar. */
+  .cal-cell.compact{ min-height:34px; padding:5px 6px; gap:4px; }
+  .cell-load{ width:6px; height:6px; border-radius:50%; background:var(--blue-text); align-self:flex-start; }
+  .cell-load.l1{ opacity:.4; } .cell-load.l2{ opacity:.7; } .cell-load.l3{ opacity:1; }
   .cal-quarter{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
   /* Year view: four quarter blocks, each a labelled row of three months. */
   .cal-year{ display:flex; flex-direction:column; gap:22px; }
@@ -768,14 +842,49 @@ PAGE_TEMPLATE = """
                  color:var(--text2); margin:0; }
   .cal-qsum{ font-size:11.5px; color:var(--text3); font-family:var(--mono); }
   @media(max-width:1100px){ .cal-quarter{ grid-template-columns:1fr; } }
-  .cal-week{ display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
-  .cal-weekday{ background:var(--layer1); border:1px solid var(--border); padding:12px; min-height:150px; cursor:pointer; }
-  .cal-weekday:hover{ background:var(--layer2); }
+  .cal-week{ display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  .cal-weekday{ border-radius:var(--r-md); background:var(--layer1); border:1px solid var(--border);
+                padding:14px; min-height:160px; display:flex; flex-direction:column; gap:10px;
+                transition:border-color .12s, background .12s; }
+  .cal-weekday.has{ cursor:pointer; }
+  .cal-weekday.has:hover{ background:var(--layer2); border-color:var(--border-strong); }
+  .cal-weekday.empty{ opacity:.5; }
+  .cal-weekday.today{ border-color:var(--blue); box-shadow:inset 0 0 0 1px var(--blue); }
+  .cal-weekday.sel{ border-color:var(--blue); background:var(--blue-soft); }
+  .wd-head{ display:flex; align-items:baseline; justify-content:space-between; }
+  .wd-date{ font-size:13px; font-weight:600; color:var(--text2); }
+  .cal-weekday.today .wd-date{ color:var(--blue-text); }
+  .wd-count{ font-family:var(--mono); font-size:13px; font-weight:600; color:var(--text1); }
+  .cal-weekday .cell-bar{ height:7px; }
+  .wd-accts{ display:flex; flex-direction:column; gap:3px; }
+  .wd-acct{ font-size:12.5px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .wd-more, .wd-free{ font-size:12px; color:var(--text3); }
+
+  /* Inline day board (day view). */
+  .cal-dayboard{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg);
+                 padding:22px 24px; }
+  .dv-sums{ font-size:14.5px; color:var(--text2); padding-bottom:16px; margin-bottom:20px;
+            border-bottom:1px solid var(--border); }
+  .dv-sums b{ color:var(--text1); font-family:var(--mono); }
+  .dv-cols{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  @media(max-width:760px){ .dv-cols{ grid-template-columns:1fr; } }
+  .dv-colhead{ display:flex; align-items:center; gap:9px; font-size:14px; font-weight:600;
+               color:var(--text1); padding-bottom:12px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+  .dv-dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .dv-dot.email{ background:linear-gradient(180deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
+  .dv-dot.call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
+  .dv-n{ margin-left:auto; font-family:var(--mono); font-size:13px; color:var(--text3); }
+  .dv-row{ display:flex; align-items:baseline; justify-content:space-between; gap:14px;
+           padding:11px 0; border-bottom:1px solid var(--border); }
+  .dv-row:last-child{ border-bottom:none; }
+  .dv-acct{ font-size:13.5px; font-weight:500; color:var(--text1); }
+  .dv-step{ font-size:12.5px; color:var(--text3); text-align:right; }
+  .dv-empty{ font-size:13px; color:var(--text3); padding:14px 0; }
   .cal-weekday.sel{ border-color:var(--blue); }
   .cal-weekday h5{ font-size:12px; margin-bottom:8px; }
   .cal-weekday .cnt{ font-size:11.5px; color:var(--text1); margin-bottom:8px; }
   /* ── day-detail side panel (Plan tab) ──────────────────────── */
-  .day-panel{ position:fixed; top:56px; right:0; width:360px; max-width:100vw; height:calc(100vh - 56px); background:var(--layer1);
+  .day-panel{ border-radius:var(--r-lg); position:fixed; top:56px; right:0; width:360px; max-width:100vw; height:calc(100vh - 56px); background:var(--layer1);
               border-left:1px solid var(--border); z-index:120; transform:translateX(100%);
               transition:transform .22s ease; display:flex; flex-direction:column; overflow:hidden; }
   .day-panel.open{ transform:translateX(0); }
@@ -787,7 +896,7 @@ PAGE_TEMPLATE = """
                            body.side-panel-open main{ padding-right:0; } }
 
   /* Contextual panel on the Email/Call tabs — same mechanics as the day panel. */
-  .side-panel{ position:fixed; top:56px; right:0; width:380px; max-width:100vw; height:calc(100vh - 56px);
+  .side-panel{ border-radius:var(--r-lg); position:fixed; top:56px; right:0; width:380px; max-width:100vw; height:calc(100vh - 56px);
                background:var(--layer1); border-left:1px solid var(--border); z-index:120;
                transform:translateX(100%); transition:transform .22s ease; display:flex;
                flex-direction:column; overflow:hidden; }
@@ -813,7 +922,7 @@ PAGE_TEMPLATE = """
   .kebab{ font:inherit; font-size:17px; line-height:1; background:none; border:none;
           color:var(--text3); cursor:pointer; padding:2px 6px; }
   .kebab:hover{ color:var(--text1); }
-  .kebab-menu{ display:none; position:absolute; top:calc(100% + 4px); right:0; z-index:60;
+  .kebab-menu{ border-radius:var(--r-md); display:none; position:absolute; top:calc(100% + 4px); right:0; z-index:60;
                min-width:206px; background:var(--layer2); border:1px solid var(--border-strong);
                box-shadow:0 14px 30px rgba(0,0,0,.5); }
   .kebab-menu.show{ display:block; }
@@ -841,16 +950,83 @@ PAGE_TEMPLATE = """
   .panel-act-body .pa-acct{ font-weight:500; font-size:12.5px; color:var(--text1); word-break:break-word; }
   .panel-act-body .pa-step{ font-size:11px; color:var(--text3); margin-top:2px; }
   /* legacy inline detail (kept for day-view fallback, hidden by default) */
-  .day-detail{ margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:none; }
+  .day-detail{ border-radius:var(--r-md); margin-top:16px; background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:none; }
   .day-detail h3{ font-size:14px; margin-bottom:6px; }
   .day-detail .sums{ color:var(--text1); font-size:13px; margin-bottom:12px; }
   .act-row{ display:flex; gap:12px; align-items:center; padding:8px 0; border-top:1px solid var(--border); font-size:12.5px; }
   .act-row:first-of-type{ border-top:none; }
-  .act-type{ width:52px; flex:none; font-size:10.5px; font-weight:600; text-align:center; border:1px solid var(--border-strong); padding:2px 0; }
-  .act-type.email{ border-color:var(--purple-border); }
-  .act-type.call{ border-color:var(--blue-border); }
+  /* Activity type: colored dot + neutral text (email=blue, call=purple). */
+  .act-type{ display:inline-flex; align-items:center; gap:6px; flex:none; font-size:12px;
+             font-weight:500; color:var(--text2); text-transform:capitalize; }
+  .act-type::before{ content:''; width:8px; height:8px; border-radius:50%; flex:none; background:var(--text3); }
+  .act-type.email::before{ background:var(--sig-white); }
+  .act-type.call::before{ background:var(--purple); }
 
   /* ── today's tasks (top of the dashboard) ───────────────────── */
+  /* ── AI-first Today: greeting, brief, priority moves ─────────── */
+  .td-greet{ display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
+  .td-greet h2{ font-size:26px; font-weight:400; letter-spacing:-.01em; }
+  .td-meta{ font-size:14px; color:var(--text3); }
+
+  /* The brief is the hero object — full width, AI elevation, model speaks first. */
+  .brief-card{ position:relative; background:var(--grad-surface); border:1px solid var(--purple-border);
+               border-radius:var(--r-lg); box-shadow:var(--shadow-ai); padding:24px 26px 22px;
+               margin-bottom:28px; overflow:hidden; }
+  .brief-card::before{ content:''; position:absolute; inset:0 0 auto 0; height:2px;
+                       background:var(--grad-brand); }
+  .brief-head{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+  .brief-mark{ display:flex; color:var(--purple-text); }
+  .brief-mark svg{ width:18px; height:18px; }
+  .brief-eyebrow{ font-size:13px; font-weight:600; color:var(--purple-text); }
+  .brief-src{ margin-left:auto; font-size:11.5px; color:var(--text3); font-family:var(--mono); }
+  .brief-body{ font-size:var(--fs-body-lg); line-height:1.62; color:var(--text1); margin:0 0 18px; }
+  .brief-actions{ display:flex; gap:12px; flex-wrap:wrap; }
+  .brief-cta{ font-size:var(--fs-body-lg); padding:9px 18px; display:inline-flex; align-items:center; gap:9px; }
+  .cta-play{ font-size:11px; }
+  .brief-ghost{ font-size:14px; }
+
+  .moves-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:12px; }
+  .moves-head h3{ font-size:17px; }
+  .moves-sub{ font-size:12.5px; color:var(--text3); }
+  .moves-list{ display:flex; flex-direction:column; gap:10px; margin-bottom:28px; }
+  .move{ display:grid; grid-template-columns:34px 1fr auto; align-items:center; gap:0 16px;
+         background:var(--layer1); border:1px solid var(--border); border-left:2px solid var(--purple);
+         border-radius:var(--r-md); padding:16px 18px; transition:border-color .13s, background .13s; }
+  .move:hover{ background:var(--layer2); }
+  .move-rank{ font-family:var(--mono); font-size:16px; font-weight:600; color:var(--text3); text-align:center; }
+  .move-main{ min-width:0; }
+  .move-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .move-acct{ font-size:15px; font-weight:600; color:var(--text1); }
+  /* Category = a colored dot + neutral text. No tinted fill, no colored text. */
+  .move-kind{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:500;
+              color:var(--text2); white-space:nowrap; }
+  .move-kind::before{ content:''; width:8px; height:8px; border-radius:50%; flex:none;
+                      background:var(--text3); }
+  .move-kind.risk::before{ background:var(--sig-risk); }
+  .move-kind.signal::before{ background:var(--sig-white); }
+  .move-kind.growing::before{ background:var(--green); }
+  .move-kind.scheduled::before{ background:var(--text3); }
+  .move-stake{ font-family:var(--mono); font-size:12.5px; color:var(--text2); }
+  .move-detail{ font-size:13px; color:var(--text3); margin-top:3px; overflow:hidden;
+                text-overflow:ellipsis; white-space:nowrap; }
+  .move-actions{ display:flex; align-items:center; gap:8px; }
+  .move-why{ font:inherit; font-size:12.5px; background:none; border:none; color:var(--text3);
+             cursor:pointer; padding:6px 8px; }
+  .move-why:hover{ color:#fff; }
+
+  /* Review fold — a clearly clickable bar, not a tiny arrow. */
+  .review-fold{ margin-top:8px; }
+  .review-summary{ display:flex; align-items:center; gap:12px; padding:15px 18px; cursor:pointer;
+                   font-size:var(--fs-body-lg); font-weight:600; color:var(--text1);
+                   background:var(--layer1); border:1px solid var(--border); list-style:none; }
+  .review-summary::-webkit-details-marker{ display:none; }
+  .review-summary:hover{ background:var(--layer2); border-color:var(--border-strong); }
+  .review-chevron{ display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px;
+                   background:var(--layer2); border:1px solid var(--border-strong); color:var(--text1);
+                   font-size:11px; transition:transform .16s; flex:none; }
+  .review-fold[open] .review-chevron{ transform:rotate(180deg); }
+  .review-hint{ font-size:var(--fs-label); font-weight:400; color:var(--text3); margin-left:auto; }
+
   .today-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:12px; }
   .today-head h3{ font-size:17px; }
   .today-sub{ font-size:13px; color:var(--text3); }
@@ -858,7 +1034,7 @@ PAGE_TEMPLATE = """
      Emails and Calls rectangles match height whatever their list length. */
   .today-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;
                align-items:stretch; }
-  .task-card{ display:flex; flex-direction:column; background:var(--layer1);
+  .task-card{ display:flex; flex-direction:column; background:var(--layer1); border-radius:var(--r-lg);
               border:1px solid var(--border); padding:18px 20px 18px; min-height:560px; }
   .task-top{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
   .task-top h4{ font-size:14px; font-weight:600; margin:0; flex:1; }
@@ -867,7 +1043,7 @@ PAGE_TEMPLATE = """
   .task-dot.call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
   .task-count{ font-size:12px; color:var(--text3); }
   .task-count b{ font-family:var(--mono); color:var(--text1); font-weight:600; }
-  .task-meter{ height:6px; background:var(--layer2); margin-bottom:12px; }
+  .task-meter{ border-radius:100px; height:6px; background:var(--layer2); margin-bottom:12px; }
   .task-fill{ height:100%; width:0; transition:width .5s cubic-bezier(.4,.14,.3,1); }
   .task-fill.email{ background:linear-gradient(90deg,var(--viz-blue-hi),var(--viz-blue-lo)); }
   .task-fill.call{ background:linear-gradient(90deg,var(--viz-purple-hi),var(--viz-purple-lo)); }
@@ -901,7 +1077,7 @@ PAGE_TEMPLATE = """
   @media(max-width:980px){ .cal-quarter{ grid-template-columns:1fr; } .cal-week{ grid-template-columns:1fr; } .accts-layout{ flex-direction:column; } .accts-sidebar{ width:100%; } }
 
   /* ── cadences tab ───────────────────────────────────────────── */
-  .cad-card{ background:var(--layer1); border:1px solid var(--border); margin-bottom:12px; }
+  .cad-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); margin-bottom:12px; }
   .cad-header{ display:flex; align-items:center; gap:14px; padding:18px 20px; cursor:pointer; }
   .cad-header:hover{ background:var(--layer2); }
   .cad-chevron{ font-size:11px; flex:none; transition:transform .2s; color:var(--text3); }
@@ -936,15 +1112,17 @@ PAGE_TEMPLATE = """
   .cad-acct-ind{ width:150px; flex:none; color:var(--text3); font-size:11.5px; padding-right:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cad-acct-next{ flex:1; font-size:11.5px; color:var(--text3); }
   .cad-acct-status{ width:90px; flex:none; }
-  .status-pill{ font-size:10.5px; font-weight:600; padding:2px 9px; border:1px solid transparent; }
-  .status-pill.not_started{ border-color:var(--border-strong); color:var(--text3); }
-  .status-pill.in_progress{ border-color:var(--blue-border); color:var(--blue-text); }
-  .status-pill.completed{ border-color:rgba(66,190,101,.4); color:var(--green); }
+  .status-pill{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500;
+                color:var(--text2); padding:2px 4px; }
+  .status-pill::before{ content:''; width:8px; height:8px; border-radius:50%; flex:none; background:var(--text3); }
+  .status-pill.not_started::before{ background:var(--text3); }
+  .status-pill.in_progress::before{ background:var(--sig-white); }
+  .status-pill.completed::before{ background:var(--green); }
 
   /* ── email tab ──────────────────────────────────────────────── */
   .email-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .email-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(380px, 1fr)); gap:14px; }
-  .email-card{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
+  .email-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:18px 20px; display:flex; flex-direction:column; gap:10px; }
   .email-card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
   .email-card-head-actions{ display:flex; align-items:center; gap:6px; flex:none; }
   .email-card-to{ font-weight:600; font-size:13.5px; }
@@ -956,7 +1134,7 @@ PAGE_TEMPLATE = """
   .email-body-wrap{ border-top:1px solid var(--border); padding-top:10px; flex:1; }
   .email-body-text{ font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2); min-height:100px; }
   .email-body-text.empty{ color:var(--text3); font-style:italic; font-family:var(--font); font-size:12.5px; }
-  .email-body-edit{ font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2);
+  .email-body-edit{ border-radius:var(--r-sm); font:12.5px/1.6 var(--mono); white-space:pre-wrap; color:var(--text2);
                     background:var(--layer2); border:1px solid var(--border); padding:10px 12px;
                     min-height:130px; width:100%; resize:vertical; outline:none; display:none; }
   .email-body-edit.active{ display:block; }
@@ -970,7 +1148,7 @@ PAGE_TEMPLATE = """
   /* ── call tab ───────────────────────────────────────────────── */
   .call-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .call-list{ display:flex; flex-direction:column; gap:10px; }
-  .call-card{ background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
+  .call-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
   .call-card-head{ display:flex; align-items:center; gap:14px; margin-bottom:14px; }
   .call-card-rank{ font-family:var(--mono); font-size:12px; color:var(--text3); width:24px; flex:none; }
   .call-card-acct{ font-size:12px; color:var(--text3); }
@@ -978,13 +1156,13 @@ PAGE_TEMPLATE = """
   .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
   .call-card-step{ font-size:11.5px; color:var(--blue-text); }
   .call-card.done{ opacity:.62; }
-  .call-done-btn{ font:inherit; font-size:11.5px; margin-left:auto; background:none;
+  .call-done-btn{ border-radius:var(--r-sm); font:inherit; font-size:11.5px; margin-left:auto; background:none;
                   border:1px solid var(--border-strong); color:var(--text3); cursor:pointer;
                   padding:4px 11px; white-space:nowrap; transition:color .12s,border-color .12s; }
   .call-done-btn:hover{ color:var(--text1); border-color:var(--text1); }
   .call-done-btn.on{ color:var(--green); border-color:rgba(66,190,101,.5); }
   .call-card-body{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .call-contacts{ background:var(--layer2); border:1px solid var(--border); padding:12px 14px; }
+  .call-contacts{ border-radius:var(--r-md); background:var(--layer2); border:1px solid var(--border); padding:12px 14px; }
   .call-contacts h4{ font-size:11.5px; font-weight:600; color:var(--text3); margin-bottom:10px; }
   .call-person{ padding:8px 0; border-top:1px solid var(--border); }
   .call-person:first-of-type{ border-top:none; }
@@ -995,7 +1173,7 @@ PAGE_TEMPLATE = """
   .call-person-email{ font-family:var(--mono); font-size:11px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
   .btn.call{ background:var(--green); border-color:var(--green); color:#000; font-weight:600; padding:4px 12px; font-size:12px; }
   .btn.call:hover{ background:#37a659; }
-  .call-brief{ background:var(--purple-soft); border:1px solid var(--purple-border); padding:12px 14px; }
+  .call-brief{ border-radius:var(--r-md); background:var(--purple-soft); border:1px solid var(--purple-border); padding:12px 14px; }
   .call-brief h4{ font-size:11.5px; font-weight:600; color:var(--purple-text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
   .call-brief p{ font-size:12px; line-height:1.6; margin:0; }
   .call-brief.loading p{ color:var(--text3); font-style:italic; }
@@ -1016,9 +1194,14 @@ PAGE_TEMPLATE = """
   .contact-row:first-of-type{ border-top:none; }
   .contact-row .cn{ flex:1; font-weight:500; }
   .contact-row .ct{ color:var(--text3); }
-  .dm-badge{ font-size:10px; font-weight:600; border:1px solid rgba(66,190,101,.55); padding:1px 7px; color:var(--text1); }
-  .ai-panel{ border-color:var(--purple-border) !important; }
-  .ai-panel h3{ color:var(--purple-text) !important; display:flex; align-items:center; gap:6px; }
+  .dm-badge{ border-radius:var(--r-sm); font-size:10px; font-weight:600; border:1px solid rgba(66,190,101,.55); padding:1px 7px; color:var(--text1); }
+  /* AI analysis is the hero of the account popup — brand-gradient wash, purple
+     edge, and the AI elevation, so it reads as watsonx output at a glance. */
+  .ai-panel{ background:var(--grad-brand-soft) !important; border-color:var(--purple) !important;
+             border-left:2px solid var(--purple) !important; box-shadow:var(--shadow-ai); }
+  .ai-panel h3{ color:var(--purple-text) !important; display:flex; align-items:center; gap:7px;
+                font-size:13px !important; }
+  .ai-panel .kv{ border-top-color:rgba(138,63,252,.18); }
 
   /* ── pipeline ───────────────────────────────────────────────── */
   .pipeline{ display:flex; align-items:stretch; gap:0; margin-bottom:28px; }
@@ -1033,7 +1216,7 @@ PAGE_TEMPLATE = """
   .pipe-title{ font-size:15.5px; font-weight:600; letter-spacing:-.005em; display:flex; align-items:center; gap:6px; }
   .pipe-step.ai .pipe-title{ color:var(--purple-text); }
   .pipe-sub{ color:var(--text3); font-size:12px; margin-top:3px; min-height:15px; }
-  .pipe-status{ display:flex; align-items:flex-start; gap:8px; margin-top:14px; font-size:12.5px; color:var(--text2); flex:1; }
+  .pipe-status{ display:flex; align-items:center; gap:8px; margin-top:14px; font-size:12.5px; color:var(--text2); flex:1; }
   .pipe-status .amsg{ flex:1; min-width:0; }
   .pipe-status.err .amsg{ color:var(--red); }
   .pipe-seller{ color:var(--text3); font-size:11.5px; margin-top:6px; }
@@ -1044,6 +1227,9 @@ PAGE_TEMPLATE = """
   .pipe-choice{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text2); cursor:pointer; }
   .pipe-choice input{ accent-color:var(--purple); }
   .pipe-chips{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  /* The import sub-steps (ISC/IBM/Segmentation) are internal plumbing — the
+     seller doesn't need to see them on first import. */
+  #gmaChips{ display:none; }
   .pipe-chip{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--text3); }
   .showlog{ margin-top:10px; align-self:flex-start; }
   .alog{ margin-top:10px; background:var(--layer2); border-radius:var(--r-sm); padding:12px 14px; max-height:180px;
@@ -1152,10 +1338,6 @@ PAGE_TEMPLATE = """
   <main>
     <!-- Dashboard (home) -->
     <section id="page-dashboard" class="page active">
-      <div class="page-head">
-        <h2>Dashboard</h2>
-        <p id="dashSub">Your day at a glance.</p>
-      </div>
 
       <div id="dashboardEmpty" class="empty-state" style="display:none">
         <h3>Import accounts to get started</h3>
@@ -1169,10 +1351,28 @@ PAGE_TEMPLATE = """
       </div>
 
       <div id="dashboardBody" style="display:none">
-        <div class="today-head">
-          <h3 id="dashTodayLabel">Today</h3>
-          <span class="today-sub" id="dashTodaySub">—</span>
+        <!-- Greeting + pacing -->
+        <div class="td-greet">
+          <h2 id="tdGreet">Good morning</h2>
+          <span class="td-meta" id="tdMeta">—</span>
         </div>
+
+        <!-- AI speaks first: the generated morning brief -->
+        <section class="brief-card">
+          <div class="brief-head">
+            <span class="brief-mark">""" + _SPARKLE + """</span>
+            <span class="brief-eyebrow">Your morning brief</span>
+            <span class="brief-src">watsonx</span>
+          </div>
+          <p class="brief-body" id="briefBody">—</p>
+          <div class="brief-actions">
+            <button class="btn primary brief-cta" onclick="startMyDay()">
+              <span class="cta-play">&#9654;</span> Start my day</button>
+            <button class="btn brief-ghost" onclick="openAsk()">Ask about my book</button>
+          </div>
+        </section>
+
+        <!-- The two work engines -->
         <div class="today-grid">
           <section class="task-card">
             <div class="task-top">
@@ -1182,7 +1382,7 @@ PAGE_TEMPLATE = """
             </div>
             <div class="task-meter"><div class="task-fill email" id="taskEmailFill"></div></div>
             <div class="task-list" id="taskEmailList"></div>
-            <button class="btn task-action" onclick="showPage('email')">Draft and send emails <span class="go-arrow">&#8594;</span></button>
+            <button class="btn primary task-action" onclick="showPage('email')">Work emails <span class="go-arrow">&#8594;</span></button>
           </section>
           <section class="task-card">
             <div class="task-top">
@@ -1192,9 +1392,17 @@ PAGE_TEMPLATE = """
             </div>
             <div class="task-meter"><div class="task-fill call" id="taskCallFill"></div></div>
             <div class="task-list" id="taskCallList"></div>
-            <button class="btn task-action" onclick="showPage('call')">Start calling <span class="go-arrow">&#8594;</span></button>
+            <button class="btn primary task-action" onclick="showPage('call')">Start calling <span class="go-arrow">&#8594;</span></button>
           </section>
         </div>
+
+        <!-- Everything below is REVIEW — available, not dominant. Collapsed. -->
+        <details class="review-fold" ontoggle="if(this.open){loadViz();loadBook();}">
+          <summary class="review-summary">
+            <span class="review-chevron">&#9662;</span>
+            Review &amp; analytics
+            <span class="review-hint" id="reviewHint">Activity · Meetings · Book of business</span>
+          </summary>
 
         <div class="dash-panel viz-panel" style="margin-top:14px;">
           <div class="viz-head">
@@ -1229,7 +1437,7 @@ PAGE_TEMPLATE = """
                   <circle cx="60" cy="60" r="52" class="ring-track"/>
                   <circle cx="60" cy="60" r="52" class="ring-fill" id="vizRing"/>
                 </svg>
-                <div class="viz-ring-txt"><span id="vizPct">0%</span><small>worked</small></div>
+                <div class="viz-ring-txt"><span id="vizPct">0%</span><small>completed</small></div>
               </div>
             </div>
             <div class="viz-plot">
@@ -1300,6 +1508,7 @@ PAGE_TEMPLATE = """
             </div>
           </div>
         </div>
+        </details>
 
       </div>
     </section>
@@ -1324,6 +1533,12 @@ PAGE_TEMPLATE = """
 
       <div id="planBody" style="display:none">
         <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="cal-arrow" onclick="calStep(-1)" title="Previous">&#8249;</button>
+            <span class="cal-label" id="calLabel"></span>
+            <button class="cal-arrow" onclick="calStep(1)" title="Next">&#8250;</button>
+            <button class="cal-today" onclick="calToday()">Today</button>
+          </div>
           <div class="range-toggle">
             <button class="range-btn" data-view="year" onclick="setCalView('year')">Year</button>
             <button class="range-btn" data-view="quarter" onclick="setCalView('quarter')">Quarter</button>
@@ -1331,11 +1546,12 @@ PAGE_TEMPLATE = """
             <button class="range-btn" data-view="week" onclick="setCalView('week')">Week</button>
             <button class="range-btn" data-view="day" onclick="setCalView('day')">Day</button>
           </div>
-          <div class="cal-nav">
-            <button class="btn" onclick="calStep(-1)">&larr;</button>
-            <span class="cal-label" id="calLabel"></span>
-            <button class="btn" onclick="calStep(1)">&rarr;</button>
-          </div>
+        </div>
+        <div class="cal-summary" id="calSummary"></div>
+        <div class="cal-legend" id="calLegend" style="display:none">
+          <span><i class="ll ll-e"></i>Emails</span>
+          <span><i class="ll ll-c"></i>Calls</span>
+          <span class="cal-legend-hint">bar length shows the day's load</span>
         </div>
         <div id="calGrid"></div>
       </div>
@@ -1793,9 +2009,13 @@ PAGE_TEMPLATE = """
 
               <section class="set-sec" id="set-access">
                 <div class="prof-card">
-                  <div class="prof-card-head"><h3>Access &amp; sessions</h3></div>
+                  <div class="prof-card-head">
+                    <h3>Access &amp; sessions</h3>
+                    <button class="btn logout-btn" onclick="logout()">Sign out</button>
+                  </div>
                   <p class="set-p">Connected systems and the sessions BobBee is using on your behalf.
-                     Nothing here is sent anywhere — every service is mocked locally.</p>
+                     Nothing here is sent anywhere — every service is mocked locally. Signing out
+                     clears the session and resets the demo book.</p>
                   <div class="signed-as" id="signedAs" style="margin-top:14px;"></div>
                 </div>
                 <div class="prof-card">
@@ -1886,7 +2106,7 @@ PAGE_TEMPLATE = """
 
 <!-- ── Ask BobBee (watsonx Assistant) ── -->
 <button class="ask-fab" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
-  <img src="/static/chat-button.png" alt="Ask BobBee"></button>
+  <img src="/static/glow-circle-chat-c.png" alt="Ask BobBee"></button>
 <div class="ask-panel" id="askPanel">
   <div class="day-panel-head">
     <h3 class="ask-title">
@@ -1954,13 +2174,18 @@ function cleanLine(line){
 
 // ── auth gate ─────────────────────────────────────────────────
 async function checkAuth(){
+  // A page refresh should NOT sign you out — if an identity is still stored,
+  // go straight into the app. (Use the explicit Sign out button to reset.)
   let saved = {};
-  try {
-    const res = await fetch('/api/credentials/status');
-    saved = await res.json();
-  } catch(e) {}
+  try { saved = await (await fetch('/api/credentials/status')).json(); } catch(e){}
   if (saved.w3id) startApp();
   else document.getElementById('loginGate').style.display = 'flex';
+}
+
+async function logout(){
+  try { await fetch('/api/logout', {method:'POST'}); } catch(e){}
+  // Reload straight to the gate — clean slate for the next demo run.
+  location.reload();
 }
 
 async function submitLogin(ev){
@@ -1979,6 +2204,9 @@ async function submitLogin(ev){
     });
     const body = await res.json();
     if (!body.ok){ errEl.textContent = body.error || 'Sign-in failed.'; return; }
+    // Fresh sign-in = fresh book: wipe any prior demo data so every session
+    // walks the full import → strategize flow.
+    try { await fetch('/api/demo/reset', {method:'POST'}); } catch(e){}
     document.getElementById('loginPw').value = '';
     document.getElementById('loginGate').style.display = 'none';
     startApp();
@@ -2085,6 +2313,12 @@ function tagClass(t){
   return '';
 }
 
+// Display name for a cadence — the underlying key keeps its full name for
+// lookups, but "Cadence" is implied and the trailing number is noise.
+function cadenceLabel(nm){
+  return (nm || '').replace(/\s*cadence\s*/i, ' ').replace(/\s+\d+\s*$/, '').replace(/\s+/g, ' ').trim();
+}
+
 function renderSidebar(){
   const bar = document.getElementById('acctsSidebar');
   if (!_acctData || !_acctData.strategized){ bar.style.display = 'none'; return; }
@@ -2095,7 +2329,7 @@ function renderSidebar(){
   bar.innerHTML = '<h4>Lists</h4>'
     + item('all', 'All accounts', L.all)
     + '<h4>Cadences</h4>'
-    + Object.entries(L.cadences).map(([nm, n]) => item('cadence:' + nm, nm, n)).join('')
+    + Object.entries(L.cadences).map(([nm, n]) => item('cadence:' + nm, cadenceLabel(nm), n)).join('')
     + '<h4>Set aside</h4>'
     + item('leftovers', 'Leftovers', L.leftovers)
     + item('no_contacts', 'No contacts', L.no_contacts)
@@ -2162,15 +2396,17 @@ function renderAccounts(){
   // property of the *view*, not the row, so decide once — otherwise a row with
   // no cadence drops its cell and knocks the remaining columns out of line.
   const showRank = inCadenceView;
+  // Signals only exist after strategize (they come from tiering/analysis). Before
+  // that the column would be empty and misleading, so it isn't shown at all.
+  const showSignals = !!(_acctData && _acctData.strategized);
   // One template drives both the header and every row (see .acct-row CSS).
   // All fractional so the table always fits its container — no sideways scroll.
-  // The name still gets the largest share, and industry stays left of centre.
   const cols = [
     showRank ? '38px' : null,
-    'minmax(0,2.1fr)',  // account
-    'minmax(0,1.5fr)',  // industry
-    'minmax(0,1.2fr)',  // location
-    '104px',            // signals
+    'minmax(0,2.1fr)',           // account
+    'minmax(0,1.5fr)',           // industry
+    'minmax(0,1.2fr)',           // location
+    showSignals ? '104px' : null, // signals
   ].filter(Boolean).join(' ');
 
   const head = `<div class="acct-row acct-head">
@@ -2178,7 +2414,7 @@ function renderAccounts(){
       <span class="an">Account</span>
       <span class="ai">Industry</span>
       <span class="aloc">Location</span>
-      <span class="atags">Signals</span>
+      ${showSignals ? '<span class="atags">Signals</span>' : ''}
     </div>`;
 
   host.innerHTML = `<div class="acct-list" style="--acct-cols:${cols}">` + cadHdr + head + rows.map(a => {
@@ -2192,7 +2428,7 @@ function renderAccounts(){
       <span class="an" title="${esc(a.account || '')}">${esc(a.account || '')}</span>
       <span class="ai" title="${esc(a.industry || '')}">${esc(a.industry || '')}</span>
       <span class="aloc">${esc(a.location || '')}</span>
-      <span class="atags" style="display:flex;gap:4px;align-items:center;">${dots}</span>
+      ${showSignals ? `<span class="atags" style="display:flex;gap:4px;align-items:center;">${dots}</span>` : ''}
     </div>`;
   }).join('') + '</div>';
 }
@@ -2231,6 +2467,13 @@ async function fetchStrategizeStatus(){
   try { data = await (await fetch('/api/status')).json(); } catch(e){ return; }
   const a = (data._actions || {}).strategize;
   renderStages(a);
+  // While strategize is running, poll fast (600ms) so every stage transition is
+  // seen — the 2s app poll would skip the quick final stages.
+  if (a && a.active && !a.done){
+    if (!window._stratFast) window._stratFast = setInterval(fetchStrategizeStatus, 600);
+  } else if (window._stratFast){
+    clearInterval(window._stratFast); window._stratFast = null;
+  }
   if (a && a.done && !_strategizeWasDone){ _strategizeWasDone = true; fetchAccountsList(); fetchSchedule(); refreshDashboard(); }
   if (!a || !a.done) _strategizeWasDone = false;
 }
@@ -2296,7 +2539,7 @@ async function openAcctModal(name){
         </div>
       </div>
       <div class="panel"><h3>Salesloft</h3>
-        ${kv('Cadence', sl.cadence)}${kv('Rank in cadence', sl.rank != null ? '#' + sl.rank : null)}
+        ${kv('Cadence', cadenceLabel(sl.cadence))}${kv('Rank in cadence', sl.rank != null ? '#' + sl.rank : null)}
         <div style="margin-top:10px;">
           ${(sl.touches || []).map(t => `<div class="act-row"><span class="act-type ${esc(t.type)}">${esc(t.type)}</span><span>${esc(t.date)}</span><span style="color:var(--text3)">${esc(t.step)}</span></div>`).join('') || '<div class="note">No touches scheduled.</div>'}
         </div>
@@ -2381,7 +2624,7 @@ function fillDayPanel(iso){
   // Group by activity type — all emails under an "Emails" header, then all calls
   // under a "Calls" header — instead of interleaving them with per-row tags.
   const items = info.items || [];
-  const row = a => `<div class="panel-act"><div class="panel-act-body"><div class="pa-acct">${esc(a.account)}</div><div class="pa-step">${esc(a.step)} &middot; ${esc(a.cadence)}</div></div></div>`;
+  const row = a => `<div class="panel-act"><div class="panel-act-body"><div class="pa-acct">${esc(a.account)}</div><div class="pa-step">${esc(a.step)} &middot; ${esc(cadenceLabel(a.cadence))}</div></div></div>`;
   const section = (label, arr) => arr.length
     ? `<div class="day-panel-section">${label} (${arr.length})</div>` + arr.map(row).join('')
     : '';
@@ -2416,23 +2659,81 @@ function monthGridHTML(year, month, compact){
   const todayIso = appTodayIso();
   // Weekdays only — cadences never schedule on a weekend, so Sat/Sun columns
   // were two permanently empty stripes down every calendar.
+  // Scale each day's load bar against the busiest weekday this month, so a full
+  // bar reads as "this is a heavy day" relative to the month.
+  const dim = new Date(year, month + 1, 0).getDate();
+  let monthMax = 1;
+  for (let d = 1; d <= dim; d++){
+    const dw = new Date(year, month, d).getDay();
+    if (dw === 0 || dw === 6) continue;
+    const inf = dayInfo(isoOf(new Date(Date.UTC(year, month, d))));
+    if (inf) monthMax = Math.max(monthMax, inf.emails + inf.calls);
+  }
+
   let cells = '<div class="cal-grid">' + ['Mon','Tue','Wed','Thu','Fri'].map(d => `<div class="dow">${d}</div>`).join('');
-  // Monday-based lead-in: getDay() is 0=Sun, so shift to 0=Mon and skip weekends.
   const lead = (first.getDay() + 6) % 7;
   for (let i = 0; i < Math.min(lead, 5); i++) cells += '<div class="cal-cell out compact"></div>';
-  const dim = new Date(year, month + 1, 0).getDate();
   for (let day = 1; day <= dim; day++){
     const dow = new Date(year, month, day).getDay();
     if (dow === 0 || dow === 6) continue;
     const iso = isoOf(new Date(Date.UTC(year, month, day)));
     const info = dayInfo(iso);
     const n = info ? info.emails + info.calls : 0;
-    cells += `<div class="cal-cell ${compact ? 'compact' : ''} ${info ? 'has' : ''} ${iso === todayIso ? 'today' : ''} ${iso === _cal.sel ? 'sel' : ''}"
-      ${info ? `onclick="selectCalDay('${iso}')"` : ''}>
-      <span class="d">${day}</span>${info && !compact ? `<div class="acts">${info.emails}e &middot; ${info.calls}c</div>` : info ? `<div class="acts">${n}</div>` : ''}</div>`;
+    const isToday = iso === todayIso, isSel = iso === _cal.sel;
+
+    let inner = `<span class="cell-num">${day}</span>`;
+    if (info && !compact){
+      // Stacked load bar: emails (blue) over calls (purple), width ∝ load.
+      const w = Math.max(14, Math.round((n / monthMax) * 100));
+      const ep = n ? Math.round(info.emails / n * 100) : 0;
+      inner = `<div class="cell-head"><span class="cell-num">${day}</span><span class="cell-count">${n}</span></div>
+        <div class="cell-bar" style="width:${w}%">
+          <i class="cbar-e" style="width:${ep}%"></i><i class="cbar-c" style="width:${100 - ep}%"></i>
+        </div>`;
+    } else if (info){
+      // Compact (year/quarter thumbnails): a load dot, no bar.
+      const lvl = Math.ceil((n / monthMax) * 3) || 1;
+      inner = `<span class="cell-num">${day}</span><span class="cell-load l${lvl}"></span>`;
+    }
+    cells += `<div class="cal-cell ${compact ? 'compact' : ''} ${info ? 'has' : ''} ${isToday ? 'today' : ''} ${isSel ? 'sel' : ''}"
+      ${info ? `onclick="selectCalDay('${iso}')"` : ''}>${inner}</div>`;
   }
   cells += '</div>';
   return {label, html: cells};
+}
+
+// Jump the calendar back to the working day (respects the weekend look-ahead).
+function calToday(){ _cal.anchor = appTodayDate(); renderCal(); }
+
+// Month orientation strip: total load, weekdays with work, and the busiest day.
+function renderCalSummary(year, month){
+  const summ = document.getElementById('calSummary'), leg = document.getElementById('calLegend');
+  if (!summ) return;
+  const dim = new Date(year, month + 1, 0).getDate();
+  let emails = 0, calls = 0, workdays = 0, busiest = null, busiestN = 0;
+  for (let d = 1; d <= dim; d++){
+    const dw = new Date(year, month, d).getDay();
+    if (dw === 0 || dw === 6) continue;
+    const info = dayInfo(isoOf(new Date(Date.UTC(year, month, d))));
+    if (!info) continue;
+    workdays++; emails += info.emails; calls += info.calls;
+    const n = info.emails + info.calls;
+    if (n > busiestN){ busiestN = n; busiest = new Date(year, month, d); }
+  }
+  if (!workdays){
+    summ.style.display = 'flex';
+    summ.innerHTML = '<span class="cal-sum-empty">No activity scheduled this month.</span>';
+    return;
+  }
+  const busyLabel = busiest ? busiest.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}) : '—';
+  summ.style.display = 'flex';
+  summ.innerHTML = `
+    <div class="cal-stat"><span class="v">${emails + calls}</span><span class="l">touches</span></div>
+    <div class="cal-stat"><span class="v">${emails}</span><span class="l">emails</span></div>
+    <div class="cal-stat"><span class="v">${calls}</span><span class="l">calls</span></div>
+    <div class="cal-stat"><span class="v">${workdays}</span><span class="l">active days</span></div>
+    <div class="cal-stat"><span class="v">${esc(busyLabel)}</span><span class="l">busiest · ${busiestN}</span></div>`;
+  if (leg) leg.style.display = 'flex';
 }
 
 function renderCal(){
@@ -2441,6 +2742,14 @@ function renderCal(){
   if (!grid) return;
   if (!_cal.data){ grid.innerHTML = ''; return; }
   const a = _cal.anchor;
+
+  // Summary + legend belong to the month view only.
+  const summEl = document.getElementById('calSummary'), legEl = document.getElementById('calLegend');
+  if (summEl) summEl.style.display = 'none';
+  if (legEl) legEl.style.display = 'none';
+  // Highlight the active range button.
+  document.querySelectorAll('#page-plan .range-btn')
+    .forEach(b => b.classList.toggle('active', b.dataset.view === _cal.view));
 
   if (_cal.view === 'year'){
     // Whole year, grouped into its four quarters (each a row of three months).
@@ -2478,28 +2787,71 @@ function renderCal(){
     const m = monthGridHTML(a.getFullYear(), a.getMonth(), false);
     label.textContent = m.label;
     grid.innerHTML = `<div class="cal-month">${m.html}</div>`;
+    renderCalSummary(a.getFullYear(), a.getMonth());
   } else if (_cal.view === 'week'){
     const mon = new Date(a); mon.setDate(a.getDate() - ((a.getDay() + 6) % 7));
     const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
     label.textContent = `${mon.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})} – ${fri.toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}`;
+    // Scale the load bars against the busiest day this week, same as the month view.
+    let wkMax = 1;
+    for (let i = 0; i < 5; i++){ const d = new Date(mon); d.setDate(mon.getDate() + i);
+      const inf = dayInfo(isoOf(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))));
+      if (inf) wkMax = Math.max(wkMax, inf.emails + inf.calls); }
+    const todayIso = appTodayIso();
     grid.innerHTML = '<div class="cal-week">' + [0, 1, 2, 3, 4].map(i => {
       const d = new Date(mon); d.setDate(mon.getDate() + i);
       const iso = isoOf(new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())));
       const info = dayInfo(iso);
-      return `<div class="cal-weekday ${iso === _cal.sel ? 'sel' : ''}" onclick="selectCalDay('${iso}')">
-        <h5>${d.toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'})}</h5>
-        <div class="cnt">${info ? `${info.emails} emails &middot; ${info.calls} calls` : 'Free'}</div>
-        ${info ? info.accounts.slice(0, 4).map(n => `<div style="font-size:11.5px; padding:2px 0;">${esc(n)}</div>`).join('') + (info.accounts.length > 4 ? `<div style="font-size:11px; color:var(--text3);">+${info.accounts.length - 4} more</div>` : '') : ''}
+      const n = info ? info.emails + info.calls : 0;
+      const w = n ? Math.max(14, Math.round((n / wkMax) * 100)) : 0;
+      const ep = n ? Math.round(info.emails / n * 100) : 0;
+      const accts = info ? info.accounts.slice(0, 5).map(nm =>
+        `<div class="wd-acct">${esc(nm)}</div>`).join('') +
+        (info.accounts.length > 5 ? `<div class="wd-more">+${info.accounts.length - 5} more</div>` : '') : '';
+      return `<div class="cal-weekday ${info ? 'has' : 'empty'} ${iso === todayIso ? 'today' : ''} ${iso === _cal.sel ? 'sel' : ''}"
+                ${info ? `onclick="selectCalDay('${iso}')"` : ''}>
+        <div class="wd-head">
+          <span class="wd-date">${d.toLocaleDateString(undefined, {weekday: 'short'})} ${d.getDate()}</span>
+          ${n ? `<span class="wd-count">${n}</span>` : ''}
+        </div>
+        <div class="cell-bar" style="width:${w}%;${n ? '' : 'visibility:hidden'}">
+          <i class="cbar-e" style="width:${ep}%"></i><i class="cbar-c" style="width:${100 - ep}%"></i>
+        </div>
+        <div class="wd-accts">${accts || '<div class="wd-free">No activity</div>'}</div>
       </div>`;
     }).join('') + '</div>';
   } else {
-    // Day view: no grid, just drive the right-side panel to the anchor day.
+    // Day view: an inline "zoomed-in day" board (the popout's content, in-page),
+    // and NO popout — close it if one was open from another view.
     const iso = isoOf(new Date(Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())));
     label.textContent = a.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric'});
-    grid.innerHTML = '';
+    document.getElementById('dayPanel').classList.remove('open');
+    document.body.classList.remove('day-panel-open');
     _cal.sel = iso;
-    fillDayPanel(iso);
+    grid.innerHTML = dayBoardHTML(iso);
   }
+}
+
+// The day's plan as an inline board: summary + Emails / Calls columns, matching
+// the dashboard's email-left / call-right language. Shared shape with the popout.
+function dayBoardHTML(iso){
+  const info = dayInfo(iso) || {emails: 0, calls: 0, accounts: [], items: []};
+  const items = info.items || [];
+  const emails = items.filter(a => a.type === 'email');
+  const calls  = items.filter(a => a.type === 'call');
+  const rows = arr => arr.length
+    ? arr.map(a => `<div class="dv-row"><span class="dv-acct">${esc(a.account)}</span>
+        <span class="dv-step">${esc(a.step)} &middot; ${esc(cadenceLabel(a.cadence))}</span></div>`).join('')
+    : '<div class="dv-empty">None scheduled.</div>';
+  const col = (label, kind, arr) => `<div class="dv-col">
+      <div class="dv-colhead"><span class="dv-dot ${kind}"></span>${label}<span class="dv-n">${arr.length}</span></div>
+      <div class="dv-list">${rows(arr)}</div>
+    </div>`;
+  return `<div class="cal-dayboard">
+    <div class="dv-sums"><b>${info.emails}</b> emails &middot; <b>${info.calls}</b> calls &middot;
+      <b>${info.accounts.length}</b> accounts to touch</div>
+    <div class="dv-cols">${col('Emails', 'email', emails)}${col('Calls', 'call', calls)}</div>
+  </div>`;
 }
 
 // ── gates: every tab needs accounts (and most need a strategy) ─
@@ -2650,6 +3002,7 @@ function renderViz(v){
 
 // ── book-of-business snapshot ──────────────────────────────────
 let _bookLoaded = false;
+let _todayLoaded = false;
 
 let _mtgScope = 'quarter';
 let _mtgOffset = 0;
@@ -3063,7 +3416,7 @@ function sidePanelHTML(kind, item){
       ${_kv('Install base', sc.install_summary)}
       ${_kv('Revenue', zi.revenue)}
       ${_kv('Employees', zi.employees)}
-      ${_kv('Cadence', sl.cadence)}
+      ${_kv('Cadence', cadenceLabel(sl.cadence))}
       ${_kv('Rank', sl.rank ? '#' + sl.rank : '')}
     </div>
     ${ai.play ? `<div class="sp-ai"><div class="sp-ai-head">${AI_SPARK} AI analysis</div>
@@ -3123,12 +3476,34 @@ function toggleCallDone(account, step){
   refreshDashboard();
 }
 
+// The AI-first hero: greeting + generated brief. Deterministic /api/today.
+function greetWord(){
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+}
+
+async function loadToday(){
+  let t;
+  try { t = await (await fetch('/api/today')).json(); } catch(e){ return; }
+  if (!t || !t.has_schedule) return;
+
+  const name = (window.__sellerFirst || 'there');
+  document.getElementById('tdGreet').textContent = `${greetWord()}, ${name}.`;
+  const pace = t.pace || {};
+  const paceStr = `on pace for ${pace.done} of ${pace.total} touches this week`;
+  document.getElementById('tdMeta').textContent =
+    t.looking_ahead ? `${t.date_label} · showing ${t.focus_label}` : `${t.date_label} · ${paceStr}`;
+  document.getElementById('briefBody').textContent = t.brief;
+}
+
+function startMyDay(){ showPage('email'); }
+
+function openAsk(){ toggleAsk(true); }
+
 function renderDashboard(d){
   if (!_vizLoaded){ _vizLoaded = true; loadViz(); }
   if (!_bookLoaded){ _bookLoaded = true; loadBook(); }
-  document.getElementById('dashTodayLabel').textContent = d.today.date_label;
-  document.getElementById('dashTodaySub').textContent =
-    `${d.today.emails} emails · ${d.today.calls} calls · ${d.today.accounts} accounts to touch`;
+  if (!_todayLoaded){ _todayLoaded = true; loadToday(); }
 
   const items = d.today.items || [];
   const emails = items.filter(a => a.type === 'email');
@@ -3162,7 +3537,7 @@ function renderDashboard(d){
     list(calls, a => doneCalls.has(a.account + '|' + a.step));
 }
 
-async function refreshDashboard(){ _vizLoaded = false; _bookLoaded = false; refreshGates(); }
+async function refreshDashboard(){ _vizLoaded = false; _bookLoaded = false; _todayLoaded = false; refreshGates(); }
 
 // ── app boot ──────────────────────────────────────────────────
 let _pollTimer = null;
@@ -3226,7 +3601,7 @@ function renderCadences(){
       <div class="cad-header" onclick="toggleCadCard('${esc(c.name)}')">
         <span class="cad-chevron">&#9658;</span>
         <div class="cad-meta">
-          <div class="cad-name">${esc(c.name)}</div>
+          <div class="cad-name">${esc(cadenceLabel(c.name))}</div>
           <div class="cad-desc">${esc(c.description)}</div>
         </div>
         <span class="cad-count">${c.account_count} account${c.account_count === 1 ? '' : 's'}</span>
@@ -3394,7 +3769,7 @@ function renderEmailGrid(){
         <div style="min-width:0;">
           <div class="email-card-to link" onclick="openSidePanel('person', ${i})">${toLine}</div>
           <div class="email-card-sub">${toSub}</div>
-          <div class="email-card-cadence">${esc(a.cadence)} &middot; ${esc(a.step)}</div>
+          <div class="email-card-cadence">${esc(cadenceLabel(a.cadence))} &middot; ${esc(a.step)}</div>
         </div>
         <div class="email-card-head-actions">
           ${pencilBtn}${redraftBtn}
@@ -3555,7 +3930,7 @@ function renderCallList(){
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:10px;">
             <span class="call-card-name" onclick="openSidePanel('account', ${i}, 'call')">${esc(a.account)}</span>
-            <span class="call-card-step">${esc(a.step)} &middot; ${esc(a.cadence)}</span>
+            <span class="call-card-step">${esc(a.step)} &middot; ${esc(cadenceLabel(a.cadence))}</span>
             <button class="call-done-btn ${isDone ? 'on' : ''}"
                     onclick="toggleCallDone('${esc(a.account)}','${esc(a.step)}')">
               ${isDone ? '&#10003; Called' : 'Mark as called'}
@@ -3617,10 +3992,13 @@ async function fetchSeller(){
       ? `Signed in as <b>${esc(d.email||'')}</b>${d.seller_name ? ' &middot; ' + esc(d.seller_name) : ''}`
       : 'Not signed in.';
   }
-  if (profileBtn){
-    // Fixed demo persona: Tim (avatar always "TZ"), independent of whichever
-    // IBM email the demo happens to be signed in under.
-    profileBtn.textContent = 'TZ';
+  // Wire the greeting + avatar to whoever is actually signed in.
+  const person = (d.seller_name && d.seller_name.trim())
+    || (d.email ? d.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '');
+  if (person){
+    window.__sellerFirst = person.split(' ')[0];
+    const initials = person.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    if (profileBtn) profileBtn.textContent = initials;
   }
 }
 
@@ -3980,7 +4358,8 @@ function _flashSaved(msg){
   setTimeout(() => el.remove(), 2200);
 }
 
-window.__today = "{{ today }}";
+window.__today = "{{ today }}";        // the working day (weekend → next weekday)
+window.__realtoday = "{{ real_today }}";
 checkAuth();
 </script>
 </body>
@@ -4065,8 +4444,8 @@ STEP1_VIEW_TEMPLATE = """
   .trow{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
   .trow:last-child{ margin-bottom:0; }
   .trow .tl{ width:56px; flex:none; font-size:12.5px; color:var(--text2); }
-  .trow .track{ flex:1; height:8px; background:var(--layer2); border-radius:0; overflow:hidden; }
-  .trow .fill{ height:100%; border-radius:0; }
+  .trow .track{ flex:1; height:8px; background:var(--layer2); border-radius:100px; overflow:hidden; }
+  .trow .fill{ height:100%; border-radius:100px; }
   .trow .fill.t1{ background:var(--blue); } .trow .fill.t2{ background:var(--blue-text); } .trow .fill.t3{ background:var(--text3); }
   .trow .tc{ width:34px; text-align:right; font-family:var(--mono); font-size:12.5px; }
   input#filter{ font-size:13.5px; padding:9px 14px; width:320px; margin-bottom:16px; }
@@ -4610,7 +4989,7 @@ async function poll(){
   const sendBtn = document.getElementById('sendBtn');
 
   if (sum && sum.cadence){
-    sub.innerHTML = `Cadence <b>${esc(sum.cadence)}</b> &middot; ${sum.email_step_count||0} email step(s) &middot; ${sum.drafted||0} email(s) drafted`;
+    sub.innerHTML = `Cadence <b>${esc(cadenceLabel(sum.cadence))}</b> &middot; ${sum.email_step_count||0} email step(s) &middot; ${sum.drafted||0} email(s) drafted`;
   }
   if (sum && sum.ai_activity) window._aiActivity = sum.ai_activity;
   const haveDrafts = !!(sum && (sum.drafted||0) > 0);

@@ -66,6 +66,21 @@ def _today():
     except ValueError:
         return date.today()
 
+
+def _workday():
+    """The day whose *work* the app should show.
+
+    Cadences only schedule on weekdays, so on a Saturday/Sunday "today" is
+    legitimately empty. Rather than show a dead "nothing to do," the app looks
+    ahead to the next weekday and shows that plan. On a weekday this is just
+    today. (Display code still uses _today() for the real date in the greeting.)
+    """
+    d = _today()
+    while d.weekday() >= 5:          # 5 = Sat, 6 = Sun
+        d += timedelta(days=1)
+    return d
+
+
 import credential_store
 import assistant
 import fake_data
@@ -618,7 +633,10 @@ def _dashboard_auth_guard():
 
 @app.route("/")
 def index():
-    return render_template_string(PAGE_TEMPLATE, today=_today().isoformat(),
+    # window.__today drives the client's "today's work" (email/call/calendar);
+    # on a weekend that's the next weekday so those tabs aren't dead.
+    return render_template_string(PAGE_TEMPLATE, today=_workday().isoformat(),
+                                  real_today=_today().isoformat(),
                                   cadences=FILL_CADENCES, bobby_cadences=BOBBY_CADENCES)
 
 
@@ -1216,6 +1234,31 @@ def api_credentials_status():
     return jsonify({key: credential_store.has(key) for key in _CREDENTIAL_KEYS})
 
 
+@app.route("/api/logout", methods=["POST"])
+def api_logout():
+    """Sign out: forget the seller identity and wipe the demo book so the next
+    sign-in starts clean (import → strategize from scratch)."""
+    for key in _CREDENTIAL_KEYS:
+        credential_store.clear(key)
+    try:
+        _reset_for_fresh_demo()
+    except Exception:
+        pass
+    return jsonify({"ok": True})
+
+
+@app.route("/api/demo/reset", methods=["POST"])
+def api_demo_reset():
+    """Wipe the pipeline artifacts (accounts/strategy/schedule) without touching
+    the sign-in — used on each fresh sign-in so every demo starts from an empty
+    book and walks the whole import → strategize flow."""
+    try:
+        _reset_for_fresh_demo()
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+    return jsonify({"ok": True})
+
+
 @app.route("/api/credentials/<key>", methods=["POST"])
 def api_credentials_save(key):
     """Store an email+password into the OS Keychain. The plaintext is used
@@ -1740,6 +1783,7 @@ def _run_strategize():
 
         # ── Stage 2: quarter segmentation (has-contacts accounts only) ──
         set_state(phase="quarters", message="Segmenting by buyer signals into quarters…")
+        time.sleep(1.4)   # let the UI show this stage running (work below is instant)
         cur_q = _current_quarter()
         by_quarter = {1: [], 2: [], 3: [], 4: []}
         for name in has_contacts:
@@ -1758,6 +1802,7 @@ def _run_strategize():
 
         # ── Stage 3: cadence + rank + tag (top-N per cadence; rest → leftovers) ──
         set_state(phase="cadences", message="Building cadences, ranking by urgency, tagging accounts…")
+        time.sleep(1.6)   # visible progress — the cadence build itself is instant
         cadences = {}
         for row in current_rows:
             cadence = _PLAY_TO_CADENCE.get(row.get("Primary_Play"), "Targeted Outreach Cadence 3")
@@ -1792,6 +1837,7 @@ def _run_strategize():
 
         # ── Stage 4: distribute over the quarter (who to email/call, daily) ──
         set_state(phase="schedule", message="Distributing cadences across the quarter — who to call and email each day…")
+        time.sleep(1.6)   # visible progress — the distribution itself is instant
         schedule = _build_quarter_schedule(cadences, cur_q)
         (_AI_OUTPUT_DIR / "schedule.json").write_text(json.dumps(schedule, indent=2))
         n_acts = sum(len(v) for v in schedule["days"].values())
@@ -2442,6 +2488,164 @@ def api_schedule():
     return jsonify({"has_schedule": True, "quarter": schedule.get("quarter"),
                     "q_start": schedule.get("q_start"), "q_end": schedule.get("q_end"),
                     "days": days})
+
+
+@app.route("/api/today")
+def api_today():
+    """The AI-first landing payload: a generated morning brief and the ranked
+    priority moves for today.
+
+    DETERMINISTIC by design — no watsonx call. Ranking and the brief are built
+    from the same tiering/schedule data the rest of the app uses, so this works
+    offline, costs nothing, and is stable across restarts. (If you later want a
+    live-written brief, wrap this the same fail-soft way llm_advisor does.)
+    """
+    schedule = _ai_file("schedule.json", None)
+    if not schedule:
+        return jsonify({"has_schedule": False})
+
+    real_today = _today()
+    today = _workday()              # the day whose work we show
+    looking_ahead = today != real_today
+    iso = today.isoformat()
+    todays = schedule.get("days", {}).get(iso, [])
+    if isinstance(todays, dict):
+        todays = todays.get("items", [])
+
+    # One entry per account touched today, remembering whether an email and/or a
+    # call is scheduled (so the recommended action can prefer a call for risk).
+    by_acct = {}
+    for a in todays:
+        name = a.get("account")
+        if not name:
+            continue
+        e = by_acct.setdefault(name, {"account": name, "cadence": a.get("cadence"),
+                                      "email": False, "call": False, "steps": []})
+        if a.get("type") == "email":
+            e["email"] = True
+        elif a.get("type") == "call":
+            e["call"] = True
+        if a.get("step"):
+            e["steps"].append(a["step"])
+
+    tier_by_name = _tiering_rows_by_name()
+
+    def _num(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return 0.0
+
+    moves = []
+    for name, e in by_acct.items():
+        trow = tier_by_name.get(name) or {}
+        tags = _account_tags(trow)
+        score = _num(trow.get("Tier_Score"))
+        spend = _num(trow.get("IBM Spend Current Year"))
+
+        at_risk = ("At-risk spend" in tags) or str(
+            trow.get("Competitive_Displacement", "")).startswith("Yes")
+        # A recent, dated signal reads as a live buying trigger.
+        has_signal = bool(trow.get("Signal_1_Summary"))
+        growing = "Growing spend" in tags
+
+        # Composite priority: base tiering score, boosted by *why now* — risk is
+        # the loudest, then a fresh signal, then growth — and nudged by stakes.
+        rank_score = score
+        if at_risk:
+            rank_score += 45
+            kind, reason = "Renewal risk", "spend declining"
+        elif has_signal:
+            rank_score += 30
+            kind, reason = "Buying signal", (trow.get("Signal_1_Type") or "recent event")
+        elif growing:
+            rank_score += 15
+            kind, reason = "Growing", "spend trending up"
+        else:
+            kind, reason = "Scheduled", "in cadence today"
+        rank_score += min(20, spend / 1e6)   # stakes nudge, capped
+
+        # Prefer a call for risk (higher-touch); otherwise the scheduled channel.
+        action = "call" if (at_risk and e["call"]) else ("email" if e["email"] else
+                 ("call" if e["call"] else "email"))
+
+        detail_bits = []
+        trend = trow.get("Spend_Trend")
+        if at_risk and trend:
+            detail_bits.append(f"spend {trend.lower()}")
+        if has_signal:
+            detail_bits.append(str(trow.get("Signal_1_Summary"))[:90])
+        if not detail_bits and trow.get("Industry"):
+            detail_bits.append(trow.get("Industry"))
+
+        moves.append({
+            "account": name,
+            "kind": kind,
+            "reason": reason,
+            "detail": " · ".join([b for b in detail_bits if b]) or "In cadence today",
+            "stakes": spend,
+            "stakes_label": _fmt_money(spend) if spend else None,
+            "action": action,
+            "cadence": e["cadence"],
+            "_score": rank_score,
+        })
+
+    moves.sort(key=lambda m: -m["_score"])
+    top = moves[:3]
+    for m in top:
+        m.pop("_score", None)
+
+    n_email = sum(1 for a in todays if a.get("type") == "email")
+    n_call = sum(1 for a in todays if a.get("type") == "call")
+    n_acct = len(by_acct)
+    risk_ct = sum(1 for m in moves if m["kind"] == "Renewal risk")
+    sig_ct = sum(1 for m in moves if m["kind"] == "Buying signal")
+
+    # Templated, data-grounded brief — reads like the model wrote it, but every
+    # number is real and it never hits the network.
+    lead = []
+    if risk_ct:
+        lead.append(f"{risk_ct} show renewal risk")
+    if sig_ct:
+        lead.append(f"{sig_ct} just triggered a buying signal")
+    why = (" and ".join(lead)) if lead else "ranked by intent, value and timing"
+    when = today.strftime("%A")
+    opener = (f"It's the weekend — you're all caught up. Here's how {when} is shaping up: "
+              if looking_ahead else "")
+    day_word = when if looking_ahead else "today"
+    brief = (f"{opener}You have {n_acct} account{'s' if n_acct != 1 else ''} to engage "
+             f"{('on ' + when) if looking_ahead else 'today'}. "
+             f"The moves below are the ones that matter most — {why}. "
+             f"I've drafted {n_email} email{'s' if n_email != 1 else ''} and prepped "
+             f"{n_call} call brief{'s' if n_call != 1 else ''}. Start at the top; that "
+             f"covers most of {day_word}'s pipeline influence.")
+
+    # Pacing for the header line — the *real* current week, so "done" is honest
+    # (independent of the weekend look-ahead).
+    wk_start = real_today - timedelta(days=real_today.weekday())
+    wk_end = wk_start + timedelta(days=6)
+    wk_done = wk_total = 0
+    for d_iso, acts in schedule.get("days", {}).items():
+        try:
+            d = datetime.strptime(d_iso, "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if wk_start <= d <= wk_end:
+            items = acts.get("items", acts) if isinstance(acts, dict) else acts
+            wk_total += len(items)
+            if d <= real_today:
+                wk_done += len(items)
+
+    return jsonify({
+        "has_schedule": True,
+        "date_label": real_today.strftime("%A, %B %-d"),
+        "focus_label": today.strftime("%A, %B %-d"),
+        "looking_ahead": looking_ahead,
+        "counts": {"emails": n_email, "calls": n_call, "accounts": n_acct},
+        "pace": {"done": wk_done, "total": wk_total},
+        "brief": brief,
+        "moves": top,
+    })
 
 
 @app.route("/api/dashboard")

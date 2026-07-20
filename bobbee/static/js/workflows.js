@@ -587,13 +587,15 @@ async function fetchCredStatus(){
   for (const key of ['w3id']){
     const isSaved = !!saved[key];
     const div = document.createElement('div');
-    div.style.margin = '10px 0 4px';
+    div.className = 'cred-block';
     div.innerHTML =
-      `<div style="font-size:var(--fs-label);display:flex;align-items:center;gap:10px;margin-bottom:8px;"><span style="font-weight:500;">${CRED_LABELS[key]}</span>`
+      `<div class="cred-head"><span class="cred-name">${CRED_LABELS[key]}</span>`
       + `<span class="pill ${isSaved ? 'ready' : ''}"><span class="dot"></span>${isSaved ? 'saved' : 'not saved'}</span></div>`
-      + `<input type="text" id="cred-email-${key}" placeholder="email / username" style="min-width:220px;">`
-      + `<input type="password" id="cred-pw-${key}" placeholder="password" style="min-width:180px;">`
-      + `<button class="btn primary" onclick="saveCredential('${key}')">${isSaved ? 'Update' : 'Save'}</button>`;
+      + `<div class="cred-form">`
+      + `<input type="text" id="cred-email-${key}" placeholder="email / username">`
+      + `<input type="password" id="cred-pw-${key}" placeholder="password">`
+      + `<button class="btn primary" onclick="saveCredential('${key}')">${isSaved ? 'Update' : 'Save'}</button>`
+      + `</div>`;
     container.appendChild(div);
   }
 }

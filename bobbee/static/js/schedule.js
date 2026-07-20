@@ -165,11 +165,11 @@ function renderCalSummary(year, month){
   const busyLabel = busiest ? busiest.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}) : '—';
   summ.style.display = 'flex';
   summ.innerHTML = `
-    <div class="cal-stat"><span class="v">${emails + calls}</span><span class="l">touches</span></div>
-    <div class="cal-stat"><span class="v">${emails}</span><span class="l">emails</span></div>
-    <div class="cal-stat"><span class="v">${calls}</span><span class="l">calls</span></div>
-    <div class="cal-stat"><span class="v">${workdays}</span><span class="l">active days</span></div>
-    <div class="cal-stat"><span class="v">${esc(busyLabel)}</span><span class="l">busiest · ${busiestN}</span></div>`;
+    <div class="cal-stat"><span class="v">${emails + calls}</span><span class="l">Touches</span></div>
+    <div class="cal-stat"><span class="v">${emails}</span><span class="l">Emails</span></div>
+    <div class="cal-stat"><span class="v">${calls}</span><span class="l">Calls</span></div>
+    <div class="cal-stat"><span class="v">${workdays}</span><span class="l">Active days</span></div>
+    <div class="cal-stat"><span class="v">${esc(busyLabel)}</span><span class="l">Busiest · ${busiestN}</span></div>`;
   if (leg) leg.style.display = 'flex';
 }
 
@@ -280,8 +280,8 @@ function dayBoardHTML(iso){
     ? arr.map(a => `<div class="dv-row"><span class="dv-acct">${esc(a.account)}</span>
         <span class="dv-step">${esc(displayStepLabel(a.step))} &middot; ${esc(cadenceLabel(a.cadence))}</span></div>`).join('')
     : '<div class="dv-empty">None scheduled.</div>';
-  const col = (label, kind, arr) => `<div class="dv-col">
-      <div class="dv-colhead"><span class="dv-dot ${kind}"></span>${label}<span class="dv-n">${arr.length}</span></div>
+  const col = (label, kind, arr) => `<div class="dv-col ${kind}">
+      <div class="dv-colhead">${label}<span class="dv-n">${arr.length}</span></div>
       <div class="dv-list">${rows(arr)}</div>
     </div>`;
   return `<div class="cal-dayboard">

@@ -31,30 +31,33 @@
   .w3-link{ color:var(--blue-text); text-decoration:none; }
   .w3-link:hover{ text-decoration:underline; }
   .w3-contact{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-               gap:14px; padding:24px 0 28px; border-top:1px solid var(--border); }
-  .w3-ctile{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:18px 20px 20px; }
+               gap:16px; padding:24px 0; border-top:1px solid var(--border); }
+  .w3-ctile{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:20px; }
   .w3-ctile.off{ opacity:.5; }
   .w3-cicon{ width:38px; height:38px; display:flex; align-items:center; justify-content:center;
              border-radius:50%; background:var(--layer2); color:var(--text2); font-size:var(--fs-icon-md);
-             margin-bottom:26px; }
-  .w3-cicon.blue{ background:var(--grad-brand); color:var(--text1); }
-  .w3-cicon.purple{ background:linear-gradient(135deg,#8a3ffc,#be95ff); color:var(--text1); }
+             margin-bottom:16px; }
+  /* Identity chrome: both contact icons use the brand gradient (same as the
+     avatar). Purple is reserved for watsonx, so it isn't used standalone here. */
+  .w3-cicon.blue,
+  .w3-cicon.purple{ background:var(--grad-brand); color:var(--text1); }
   .w3-clabel{ font-size:var(--fs-label); color:var(--text3); margin-bottom:3px; }
   .w3-cval{ font-size:var(--fs-label); color:var(--text2); }
 
   /* Details column + sticky map column. */
   .prof-split{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px;
                align-items:start; }
-  /* Not sticky — both columns scroll together so the two sides stay level. */
-  .prof-aside{ min-width:0; }
+  /* The map column is sticky so a short single-state view follows the scroll of
+     the much longer details column instead of leaving a tall blank to scroll past. */
+  .prof-aside{ min-width:0; position:sticky; top:72px; align-self:start; }
   .map-card{ margin-bottom:0; }
   .map-card .usmap{ max-width:none; }
   .seg-wrap{ flex-wrap:wrap; }
-  @media(max-width:1080px){ .prof-split{ grid-template-columns:1fr; } }
+  @media(max-width:1080px){ .prof-split{ grid-template-columns:1fr; } .prof-aside{ position:static; } }
 
   .w3-rows{ display:flex; flex-direction:column; }
   .w3-row{ display:grid; grid-template-columns:minmax(120px,34%) 1fr; gap:16px;
-           padding:11px 0; border-bottom:1px solid var(--border); font-size:var(--fs-label); }
+           padding:12px 0; border-bottom:1px solid var(--border); font-size:var(--fs-label); }
   .w3-row:last-child{ border-bottom:none; }
   .w3-row .k{ color:var(--text3); }
   .w3-row .v{ color:var(--text2); }
@@ -64,7 +67,7 @@
   .w3-expname{ font-size:var(--fs-label); font-weight:600; color:var(--text1); }
   .w3-expdesc{ font-size:var(--fs-label); color:var(--text3); margin:4px 0 8px; line-height:1.5; }
   .w3-creds{ display:flex; flex-direction:column; gap:10px; }
-  .w3-cred{ border-radius:var(--r-md); font-size:var(--fs-label); color:var(--text2); padding:11px 14px; background:var(--layer2);
+  .w3-cred{ border-radius:var(--r-md); font-size:var(--fs-label); color:var(--text2); padding:12px 16px; background:var(--layer2);
             border-left:2px solid transparent; border-image:var(--grad-brand) 1; }
   .profile-tabs{ display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:36px; }
   .profile-tab{ font:inherit; font-size:var(--fs-label); line-height:var(--lh-label); font-weight:500; color:var(--text3); background:none; border:none;
@@ -75,7 +78,7 @@
   .profile-tab.active{ color:var(--text1); border-bottom-color:var(--blue); }
   .profile-section{ display:none; }
   .profile-section.active{ display:block; }
-  .prof-card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px 26px; margin-bottom:16px; }
+  .prof-card{ background:var(--layer1); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px; margin-bottom:16px; }
   .prof-card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
   .prof-card-head h3{ font-size:var(--fs-body); font-weight:600; margin:0; }
   .field-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px 20px; }
@@ -170,14 +173,14 @@
                           background:var(--blue); }
   /* Global search sits at the right, next to the avatar — not jammed against the nav. */
   .topsearch{ flex:0 0 330px; display:flex; align-items:center; gap:10px; min-width:330px;
-              margin-left:auto; padding:0 16px; background:var(--layer1);
+              margin-left:auto; padding:0 16px; background:var(--header-bg);
               border-left:1px solid var(--border); border-right:1px solid var(--border); }
   .topsearch svg{ width:17px; height:17px; flex:none; color:var(--text3); }
   .topsearch input{ flex:1; min-width:0; font:inherit; font-size:var(--fs-body); background:none;
                     border:none; color:var(--text1); padding:0; height:36px; }
   .topsearch input::placeholder{ color:var(--text3); }
   .topsearch input:focus{ outline:none; }
-  .topsearch:focus-within{ background:var(--layer2); box-shadow:inset 0 -2px 0 var(--blue); }
+  .topsearch:focus-within{ background:var(--layer1); box-shadow:inset 0 -2px 0 var(--blue); }
   .topbar-actions{ display:flex; align-items:stretch; flex:none; }
   .icon-btn{ width:44px; background:none; border:none; color:var(--text2); cursor:pointer;
              display:flex; align-items:center; justify-content:center; transition:background .11s,color .11s; }
@@ -217,12 +220,16 @@
   .warndot{ position:absolute; top:4px; right:6px; width:8px; height:8px; border-radius:50%; background:var(--red);
             box-shadow:0 0 0 3px rgba(250,77,86,.18); }
 
-  /* Wider content — fill more of the screen, less dead margin. */
-  main{ max-width:1600px; margin:0 auto; padding:44px 40px 100px; }
+  /* Content is a fixed share of the viewport (78vw) so the side gutters scale
+     with the screen — a laptop gets generous margins — while the 1340px cap keeps
+     a large monitor from widening further (its margins come from centering). */
+  main{ width:min(1340px, 78vw); margin:0 auto; padding:44px 0 100px; }
   .page{ display:none; } .page.active{ display:block; }
   .page-head{ margin-bottom:40px; }
   .page-head p{ max-width:760px; color:var(--text2); font-size:var(--fs-body-lg);
                 line-height:var(--lh-body-lg); margin:12px 0 0; }
+  /* Below laptop width, stop reserving a big proportional gutter and use padding. */
+  @media(max-width:1100px){ main{ width:auto; padding:44px 40px 100px; } }
   @media(max-width:640px){
     main{ padding:32px 20px 80px; }
     .page-head{ margin-bottom:32px; }
@@ -334,7 +341,7 @@
   .tagpill.white::before{ background:var(--sig-white); }
   .tagpill.risk::before{ background:var(--sig-risk); }
   .tagpill.up::before{ background:var(--sig-up); }
-  .tagpill:hover{ border-color:var(--border-strong); color:#fff; }
+  .tagpill:hover{ border-color:var(--border-strong); color:var(--text1); }
   .tagpill.on{ background:var(--text1); color:var(--bg); border-color:var(--text1); }
   .tagpill.on::before{ background:var(--bg); }
   /* tag tooltip */
@@ -364,9 +371,11 @@
   .accts-layout{ display:flex; gap:18px; align-items:flex-start; }
   .accts-sidebar{ width:200px; flex:none; background:var(--grad-surface); border:1px solid var(--border);
                   box-shadow:4px 4px 0 rgba(5,10,25,.12); padding:2px 0 4px; }
-  /* Section headers — readable, evenly spaced; first one doesn't over-pad the top. */
-  .accts-sidebar h4{ font-size:var(--fs-body); font-weight:600; color:var(--text1); padding:8px 13px 4px; }
-  .accts-sidebar h4:first-child{ padding-top:4px; }
+  /* Section headers — each list group is separated by a divider so the
+     Lists / Cadences / Set aside groups read as distinct. */
+  .accts-sidebar h4{ font-size:var(--fs-body); font-weight:600; color:var(--text1); padding:14px 13px 6px;
+                     margin-top:8px; border-top:1px solid var(--border); }
+  .accts-sidebar h4:first-child{ padding-top:6px; margin-top:0; border-top:none; }
   .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:var(--fs-body); color:var(--text1);
           background:none; border:none; border-left:3px solid transparent; padding:5px 13px 5px 10px; cursor:pointer; }
   .slist:hover{ background:var(--layer2); color:var(--text1); }
@@ -531,7 +540,7 @@
   /* Coverage meter: filled portion = accounts already in a cadence. */
   .bar-meter{ display:flex; flex-direction:column; gap:9px; }
   .meter-track{ height:26px; background:var(--layer2); position:relative; overflow:hidden; }
-  .meter-fill{ height:100%; background:linear-gradient(90deg,#4589ff,#a56eff); transition:width .55s cubic-bezier(.4,.14,.3,1); }
+  .meter-fill{ height:100%; background:linear-gradient(90deg,var(--viz-blue-hi),var(--viz-purple-hi)); transition:width .55s cubic-bezier(.4,.14,.3,1); }
   .meter-legend{ display:flex; justify-content:space-between; font-size:var(--fs-caption); color:var(--text3); }
   .meter-legend b{ color:var(--text1); font-family:var(--mono); font-weight:600; }
 
@@ -545,9 +554,9 @@
   .terr.empty{ opacity:.45; }
   /* Geographic silhouettes with a restrained isometric extrusion. */
   .terr-iso{ width:100%; margin-bottom:10px; }
-  .usmap.single .terr-iso{ max-width:420px; margin-inline:auto; }
+  .usmap.single .terr-iso{ max-width:300px; margin-inline:auto; margin-bottom:6px; }
   .terr-svg{ width:100%; height:120px; display:block; }
-  .usmap.single .terr-svg{ height:230px; }
+  .usmap.single .terr-svg{ height:150px; }
   .geo-shadow{ fill:rgba(0,0,0,.28); }
   .geo-extrusion{ fill:#0043ce; opacity:.86; }
   .geo-face{ stroke:var(--map-edge); stroke-width:1.2; vector-effect:non-scaling-stroke;
@@ -564,8 +573,7 @@
               padding:4px 2px; }
   .terr-city b{ font-family:var(--mono); color:var(--text1); font-weight:600; }
   /* Map card fills the aside so both profile columns end level. */
-  .map-card{ display:flex; flex-direction:column; height:100%; }
-  .prof-split{ align-items:stretch; }
+  .map-card{ display:flex; flex-direction:column; }
   @media(max-width:520px){ .usmap{ grid-template-columns:1fr; } }
   .map-foot{ display:flex; align-items:center; justify-content:space-between; gap:16px;
              flex-wrap:wrap; margin-top:16px; }
@@ -588,7 +596,7 @@
               border:1px solid var(--border); border-radius:var(--r-sm); cursor:pointer;
               width:34px; height:34px; display:flex; align-items:center; justify-content:center;
               transition:border-color .12s, color .12s; }
-  .cal-arrow:hover{ color:#fff; border-color:var(--border-strong); }
+  .cal-arrow:hover{ color:var(--text1); border-color:var(--border-strong); }
   .cal-today{ font:inherit; font-size:var(--fs-label); color:var(--blue-text); background:none; border:none;
               cursor:pointer; padding:6px 8px; }
   .cal-today:hover{ text-decoration:underline; }
@@ -615,9 +623,11 @@
   .cal-grid .dow{ font-size:var(--fs-label); color:var(--text2); font-weight:500; text-align:center; padding:5px 0; }
   /* Empty days recede into the card; only days with work take the lighter
      layer2 fill, so the month reads as activity rather than a slab of gray. */
-  .cal-cell{ aspect-ratio:1 / 1; border-radius:var(--r-sm); min-height:0; background:transparent; padding:8px 9px;
+  /* Compact cells sized to their content (day number + load bar) — no forced
+     square, no big empty middle. */
+  .cal-cell{ min-height:62px; border-radius:var(--r-sm); background:transparent; padding:9px 10px;
              cursor:default; border:1px solid var(--border); display:flex; flex-direction:column;
-             gap:7px; transition:border-color .12s, background .12s; }
+             gap:8px; transition:border-color .12s, background .12s; }
   .cal-cell.out{ opacity:0; border-color:transparent; }
   .cal-cell.has{ cursor:pointer; background:var(--layer1); border-color:var(--border); }
   .cal-cell.has:hover{ background:var(--layer2); border-color:var(--border-strong); }
@@ -818,7 +828,7 @@
   .move-actions{ display:flex; align-items:center; gap:8px; }
   .move-why{ font:inherit; font-size:var(--fs-label); background:none; border:none; color:var(--text3);
              cursor:pointer; padding:6px 8px; }
-  .move-why:hover{ color:#fff; }
+  .move-why:hover{ color:var(--text1); }
 
   /* Review fold — a clearly clickable bar, not a tiny arrow. */
   .review-fold{ margin-top:8px; }
@@ -960,8 +970,10 @@
   .call-toolbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .call-list{ display:flex; flex-direction:column; gap:10px; }
   .call-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:18px 20px; }
-  .call-card-head{ display:flex; align-items:center; gap:14px; margin-bottom:14px; }
-  .call-card-rank{ font-family:var(--mono); font-size:var(--fs-caption); color:var(--text3); width:24px; flex:none; }
+  /* Rank shares the account name's baseline (both on the same line), so the
+     number reads as aligned with the account it ranks. */
+  .call-card-head{ display:flex; align-items:baseline; gap:12px; margin-bottom:14px; }
+  .call-card-rank{ font-family:var(--mono); font-size:var(--fs-body); line-height:var(--lh-body); color:var(--text3); width:18px; flex:none; text-align:right; }
   .call-card-acct{ font-size:var(--fs-caption); color:var(--text3); }
   .call-card-name{ font-weight:600; font-size:var(--fs-body); flex:1; cursor:pointer; }
   .call-card-name:hover{ color:var(--blue-text); text-decoration:underline; }
@@ -986,7 +998,9 @@
      reserved for "done" states (mark-as-called, completed). */
   .btn.call{ background:var(--blue); border-color:var(--blue); color:#fff; font-weight:600; padding:4px 12px; font-size:var(--fs-caption); }
   .btn.call:hover{ background:#0353e9; border-color:#0353e9; }
-  .call-brief{ border-radius:var(--r-md); background:var(--purple-soft); border:1px solid var(--purple-border); padding:12px 14px; }
+  /* Neutral panel like the contacts side, with a subtle purple accent (border +
+     eyebrow) marking it as AI — not a full saturated purple block. */
+  .call-brief{ border-radius:var(--r-md); background:var(--layer2); border:1px solid var(--border); border-left:2px solid var(--purple); padding:12px 14px; }
   .call-brief h4{ font-size:var(--fs-caption); font-weight:600; color:var(--purple-text); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
   .call-brief p{ font-size:var(--fs-caption); line-height:1.6; margin:0; }
   .call-brief.loading p{ color:var(--text3); font-style:italic; }
@@ -1105,3 +1119,14 @@
   .alert.show{ display:block; }
   .note{ color:var(--text1); font-size:var(--fs-label); line-height:1.55; margin-bottom:6px; }
   .panel input[type=text],.panel input[type=password]{ margin:8px 8px 4px 0; }
+  /* Saved-password form — a spaced, on-theme row (label + status, then the two
+     fields and the action), instead of inputs jammed together inline. */
+  .cred-block{ margin-top:16px; }
+  .cred-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:var(--fs-label); }
+  .cred-name{ font-weight:500; color:var(--text1); }
+  .cred-form{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  /* Compact, recessed fields — same height as the button and darker than the
+     card so they read as inputs, not bright white boxes. */
+  .cred-form input[type=text],.cred-form input[type=password]{ flex:1 1 200px; min-width:0;
+      font-size:var(--fs-body); line-height:var(--lh-body); padding:7px 14px; background:var(--bg); border-color:var(--border-strong); }
+  .cred-form .btn{ flex:none; }

@@ -126,6 +126,8 @@ _DESIGN_CSS = """
   html,body{ background:var(--bg); }
   body{ font-family:var(--font); color:var(--text1); margin:0;
         font-size:var(--fs-body); line-height:var(--lh-body); -webkit-font-smoothing:antialiased; }
+  .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+            overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   ::selection{ background:rgba(91,150,255,.3); }
   ::-webkit-scrollbar{ width:10px; height:10px; }
   ::-webkit-scrollbar-track{ background:transparent; }
@@ -381,17 +383,19 @@ PAGE_TEMPLATE = """
   .brand-name{ font-size:17px; font-weight:400; letter-spacing:.01em; color:var(--text1);
                white-space:nowrap; }
   .brand-name b{ font-weight:600; }
-  .topnav{ display:flex; align-items:stretch; gap:0; flex:none; margin-left:8px; }
+  /* Let the navigation occupy the middle of the shell, rather than leaving an
+     arbitrary void between the final tab and the search controls. */
+  .topnav{ display:flex; align-items:stretch; justify-content:space-evenly; gap:0; flex:1 1 auto; margin-left:8px; }
   .navlink{ font:inherit; font-size:var(--fs-body); font-weight:400; color:var(--text2); background:none;
-            border:none; cursor:pointer; padding:0 18px; flex:none;
+            border:none; cursor:pointer; padding:0 18px; flex:none; white-space:nowrap;
             position:relative; transition:background .11s,color .11s; }
   .navlink:hover{ color:var(--text1); background:var(--layer2); }
   .navlink.active{ color:var(--text1); background:var(--layer1); }
   .navlink.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:2px;
                           background:var(--blue); }
   /* Global search sits at the right, next to the avatar — not jammed against the nav. */
-  .topsearch{ flex:0 1 340px; display:flex; align-items:center; gap:10px; min-width:0;
-              margin-left:auto; padding:0 16px; background:var(--layer1);
+  .topsearch{ flex:0 1 320px; display:flex; align-items:center; gap:10px; min-width:220px;
+              margin-left:16px; padding:0 16px; background:var(--layer1);
               border-left:1px solid var(--border); border-right:1px solid var(--border); }
   .topsearch svg{ width:17px; height:17px; flex:none; color:var(--text3); }
   .topsearch input{ flex:1; min-width:0; font:inherit; font-size:var(--fs-body); background:none;
@@ -404,8 +408,8 @@ PAGE_TEMPLATE = """
              display:flex; align-items:center; justify-content:center; transition:background .11s,color .11s; }
   .icon-btn:hover{ background:var(--layer2); color:var(--text1); }
   .icon-btn svg{ width:20px; height:20px; }
-  .profile-wrap{ position:relative; flex:none; display:flex; align-items:center; gap:10px;
-                 padding:0 18px; }
+  .profile-wrap{ position:relative; flex:none; display:flex; align-items:center; justify-content:center;
+                 width:52px; padding:0; border-left:1px solid var(--border); }
   /* Sharp, gradient-brand avatar tile — matches the IBM theme (not a bubble). */
   .profile-btn{ width:36px; height:36px; border-radius:0; background:var(--grad-brand); border:none;
                 color:#fff; font-size:13px; font-weight:600; letter-spacing:.02em; font-family:var(--font);
@@ -561,7 +565,7 @@ PAGE_TEMPLATE = """
   .slist{ display:block; width:100%; text-align:left; font:inherit; font-size:var(--fs-body); color:var(--text1);
           background:none; border:none; border-left:3px solid transparent; padding:6px 16px 6px 13px; cursor:pointer; }
   .slist:hover{ background:var(--layer2); color:var(--text1); }
-  .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:600; }
+  .slist.active{ background:var(--layer2); color:var(--text1); border-left-color:var(--blue); font-weight:400; }
   .slist .n{ float:right; font-family:var(--mono); font-size:11.5px; color:var(--text1); }
   .accts-main{ flex:1; min-width:0; }
   .accts-tools{ display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
@@ -672,11 +676,11 @@ PAGE_TEMPLATE = """
                transition:background .11s; }
   .ask-navbtn:hover{ background:var(--layer2); }
   .ask-navbtn img{ width:34px; height:34px; object-fit:contain; display:block; }
-  .ask-panel{ border-radius:var(--r-lg); position:fixed; right:22px; top:64px; z-index:130; width:378px;
-              max-width:calc(100vw - 44px); height:min(560px, calc(100vh - 88px));
-              background:var(--layer1); border:1px solid var(--border-strong);
-              box-shadow:var(--shadow-lg); display:none; flex-direction:column; }
-  .ask-panel.open{ display:flex; }
+  .ask-panel{ position:fixed; top:56px; right:0; z-index:120; width:380px; max-width:100vw;
+              height:calc(100vh - 56px); background:var(--layer1); border-left:1px solid var(--border);
+              transform:translateX(100%); transition:transform .22s ease; display:flex;
+              flex-direction:column; overflow:hidden; }
+  .ask-panel.open{ transform:translateX(0); }
   .ask-title{ display:flex; align-items:center; gap:8px; }
   .ask-title img{ width:22px; height:22px; object-fit:contain; }
   /* Default (no attribute) and explicit dark → the light-on-dark mark; light
@@ -733,15 +737,17 @@ PAGE_TEMPLATE = """
          align-items:center; gap:2px; transition:border-color .13s,background .13s; }
   .terr:hover{ border-color:var(--border-strong); background:var(--layer2); }
   .terr.empty{ opacity:.45; }
-  /* Isometric presentation: tilt the plate the shape sits on, so the maps read
-     as objects in space rather than flat clip-art. */
+  /* Territory maps sit on a quiet isometric plane: the data stays geographic,
+     while the presentation follows IBM's layered, dimensional illustration language. */
   .terr-iso{ width:100%; margin-bottom:10px; }
   .usmap.single .terr-iso{ max-width:420px; margin-inline:auto; }
-  /* Flat, like the county-choropleth reference — the discrete region bands and
-     their separators are the point, and a tilt just distorts them. */
   .terr-svg{ width:100%; height:120px; display:block; }
   .usmap.single .terr-svg{ height:230px; }
-  /* Plate under the regions; regions paint over it, unlit ones show through. */
+  .terr-plane{ fill:var(--map-base); opacity:.96; }
+  .terr-plane-edge{ fill:var(--purple); opacity:.62; }
+  .terr-platform-grid{ fill:none; stroke:var(--blue-text); stroke-width:.65; opacity:.38; }
+  .terr-shadow{ fill:#161616; opacity:.56; }
+  .terr-map-lift{ filter:drop-shadow(0 3px 0 rgba(0,0,0,.18)); }
   .terr-plate{ fill:var(--map-base); }
   .terr-region{ cursor:pointer; transition:filter .12s; }
   .terr-region:hover{ filter:brightness(1.18); }
@@ -892,8 +898,11 @@ PAGE_TEMPLATE = """
   main{ transition:padding-right .22s ease; }
   body.day-panel-open main,
   body.side-panel-open main{ padding-right:396px; }
+  /* The assistant is fixed; the scrollable document ends at its left edge. */
+  html:has(body.ask-panel-open){ width:calc(100% - 380px); overflow-y:scroll; }
   @media(max-width:900px){ body.day-panel-open main,
-                           body.side-panel-open main{ padding-right:0; } }
+                           body.side-panel-open main{ padding-right:0; }
+                           html:has(body.ask-panel-open){ width:100%; } }
 
   /* Contextual panel on the Email/Call tabs — same mechanics as the day panel. */
   .side-panel{ border-radius:var(--r-lg); position:fixed; top:56px; right:0; width:380px; max-width:100vw; height:calc(100vh - 56px);
@@ -1028,8 +1037,8 @@ PAGE_TEMPLATE = """
   .review-hint{ font-size:var(--fs-label); font-weight:400; color:var(--text3); margin-left:auto; }
 
   .today-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:12px; }
-  .today-head h3{ font-size:17px; }
-  .today-sub{ font-size:13px; color:var(--text3); }
+  .today-head h3{ font-size:var(--fs-h3); line-height:var(--lh-h3); }
+  .today-sub{ font-size:var(--fs-label); line-height:var(--lh-label); color:var(--text3); }
   /* Two equal columns that stay equal — 1fr each, and the cards stretch so the
      Emails and Calls rectangles match height whatever their list length. */
   .today-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;
@@ -1037,11 +1046,16 @@ PAGE_TEMPLATE = """
   .task-card{ display:flex; flex-direction:column; background:var(--layer1); border-radius:var(--r-lg);
               border:1px solid var(--border); padding:18px 20px 18px; min-height:560px; }
   .task-top{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
-  .task-top h4{ font-size:14px; font-weight:600; margin:0; flex:1; }
-  .task-dot{ width:10px; height:10px; flex:none; }
-  .task-dot.email{ background:linear-gradient(180deg,var(--viz-blue-lo),var(--viz-blue-hi)); }
-  .task-dot.call{ background:linear-gradient(180deg,var(--viz-purple-lo),var(--viz-purple-hi)); }
-  .task-count{ font-size:12px; color:var(--text3); }
+  .task-top h4{ font-size:var(--fs-h3); line-height:var(--lh-h3); font-weight:600; margin:0; flex:1; }
+  /* Small isometric activity marks replace generic square colour swatches. */
+  .task-mark{ width:20px; height:20px; flex:none; }
+  .task-mark .top{ fill:var(--viz-blue-lo); }
+  .task-mark .left{ fill:var(--viz-blue-hi); }
+  .task-mark .right{ fill:var(--blue); }
+  .task-mark.call .top{ fill:var(--viz-purple-lo); }
+  .task-mark.call .left{ fill:var(--viz-purple-hi); }
+  .task-mark.call .right{ fill:var(--purple); }
+  .task-count{ font-size:var(--fs-label); line-height:var(--lh-label); color:var(--text3); }
   .task-count b{ font-family:var(--mono); color:var(--text1); font-weight:600; }
   .task-meter{ border-radius:100px; height:6px; background:var(--layer2); margin-bottom:12px; }
   .task-fill{ height:100%; width:0; transition:width .5s cubic-bezier(.4,.14,.3,1); }
@@ -1049,11 +1063,11 @@ PAGE_TEMPLATE = """
   .task-fill.call{ background:linear-gradient(90deg,var(--viz-purple-hi),var(--viz-purple-lo)); }
   .task-list{ flex:1; overflow-y:auto; max-height:470px; margin-bottom:14px; }
   .task-row{ display:flex; align-items:baseline; gap:10px; padding:8px 0;
-             border-bottom:1px solid var(--border); font-size:13px; }
+             border-bottom:1px solid var(--border); font-size:var(--fs-body); line-height:var(--lh-body); }
   .task-row:last-child{ border-bottom:none; }
   .task-tick{ width:14px; flex:none; color:var(--green); font-size:12px; }
   .task-acct{ font-weight:500; color:var(--text1); }
-  .task-step{ color:var(--text3); font-size:12.5px; margin-left:auto; }
+  .task-step{ color:var(--text3); font-size:var(--fs-label); line-height:var(--lh-label); margin-left:auto; }
   .task-row.done .task-acct,
   .task-row.done .task-step{ color:var(--text3); text-decoration:line-through; }
   .task-action{ width:100%; justify-content:center; display:flex; align-items:center; gap:7px; }
@@ -1332,7 +1346,7 @@ PAGE_TEMPLATE = """
     </div>
     <div class="topbar-actions">
       <button class="ask-navbtn" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
-        <img src="/static/chat-icon.png" alt="Ask BobBee"></button>
+        <img src="/static/glow-circle-chat.png" alt="Ask BobBee"></button>
       <div class="profile-wrap">
         <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">?</button>
       </div>
@@ -1380,7 +1394,7 @@ PAGE_TEMPLATE = """
         <div class="today-grid">
           <section class="task-card">
             <div class="task-top">
-              <span class="task-dot email"></span>
+              <svg class="task-mark email" viewBox="0 0 24 24" aria-hidden="true"><path class="top" d="M12 2l9 5-9 5-9-5z"/><path class="left" d="M3 7l9 5v10l-9-5z"/><path class="right" d="M21 7l-9 5v10l9-5z"/></svg>
               <h4>Emails</h4>
               <span class="task-count"><b id="taskEmailDone">0</b> of <b id="taskEmailTotal">0</b> sent</span>
             </div>
@@ -1390,7 +1404,7 @@ PAGE_TEMPLATE = """
           </section>
           <section class="task-card">
             <div class="task-top">
-              <span class="task-dot call"></span>
+              <svg class="task-mark call" viewBox="0 0 24 24" aria-hidden="true"><path class="top" d="M12 2l9 5-9 5-9-5z"/><path class="left" d="M3 7l9 5v10l-9-5z"/><path class="right" d="M21 7l-9 5v10l9-5z"/></svg>
               <h4>Calls</h4>
               <span class="task-count"><b id="taskCallDone">0</b> of <b id="taskCallTotal">0</b> done</span>
             </div>
@@ -2233,6 +2247,7 @@ function showPage(name, opts){
   // should take it with you, not leave it hanging over the next one.
   closeDayPanel();
   closeSidePanel();
+  toggleAsk(false);
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   document.querySelectorAll('.navlink').forEach(b => b.classList.toggle('active', b.dataset.page === name));
   if (name === 'accounts'){ fetchAccountsList(); fetchStrategizeStatus(); }
@@ -2241,7 +2256,7 @@ function showPage(name, opts){
   if (name === 'cadences'){ fetchCadences(opts && opts.open); }
   if (name === 'email'){ fetchTodayEmail(); }
   if (name === 'call'){ fetchTodayCall(); }
-  if (name === 'profile'){ loadProfilePage(); }
+  if (name === 'profile'){ switchProfileTab('profile'); loadProfilePage(); }
 }
 
 // ── accounts tab: strategize stages ───────────────────────────
@@ -2318,7 +2333,13 @@ function tagClass(t){
 // Display name for a cadence — the underlying key keeps its full name for
 // lookups, but "Cadence" is implied and the trailing number is noise.
 function cadenceLabel(nm){
-  return (nm || '').replace(/\s*cadence\s*/i, ' ').replace(/\s+\d+\s*$/, '').replace(/\s+/g, ' ').trim();
+  const label = (nm || '').replace(/\s*cadence\s*/i, ' ').replace(/\s+\d+\s*$/, '').replace(/\s+/g, ' ').trim();
+  return label.replace(/\b[a-z][a-z']*/g, w => w[0].toUpperCase() + w.slice(1));
+}
+
+// Data keys are deliberately lowercase; UI labels should still read like prose.
+function displayStepLabel(value){
+  return (value || '').replace(/\bemail\b/gi, 'Email').replace(/\bcall\b/gi, 'Call');
 }
 
 function renderSidebar(){
@@ -2543,7 +2564,7 @@ async function openAcctModal(name){
       <div class="panel"><h3>Salesloft</h3>
         ${kv('Cadence', cadenceLabel(sl.cadence))}${kv('Rank in cadence', sl.rank != null ? '#' + sl.rank : null)}
         <div style="margin-top:10px;">
-          ${(sl.touches || []).map(t => `<div class="act-row"><span class="act-type ${esc(t.type)}">${esc(t.type)}</span><span>${esc(t.date)}</span><span style="color:var(--text3)">${esc(t.step)}</span></div>`).join('') || '<div class="note">No touches scheduled.</div>'}
+          ${(sl.touches || []).map(t => `<div class="act-row"><span class="act-type ${esc(t.type)}">${esc(displayStepLabel(t.type))}</span><span>${esc(t.date)}</span><span style="color:var(--text3)">${esc(displayStepLabel(t.step))}</span></div>`).join('') || '<div class="note">No touches scheduled.</div>'}
         </div>
       </div>
       <div class="panel"><h3>Signals &amp; news</h3>
@@ -2626,7 +2647,7 @@ function fillDayPanel(iso){
   // Group by activity type — all emails under an "Emails" header, then all calls
   // under a "Calls" header — instead of interleaving them with per-row tags.
   const items = info.items || [];
-  const row = a => `<div class="panel-act"><div class="panel-act-body"><div class="pa-acct">${esc(a.account)}</div><div class="pa-step">${esc(a.step)} &middot; ${esc(cadenceLabel(a.cadence))}</div></div></div>`;
+  const row = a => `<div class="panel-act"><div class="panel-act-body"><div class="pa-acct">${esc(a.account)}</div><div class="pa-step">${esc(displayStepLabel(a.step))} &middot; ${esc(cadenceLabel(a.cadence))}</div></div></div>`;
   const section = (label, arr) => arr.length
     ? `<div class="day-panel-section">${label} (${arr.length})</div>` + arr.map(row).join('')
     : '';
@@ -2843,7 +2864,7 @@ function dayBoardHTML(iso){
   const calls  = items.filter(a => a.type === 'call');
   const rows = arr => arr.length
     ? arr.map(a => `<div class="dv-row"><span class="dv-acct">${esc(a.account)}</span>
-        <span class="dv-step">${esc(a.step)} &middot; ${esc(cadenceLabel(a.cadence))}</span></div>`).join('')
+        <span class="dv-step">${esc(displayStepLabel(a.step))} &middot; ${esc(cadenceLabel(a.cadence))}</span></div>`).join('')
     : '<div class="dv-empty">None scheduled.</div>';
   const col = (label, kind, arr) => `<div class="dv-col">
       <div class="dv-colhead"><span class="dv-dot ${kind}"></span>${label}<span class="dv-n">${arr.length}</span></div>
@@ -3174,12 +3195,10 @@ function setMapFocus(code){
   if (_mapData) renderTerritory(_mapData);
 }
 
-// The body of one territory: base silhouette plus a soft blob per city, sized
-// and coloured by that city's share. Blobs are clipped to the outline, so the
-// heat stays inside the territory instead of bleeding into the card.
-// One territory rendered as a discrete choropleth: each sub-region gets its own
-// step colour and a white separator, like a county map. Regions defined by a
-// band are clipped to the territory outline so the silhouette stays correct.
+// One territory is a layered data object: a geographic choropleth sits over a
+// small isometric plane and a restrained extrusion. It borrows IBM's isometric
+// illustration vocabulary without turning the underlying territory data into
+// decorative clip-art.
 function territoryBody(code, t, idx){
   const shape = TERRITORY_SHAPES[code];
   const cityCounts = (t.cities || {})[code] || {};
@@ -3190,6 +3209,10 @@ function territoryBody(code, t, idx){
   const rMax = Math.max(1, ...values);
 
   const [vw, vh] = shape.viewBox.split(' ').slice(2).map(Number);
+  const outline = shape.outline || shape.regions.map(r => r.svg).join('');
+  const plane = `M${vw*.08} ${vh*.69} L${vw*.5} ${vh*.96} L${vw*.92} ${vh*.69} L${vw*.5} ${vh*.43} Z`;
+  const planeEdge = `M${vw*.5} ${vh*.96} L${vw*.92} ${vh*.69} L${vw*.92} ${vh*.76} L${vw*.5} ${vh} Z`;
+  const grid = `M${vw*.2} ${vh*.62} L${vw*.62} ${vh*.89} M${vw*.34} ${vh*.53} L${vw*.76} ${vh*.8} M${vw*.37} ${vh*.88} L${vw*.78} ${vh*.61} M${vw*.22} ${vh*.78} L${vw*.63} ${vh*.51}`;
 
   const parts = shape.regions.map((r, ri) => {
     const v = values[ri];
@@ -3211,10 +3234,16 @@ function territoryBody(code, t, idx){
 
   return `<svg class="terr-svg" viewBox="${shape.viewBox}" preserveAspectRatio="xMidYMid meet">
       ${shape.outline ? `<defs><clipPath id="${clipId}">${shape.outline}</clipPath></defs>` : ''}
-      <g class="terr-plate">${shape.outline || shape.regions.map(r => r.svg).join('')}</g>
-      ${parts}
-      <g class="terr-sep">${seps}</g>
-      <g class="terr-edge">${shape.outline || shape.regions.map(r => r.svg).join('')}</g>
+      <path class="terr-shadow" d="${outline}" transform="translate(0 10)"/>
+      <path class="terr-plane" d="${plane}"/>
+      <path class="terr-plane-edge" d="${planeEdge}"/>
+      <path class="terr-platform-grid" d="${grid}"/>
+      <g class="terr-map-lift" transform="translate(0 -5)">
+        <g class="terr-plate">${outline}</g>
+        ${parts}
+        <g class="terr-sep">${seps}</g>
+        <g class="terr-edge">${outline}</g>
+      </g>
     </svg>`;
 }
 
@@ -3301,6 +3330,7 @@ function toggleAsk(force){
   const p = document.getElementById('askPanel');
   const open = force === undefined ? !p.classList.contains('open') : force;
   p.classList.toggle('open', open);
+  document.body.classList.toggle('ask-panel-open', open);
   if (open){
     if (!_askReady){ _askReady = true; askInit(); }
     document.getElementById('askInput').focus();
@@ -3521,7 +3551,7 @@ function renderDashboard(d){
     ? rows.map(a => `<div class="task-row ${isDone(a) ? 'done' : ''}">
         <span class="task-tick">${isDone(a) ? '&#10003;' : ''}</span>
         <span class="task-acct">${esc(a.account)}</span>
-        <span class="task-step">${esc(a.step)}</span>
+        <span class="task-step">${esc(displayStepLabel(a.step))}</span>
       </div>`).join('')
     : '<div class="note" style="padding:16px 0;">Nothing scheduled today.</div>';
 
@@ -3582,15 +3612,16 @@ function renderCadences(){
     const inProg = c.accounts.filter(a => a.status === 'in_progress').length;
     const done = c.accounts.filter(a => a.status === 'completed').length;
     const steps = c.steps.map(s => {
-      const dotCls = s.type === 'Email' ? 'email' : s.type === 'Call' ? 'call' : '';
+      const type = displayStepLabel(s.type);
+      const dotCls = type === 'Email' ? 'email' : type === 'Call' ? 'call' : '';
       return `<div class="step-node">
         <div class="step-dot ${dotCls}">${s.step_number}</div>
-        <div class="step-label">${esc(s.name)}</div>
+        <div class="step-label">${esc(displayStepLabel(s.name))}</div>
         <div class="step-day">Day ${s.day}</div>
       </div>`;
     }).join('');
     const accts = c.accounts.map(a => {
-      const nt = a.next_touch ? `${esc(a.next_touch.type)} · ${esc(a.next_touch.step)} on ${esc(a.next_touch.date)}` : 'No upcoming touch';
+      const nt = a.next_touch ? `${esc(displayStepLabel(a.next_touch.type))} · ${esc(displayStepLabel(a.next_touch.step))} on ${esc(a.next_touch.date)}` : 'No upcoming touch';
       return `<div class="cad-acct-row">
         <span class="cad-acct-rank">${a.rank ? '#' + a.rank : ''}</span>
         <span class="cad-acct-name" onclick="openAcctModal('${esc(a.account)}')">${esc(a.account)}</span>
@@ -3771,7 +3802,7 @@ function renderEmailGrid(){
         <div style="min-width:0;">
           <div class="email-card-to link" onclick="openSidePanel('person', ${i})">${toLine}</div>
           <div class="email-card-sub">${toSub}</div>
-          <div class="email-card-cadence">${esc(cadenceLabel(a.cadence))} &middot; ${esc(a.step)}</div>
+          <div class="email-card-cadence">${esc(cadenceLabel(a.cadence))} &middot; ${esc(displayStepLabel(a.step))}</div>
         </div>
         <div class="email-card-head-actions">
           ${pencilBtn}${redraftBtn}
@@ -3932,7 +3963,7 @@ function renderCallList(){
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:baseline;gap:10px;">
             <span class="call-card-name" onclick="openSidePanel('account', ${i}, 'call')">${esc(a.account)}</span>
-            <span class="call-card-step">${esc(a.step)} &middot; ${esc(cadenceLabel(a.cadence))}</span>
+            <span class="call-card-step">${esc(displayStepLabel(a.step))} &middot; ${esc(cadenceLabel(a.cadence))}</span>
             <button class="call-done-btn ${isDone ? 'on' : ''}"
                     onclick="toggleCallDone('${esc(a.account)}','${esc(a.step)}')">
               ${isDone ? '&#10003; Called' : 'Mark as called'}

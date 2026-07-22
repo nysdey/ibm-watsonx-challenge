@@ -52,7 +52,8 @@
              onkeydown="if(event.key==='Enter') globalSearchGo()">
     </div>
     <div class="topbar-actions">
-      <button class="ask-navbtn" id="askFab" onclick="toggleAsk()" title="Ask BobBee">
+      <button class="ask-navbtn" id="askFab" onclick="toggleAsk()" title="Ask BobBee"
+              aria-controls="askPanel" aria-expanded="false">
         <img src="/static/wx-chat-dark.png" alt="Ask BobBee"></button>
       <div class="profile-wrap">
         <button class="profile-btn" id="profileBtn" onclick="showPage('profile')">Tim Zhou</button>

@@ -66,6 +66,13 @@ function showPage(name, opts){
   toggleAsk(false);
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   document.querySelectorAll('.navlink').forEach(b => b.classList.toggle('active', b.dataset.page === name));
+  const profileBtn = document.getElementById('profileBtn');
+  if (profileBtn){
+    const profileActive = name === 'profile';
+    profileBtn.classList.toggle('active', profileActive);
+    profileBtn.closest('.profile-wrap')?.classList.toggle('active', profileActive);
+    profileBtn.setAttribute('aria-current', profileActive ? 'page' : 'false');
+  }
   if (name === 'accounts'){ fetchAccountsList(); fetchStrategizeStatus(); }
   if (name === 'dashboard'){ refreshDashboard(); }
   if (name === 'plan'){ fetchSchedule(); }

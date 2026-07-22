@@ -336,8 +336,11 @@ class DashboardQueries:
         elif period == "week":
             anchor = current + timedelta(weeks=offset)
             low = anchor - timedelta(days=anchor.weekday())
-            high = low + timedelta(days=6)
-            keys = [((low + timedelta(days=index)).strftime("%a"), low + timedelta(days=index), low + timedelta(days=index)) for index in range(7)]
+            # Seller activity is planned on business days. Keep the weekly
+            # view and its totals aligned to Monday–Friday rather than showing
+            # two permanently empty weekend columns.
+            high = low + timedelta(days=4)
+            keys = [((low + timedelta(days=index)).strftime("%a"), low + timedelta(days=index), low + timedelta(days=index)) for index in range(5)]
         elif period == "month":
             month_index = current.month - 1 + offset
             low = date(current.year + month_index // 12, month_index % 12 + 1, 1)

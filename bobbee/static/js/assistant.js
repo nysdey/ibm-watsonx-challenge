@@ -10,6 +10,11 @@ function toggleAsk(force){
   const open = force === undefined ? !p.classList.contains('open') : force;
   p.classList.toggle('open', open);
   document.body.classList.toggle('ask-panel-open', open);
+  const askBtn = document.getElementById('askFab');
+  if (askBtn){
+    askBtn.classList.toggle('active', open);
+    askBtn.setAttribute('aria-expanded', String(open));
+  }
   if (open){
     if (!_askReady){ _askReady = true; askInit(); }
     document.getElementById('askInput').focus();

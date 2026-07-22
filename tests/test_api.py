@@ -62,6 +62,9 @@ def test_active_read_models_share_one_book(client):
     assert payloads["/api/schedule"]["has_schedule"] is True
     assert payloads["/api/dashboard"]["has_schedule"] is True
     assert payloads["/api/cadences"]["has_cadences"] is True
+    assert [point["label"] for point in payloads["/api/dashboard/progress"]["series"]] == [
+        "Mon", "Tue", "Wed", "Thu", "Fri"
+    ]
 
 
 def test_account_detail_batch_and_ai_fallback(client):
@@ -84,4 +87,3 @@ def test_loopback_and_cross_origin_guards(client):
         headers={"Origin": "https://evil.example"},
     )
     assert response.status_code == 403
-

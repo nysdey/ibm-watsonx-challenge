@@ -4,6 +4,7 @@
     --bg:#161616; --layer1:#262626; --layer2:#393939; --layer3:#525252;
     --border:#393939; --border-strong:#6f6f6f;
     --header-bg:#161616;
+    --nav-active-bg:transparent; --nav-active-indicator:#78a9ff;
     /* Bright type ramp — gray body text was hard to read on the dark layers, so
        hierarchy stays in the top three Carbon steps and never dims below #c6c6c6. */
     --text1:#ffffff; --text2:#f4f4f4; --text3:#c6c6c6;
@@ -19,6 +20,7 @@
     --viz-purple-lo:#d4bbff; --viz-purple-hi:#a56eff;
     --map-base:#2a2130; --map-edge:rgba(255,255,255,.34); --map-sep:rgba(255,255,255,.55);
     --gate-glow:rgba(138,63,252,.05);
+    --shadow-block:4px 4px 0 rgba(5,10,25,.12);
     --shadow-lg:0 18px 44px rgba(0,0,0,.45), 8px 8px 0 rgba(0,0,0,.18);
     /* Neutral angled planes add structure while IBM blue and watsonx purple
        stay reserved for meaning, not large background areas. */
@@ -68,7 +70,8 @@
     --bg:#ffffff; --layer1:#f4f4f4; --layer2:#e8e8e8; --layer3:#d1d1d1;
     --border:#e0e0e0; --border-strong:#8d8d8d;
     --header-bg:#161616;          /* Carbon keeps the UI-shell header dark */
-    --text1:#161616; --text2:#393939; --text3:#6f6f6f;
+    --nav-active-bg:#262626; --nav-active-indicator:#78a9ff;
+    --text1:#161616; --text2:#262626; --text3:#525252;
     --blue:#0f62fe; --blue-text:#0043ce; --blue-soft:rgba(15,98,254,.10); --blue-border:rgba(15,98,254,.4);
     --purple:#8a3ffc; --purple-text:#6929c4; --purple-soft:rgba(138,63,252,.10); --purple-border:rgba(138,63,252,.4);
     --green:#198038; --amber:#8e6a00; --red:#da1e28;
@@ -77,6 +80,7 @@
     --viz-purple-lo:#8a3ffc; --viz-purple-hi:#491d8b;
     --map-base:#e8e0f0; --map-edge:rgba(0,0,0,.28); --map-sep:#ffffff;
     --gate-glow:rgba(138,63,252,.06);
+    --shadow-block:4px 4px 0 rgba(5,10,25,.14);
     --shadow-lg:0 18px 40px rgba(0,0,0,.16), 6px 6px 0 rgba(0,0,0,.06);
     --grad-surface:linear-gradient(145deg,#ffffff 0%,#f4f4f4 100%);
     --grad-glow:linear-gradient(145deg,rgba(0,0,0,.018) 0%,transparent 42%);
@@ -87,13 +91,13 @@
   :root[data-theme="light"] .brand-name,
   :root[data-theme="light"] .navlink.active,
   :root[data-theme="light"] .topsearch input{ color:#ffffff; }
-  :root[data-theme="light"] .navlink{ color:#c6c6c6; }
+  :root[data-theme="light"] .navlink{ color:#ffffff; }
   :root[data-theme="light"] .navlink:hover{ color:#ffffff; background:transparent; }
-  :root[data-theme="light"] .navlink.active{ background:transparent; }
+  :root[data-theme="light"] .navlink.active{ background:var(--nav-active-bg); }
   :root[data-theme="light"] .topsearch{ background:#161616; border-color:#393939; }
   :root[data-theme="light"] .topsearch:focus-within{ background:#262626; }
   :root[data-theme="light"] .topsearch svg,
-  :root[data-theme="light"] .topsearch input::placeholder{ color:#8d8d8d; }
+  :root[data-theme="light"] .topsearch input::placeholder{ color:#c6c6c6; }
   :root[data-theme="light"] .brand{ border-right-color:#393939; }
   :root[data-theme="light"] .brand:hover{ background:#393939; }
   :root[data-theme="light"] .profile-wrap{ border-left-color:#393939; }
@@ -152,7 +156,7 @@
   .link:hover{ text-decoration:underline; }
 
   .card{ background:var(--grad-surface); border:1px solid var(--border); border-radius:var(--r-lg);
-         box-shadow:4px 4px 0 rgba(5,10,25,.16); }
+         box-shadow:var(--shadow-block); }
 
   /* One chip style everywhere: neutral surface, neutral text, a colored dot for
      category. Never a colored fill with lighter-same-color text. */

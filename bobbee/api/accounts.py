@@ -214,7 +214,9 @@ def email_draft():
         return jsonify({"error": "name required"}), 400
     context, _ = services().account_queries.brief_context(name)
     context.update(contact_first_name=first, email_step=step)
-    generated = watsonx.advise_email(context) if watsonx.available() else {}
+    industry = (context.get("sales_cloud") or {}).get("industry")
+    examples = services().emails.top_examples_for_prompt(industry)
+    generated = watsonx.advise_email(context, examples=examples) if watsonx.available() else {}
     if generated:
         result, source = generated, "watsonx"
     else:

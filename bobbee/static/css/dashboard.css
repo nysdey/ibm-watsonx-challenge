@@ -1187,3 +1187,43 @@
       -webkit-text-fill-color:var(--text1); }
   .cred-form .btn{ height:37px; box-sizing:border-box; }
   @media(max-width:700px){ .cred-form{ grid-template-columns:1fr; } .cred-form .btn{ justify-self:start; } }
+
+  /* ── email feedback loop: Rate Email + Training Data ─────────────
+     Purple is the AI convention everywhere else in BobBee (see set-ai panel),
+     so the trained/rated states borrow it — this feature is the AI getting
+     better from real outcomes, not deterministic app data. */
+  .star-mark{ width:15px; height:15px; display:block; }
+  .rate-btn{ color:var(--purple-text); border-color:var(--purple-border); display:inline-flex; align-items:center; gap:6px; }
+  .rate-btn:hover{ background:var(--purple-soft); }
+  .rate-btn .star-mark{ color:var(--purple-text); }
+  .email-rated{ display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-caption); color:var(--purple-text); }
+  .email-rated .star-mark{ width:13px; height:13px; }
+
+  .rate-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--border); }
+  .rate-row:first-child{ border-top:none; }
+  .rate-label{ font-size:var(--fs-label); color:var(--text1); }
+  .rate-stars{ display:flex; gap:2px; flex:none; }
+  .star-btn{ background:none; border:none; padding:3px; cursor:pointer; color:var(--text3); line-height:0; }
+  .star-btn .star-mark{ width:19px; height:19px; }
+  .star-btn.on{ color:var(--amber); }
+  .star-btn:hover{ color:var(--amber); }
+
+  .td-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(380px, 1fr)); gap:14px; }
+  .td-card{ border-radius:var(--r-lg); background:var(--layer1); border:1px solid var(--border); padding:16px 18px;
+            display:flex; flex-direction:column; gap:8px; }
+  .td-card.top{ border-color:var(--purple-border); box-shadow:0 0 0 1px var(--purple-border) inset; }
+  .td-badges{ display:flex; flex-wrap:wrap; gap:6px; }
+  .td-badge{ font-size:var(--fs-caption); font-weight:600; padding:3px 9px; border-radius:var(--r-sm); border:1px solid; }
+  .td-badge.good{ color:var(--blue-text); border-color:var(--blue-border); background:var(--blue-soft); }
+  .td-badge.priority{ color:var(--amber); border-color:rgba(241,194,27,.4); background:rgba(241,194,27,.12); }
+  .td-badge.top{ color:var(--purple-text); border-color:var(--purple-border); background:var(--purple-soft); }
+  .td-prompt,.td-subject{ font-size:var(--fs-caption); color:var(--text2); }
+  .td-prompt span,.td-subject span{ color:var(--text3); }
+  .td-body{ font-size:var(--fs-label); line-height:var(--lh-label); color:var(--text2); white-space:pre-wrap;
+            border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:10px 0; max-height:180px; overflow-y:auto; }
+  .td-tags{ display:flex; flex-wrap:wrap; gap:6px; }
+  .td-tag{ font-size:var(--fs-caption); color:var(--text3); background:var(--layer2); border-radius:var(--r-sm); padding:2px 8px; }
+  .td-foot{ display:flex; align-items:center; justify-content:space-between; font-size:var(--fs-caption); color:var(--text3); }
+  .td-score{ font-weight:600; color:var(--text1); }
+  .td-notes{ font-size:var(--fs-caption); color:var(--text3); font-style:italic; }
+  .td-rag-note{ font-size:var(--fs-caption); color:var(--purple-text); background:var(--purple-soft); border-radius:var(--r-sm); padding:6px 10px; }

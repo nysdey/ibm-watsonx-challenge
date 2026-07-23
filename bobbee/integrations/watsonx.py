@@ -335,11 +335,12 @@ def advise_call_brief(context, max_bullets=6):
     return [str(b).strip() for b in parsed if str(b).strip()][:max_bullets]
 
 
-# Style exemplars (real seller emails) — anchor Granite's tone and structure:
-# an insight-led opener on a specific signal, one quantified/estimated value tied
-# to a concrete IBM offering, casual & human, soft low-pressure CTA. These are for
-# DIFFERENT accounts; the model must write fresh copy for the target account.
-_EMAIL_EXEMPLARS = """Example 1 (install-base end-of-support signal):
+# Static fallback exemplars — used only until the RAG bank below has at least
+# one seller-rated example to retrieve (a cold-start problem, not a bug).
+# Same intent as the curated ones: insight-led opener on a specific signal,
+# one quantified/estimated value tied to a concrete IBM offering, casual and
+# human, soft low-pressure CTA.
+_FALLBACK_EXEMPLARS = """Example 1 (install-base end-of-support signal):
 Hi Carlo, I work for IBM and am the Account Lead for Mission FCU — nice to meet you!
 I noticed you currently have 3 units of Power9 installed, which reached End of Standard
 Support on 1/31/2026, as officially announced by IBM. I'd love to understand where
@@ -355,7 +356,7 @@ this year. With both in mind I'd recommend IBM deep archival, which aligns with 
 mission and the margin goal — typically ~70% TCO savings vs cloud/HDD. Feels like a fit —
 open to a chat? Best,"""
 
-_EMAIL_SYSTEM = (
+_EMAIL_INSTRUCTIONS = (
     "You are an IBM infrastructure account executive writing a short, highly "
     "personalized outbound email to one contact. You are given everything known about "
     "the account from IBM Sales Cloud (relationship, IBM spend + trend, install base, "
@@ -376,24 +377,63 @@ _EMAIL_SYSTEM = (
     "- End with a soft CTA (e.g. 'Open to a quick chat?').\n"
     "- Use only facts consistent with the context; grounded estimates are fine, wild "
     "fabrication is not.\n\n"
-    "Match the tone and structure of these examples (they are for OTHER accounts — do "
-    "not reuse their specifics):\n" + _EMAIL_EXEMPLARS + "\n\n"
+)
+
+_EMAIL_RETURN_SPEC = (
     "Return ONLY JSON: {\"subject\": a specific subject <=70 chars, \"body\": the full "
     "email body ending with a sign-off line \"Best,\" then \"[Your name]\"}."
 )
 
 
-def advise_email(context):
+def _format_examples(examples):
+    """Render curated {subject, body, tags} dicts as numbered exemplars."""
+    blocks = []
+    for i, example in enumerate(examples, 1):
+        tags = ", ".join(example.get("tags") or []) or "seller-rated"
+        blocks.append(
+            f"Example {i} ({tags}) — a real email a seller rated highly and that "
+            f"got real engagement:\nSubject: {example.get('subject', '')}\n{example.get('body', '')}"
+        )
+    return "\n\n".join(blocks)
+
+
+def _build_email_system(examples):
+    """Build the email system prompt, preferring live RAG examples (sent
+    emails sellers rated highly and that got real Salesloft engagement) over
+    the static fallback. This is the retraining loop: better examples in ⇒
+    better drafts out, with no model fine-tuning required."""
+    if examples:
+        exemplar_block = _format_examples(examples)
+        note = (
+            "Match the tone and structure of these examples — they are real emails from "
+            "THIS seller's own outreach that were rated highly and performed well "
+            "(opened/clicked/replied). They are for OTHER accounts — do not reuse their "
+            "specifics, but write in the same voice:\n"
+        )
+    else:
+        exemplar_block = _FALLBACK_EXEMPLARS
+        note = (
+            "Match the tone and structure of these examples (they are for OTHER accounts — do "
+            "not reuse their specifics):\n"
+        )
+    return _EMAIL_INSTRUCTIONS + note + exemplar_block + "\n\n" + _EMAIL_RETURN_SPEC
+
+
+def advise_email(context, examples=None):
     """context: everything known about one account + the contact + the cadence step
-    the email-draft API). Returns {"subject": str, "body": str} from
-    watsonx.ai, or {} when the live layer is unavailable/errored (caller falls back
-    to a deterministic template). One call per email."""
+    (the email-draft API). `examples`: optional list of {"subject", "body", "tags"}
+    curated training examples — see EmailService.top_examples_for_prompt — used as
+    live few-shot exemplars in place of the static fallback ones. Returns
+    {"subject": str, "body": str} from watsonx.ai, or {} when the live layer is
+    unavailable/errored (caller falls back to a deterministic template). One call
+    per email."""
     if not context or not available():
         return {}
     user = ("Account + contact + step context (JSON):\n" +
             json.dumps(context, indent=2, default=str) +
             "\n\nWrite the email now. Return ONLY the JSON object.")
-    parsed = _extract_json(_complete(_EMAIL_SYSTEM, user, max_tokens=700))
+    system = _build_email_system(examples or [])
+    parsed = _extract_json(_complete(system, user, max_tokens=700))
     if not isinstance(parsed, dict) or not parsed.get("body"):
         return {}
     return {"subject": str(parsed.get("subject") or "").strip(),

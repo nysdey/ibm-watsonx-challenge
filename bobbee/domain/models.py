@@ -21,5 +21,10 @@ def empty_state() -> dict[str, Any]:
         "accounts": [],
         "strategy": None,
         "schedule": None,
+        # Sent emails, one record per send. Each accumulates seller-submitted
+        # star-rating feedback and (mocked) Salesloft engagement, and together
+        # they form the RAG example bank email drafting retrieves from — see
+        # bobbee/domain/feedback.py and bobbee/services/emails.py.
+        "emails": [],
     }
 

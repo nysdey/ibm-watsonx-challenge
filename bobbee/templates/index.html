@@ -44,6 +44,7 @@
       <button class="navlink" data-page="cadences" onclick="showPage('cadences')">Cadences</button>
       <button class="navlink" data-page="email" onclick="showPage('email')">Email</button>
       <button class="navlink" data-page="call" onclick="showPage('call')">Call</button>
+      <button class="navlink" data-page="training" onclick="showPage('training')">Training Data</button>
     </nav>
     <div class="topsearch">
       <svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M29 27.586l-7.552-7.552a11.018 11.018 0 10-1.414 1.414L27.586 29zM4 13a9 9 0 119 9 9.01 9.01 0 01-9-9z"/></svg>
@@ -442,6 +443,21 @@
         </div>
         <div class="call-list" id="callList"></div>
       </div>
+    </section>
+
+    <!-- Training Data — the RAG example bank email drafting retrieves from -->
+    <section id="page-training" class="page">
+      <div class="page-head">
+        <h2 class="page-title">Training Data</h2>
+        <p>Sent emails you've rated highly that also performed well feed straight back into
+           watsonx as live examples the next time it drafts &mdash; no fine-tuning required.</p>
+      </div>
+      <div class="email-toolbar">
+        <span id="trainingCount" style="font-size:var(--fs-label);"></span>
+        <input type="text" id="trainingSearch" placeholder="Search training data..."
+               style="min-width:260px;" oninput="searchTrainingData(this.value)">
+      </div>
+      <div class="td-grid" id="trainingGrid"></div>
     </section>
 
     <!-- Profile -->
@@ -859,6 +875,29 @@
   </div>
 </div>
 
+<!-- ── Rate Email modal (Email tab) ──────────────────────────────── -->
+<div class="modal" id="rateModal" onclick="if(event.target===this) closeRateModal()">
+  <div class="modal-card" style="max-width:560px;">
+    <div class="modal-head">
+      <h2>Rate Email Quality</h2>
+      <button class="link" onclick="closeRateModal()">Close</button>
+    </div>
+    <p style="font-size:var(--fs-caption); color:var(--text3); margin:0 0 4px;">Subject: <span id="rateModalSubject" style="color:var(--text2);"></span></p>
+    <p style="font-size:var(--fs-label); color:var(--text3); margin:0 0 18px;">Your feedback helps improve AI-generated emails.</p>
+    <div id="rateModalRows"></div>
+    <div class="field" style="margin-top:14px;">
+      <label>Additional feedback (optional)</label>
+      <textarea id="rateModalNotes" rows="3" placeholder="Share specific suggestions for improvement..."></textarea>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:18px;">
+      <button class="btn" onclick="closeRateModal()">Cancel</button>
+      <button class="btn primary" id="rateSubmitBtn" onclick="submitRating()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M2 12l19-9-4 19-6-6-5 4z"/></svg> Submit for Retraining
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Details (Access) modal ─────────────────────────────────── -->
 <script>window.BOBBEE_CONFIG = {{ {'today': today, 'realToday': real_today}|tojson }};</script>
 <script src="{{ url_for('static', filename='js/app-shell.js') }}" defer></script>
@@ -868,5 +907,6 @@
 <script src="{{ url_for('static', filename='js/assistant.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/panels.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/workflows.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/feedback.js') }}" defer></script>
 </body>
 </html>

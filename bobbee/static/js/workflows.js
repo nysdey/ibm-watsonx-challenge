@@ -245,9 +245,25 @@ function renderEmailGrid(){
         ${hasDraft && !a.sent && !isEditing ? `<button class="btn primary" onclick="sendOneEmail(${i})">Send</button>` : ''}
         ${isEditing ? `<button class="btn primary" onclick="saveEmailEdit(${i})">Save</button>` : ''}
         <span class="email-sent ${a.sent ? 'show' : ''}" id="emailsent-${i}">&#10003; Sent</span>
+        ${a.sent && a.emailId && !a.feedback
+          ? `<button class="btn rate-btn" onclick="openRateModal(${i})">${STAR_ICON} Rate Email</button>`
+          : ''}
+        ${a.feedback ? renderRatedPill(a.feedback) : ''}
       </div>
     </div>`;
   }).join('');
+}
+
+// A small "trained" pill once feedback is on file — badges come straight from
+// the same domain scoring the Training Data tab uses (bobbee/domain/feedback.py),
+// so the label here always matches whether this email is feeding future drafts.
+function renderRatedPill(feedback){
+  const badges = feedback.badges || [];
+  const label = badges.includes('Top Example') ? 'Top example — training on this'
+    : badges.includes('High Priority') ? 'High priority — training on this'
+    : badges.includes('Good Example') ? 'Good example — training on this'
+    : 'Rated';
+  return `<span class="email-rated" title="Score ${feedback.score}/100">${STAR_ICON_FILLED} ${esc(label)}</span>`;
 }
 
 async function _draftOne(i, force){
@@ -290,32 +306,60 @@ async function redraftOne(i){
   await _draftOne(i, true);
 }
 
-function sendOneEmail(i){
-  const a = _emailItems[i];
-  if (!a) return;
-  _saveEditIfOpen(i);
-  a.sent = true;
-  a.editing = false;
-  renderEmailGrid();
+// Records the send server-side so it can be rated later and (once rated +
+// it picks up mock Salesloft engagement) retrieved as a future few-shot
+// example — see /api/email_send and EmailService.record_sent. Best-effort:
+// if this fails, the email still shows as sent, it just can't be rated.
+async function _persistSend(a){
+  if (a.emailId) return;
+  const d = a.acctDetail || {};
+  const sc = d.sales_cloud || {};
+  const ai = d.ai || {};
+  try {
+    const r = await fetch('/api/email_send', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        account: a.account, industry: sc.industry, tier: ai.tier, play: ai.play,
+        contact: a.contact ? {first_name: a.contact.first_name, last_name: a.contact.last_name, title: a.contact.title} : {},
+        cadence: a.cadence, step: a.step,
+        subject: a.subject || '', body: a.draft || '', source: a.draftSource || 'deterministic',
+      }),
+    });
+    const j = await r.json();
+    if (j.ok) a.emailId = j.email_id;
+  } catch(e){ /* rating just won't be available for this one */ }
+}
+
+function _updateSentCount(){
   const sentCount = _emailItems.filter(x => x.sent).length;
   const cnt = document.getElementById('emailCountLabel');
   if (cnt) cnt.textContent = `${_emailItems.length} scheduled today &middot; ${sentCount} sent`;
 }
 
-function sendAllEmails(){
+async function sendOneEmail(i){
+  const a = _emailItems[i];
+  if (!a) return;
+  _saveEditIfOpen(i);
+  await _persistSend(a);
+  a.sent = true;
+  a.editing = false;
+  renderEmailGrid();
+  _updateSentCount();
+}
+
+async function sendAllEmails(){
   const ready = _emailItems.filter(a => a.draft != null && !a.draft.startsWith('…') && !a.sent);
   if (!ready.length){ alert('Draft all emails first before sending.'); return; }
   for (let i = 0; i < _emailItems.length; i++){
     const a = _emailItems[i];
     if (a.draft == null || a.draft.startsWith('…') || a.sent) continue;
     _saveEditIfOpen(i);
+    await _persistSend(a);
     a.sent = true;
     a.editing = false;
   }
   renderEmailGrid();
-  const sentCount = _emailItems.filter(x => x.sent).length;
-  const cnt = document.getElementById('emailCountLabel');
-  if (cnt) cnt.textContent = `${_emailItems.length} scheduled today &middot; ${sentCount} sent`;
+  _updateSentCount();
 }
 
 // ── call tab ──────────────────────────────────────────────────

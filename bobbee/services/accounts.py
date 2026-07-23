@@ -57,6 +57,7 @@ class AccountService:
             "accounts": accounts,
             "strategy": None,
             "schedule": None,
+            "emails": [],
         }
         self.repository.save(state)
         progress(

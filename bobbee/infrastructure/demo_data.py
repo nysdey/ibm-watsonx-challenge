@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Deterministic synthetic source data for the local BobBee demo.
 
 Every random stream is seeded with a stable digest, so the same territory always
@@ -403,3 +405,49 @@ def salesloft_cadence_steps(cadence):
         steps.append({"id": r.randint(100000, 999999) + i, "step_number": i,
                       "day": day, "type": stype, "name": sname})
     return steps
+
+
+# ── Salesloft engagement (opens / clicks / replies) ────────────────────────
+# Real Salesloft tracks open/click/reply events per send with webhooks. This
+# clone has no live Salesloft connection, so engagement is generated the same
+# way every other "external" fact in this file is: deterministic and seeded
+# off a stable id, not stored, not random-per-request.
+#
+# Each email gets a fixed, hidden "reveal day" per event (open/click/reply)
+# the moment it's sent — mirroring how a real prospect doesn't open, click,
+# and reply all in the same instant. Calling this again later with a larger
+# `days_elapsed` can only add events, never remove them, so a rated email's
+# engagement genuinely fills in over the following demo days instead of
+# jumping around.
+def mock_engagement(email_id: str, days_elapsed: int, tier: int | None = None) -> dict:
+    """Deterministic mock Salesloft engagement for one sent email.
+
+    tier: the account's urgency tier (1=hottest) if known — higher-fit accounts
+    are modeled as modestly more likely to open/click/reply, same as a real
+    territory would see better response on better-fit accounts.
+    """
+    r = _rng("engagement", email_id)
+    boost = {1: 0.15, 2: 0.05}.get(tier, 0.0)
+    opened = r.random() < min(0.92, 0.55 + boost)
+    open_day = r.randint(0, 2) if opened else None
+    clicked = opened and r.random() < min(0.85, 0.30 + boost)
+    click_day = (open_day + r.randint(0, 2)) if clicked else None
+    replied = opened and r.random() < min(0.75, 0.14 + boost * 1.5)
+    reply_day = ((click_day if clicked else open_day) + r.randint(0, 3)) if replied else None
+
+    def _live(flag, day):
+        return bool(flag) and day is not None and days_elapsed >= day
+
+    is_open = _live(opened, open_day)
+    is_click = _live(clicked, click_day)
+    is_reply = _live(replied, reply_day)
+    return {
+        "opened": is_open,
+        "clicked": is_click,
+        "replied": is_reply,
+        "open_count": (1 + r.randint(0, 3)) if is_open else 0,
+        "click_count": (1 + r.randint(0, 2)) if is_click else 0,
+        "opened_at_day": open_day if is_open else None,
+        "clicked_at_day": click_day if is_click else None,
+        "replied_at_day": reply_day if is_reply else None,
+    }

@@ -2,6 +2,10 @@
 // rebuild their own label can restore it instead of dropping it.
 const AI_SPARK = '<svg class="spark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1c.7 5.1 2.6 7 7.7 7.7-5.1.7-7 2.6-7.7 7.7-.7-5.1-2.6-7-7.7-7.7C9.4 8 11.3 6.1 12 1z"/></svg>';
 
+// Outline / filled star, used by the email feedback + training-data feature.
+const STAR_ICON = '<svg class="star-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7L5.8 21.6l1.6-7-5.4-4.8 7.1-.7z"/></svg>';
+const STAR_ICON_FILLED = '<svg class="star-mark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.6 7.1.7-5.4 4.8 1.6 7-6.2-3.7L5.8 21.6l1.6-7-5.4-4.8 7.1-.7z"/></svg>';
+
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 // ── auth gate ─────────────────────────────────────────────────
@@ -79,5 +83,6 @@ function showPage(name, opts){
   if (name === 'cadences'){ fetchCadences(opts && opts.open); }
   if (name === 'email'){ fetchTodayEmail(); }
   if (name === 'call'){ fetchTodayCall(); }
+  if (name === 'training'){ fetchTrainingData(); }
   if (name === 'profile'){ switchProfileTab('profile'); loadProfilePage(); }
 }
